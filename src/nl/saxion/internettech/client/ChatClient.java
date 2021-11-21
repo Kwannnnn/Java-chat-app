@@ -21,4 +21,15 @@ public class ChatClient {
         this.readThread.start();
         this.writeThread.start();
     }
+
+    public static void showMenu() {
+        System.out.print(
+                """
+                        CONN \t\t Login to the server with a username
+                        BCST \t\t Broadcast a message to every client on the server
+                        PONG \t\t Reply to the server's PING request
+                        QUIT \t\t Close connection with the server
+                        
+                        """);
+    }
 }

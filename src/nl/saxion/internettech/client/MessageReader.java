@@ -23,14 +23,29 @@ public class MessageReader implements Runnable {
 
     @Override
     public void run() {
-        while (!this.socket.isClosed()) {
+        while (true) {
             try {
                 String line = reader.readLine();
+
+                if (line == null) {
+                    stopConnection();
+                    break;
+                }
+
                 System.out.println(line);
             } catch (IOException e) {
                 e.printStackTrace();
                 break;
             }
         }
+    }
+
+    public void stopConnection() {
+        try {
+            socket.close();
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+
     }
 }

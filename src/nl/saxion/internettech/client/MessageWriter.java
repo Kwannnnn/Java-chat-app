@@ -26,17 +26,37 @@ public class MessageWriter implements Runnable {
         Scanner scanner = new Scanner(System.in);
         String message;
 
+//        while (!message.equals("QUIT")) {
+//
+//            if (message.equals("HELP")) {
+//                ChatClient.showMenu();
+//                continue;
+//            }
+//
+//            this.writer.println(message);
+//            this.writer.flush();
+//        }
+
         do {
             message = scanner.nextLine();
+
+            if (message.equals("HELP")) {
+                ChatClient.showMenu();
+                continue;
+            }
+
             this.writer.println(message);
             this.writer.flush();
         } while (!message.equals("QUIT"));
 
         // Close the connection whenever the message is quit
-        try {
-            socket.close();
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
+//        try {
+//            socket.close();
+//        } catch (IOException e) {
+//            System.out.println(e.getMessage());
+//        }
+
     }
+
+
 }
