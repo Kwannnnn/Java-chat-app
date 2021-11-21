@@ -1,45 +1,24 @@
 package nl.saxion.internettech.client;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.Socket;
-import java.util.Scanner;
 
 public class ChatClient {
-    private static final String SERVER_ADDRESS = "127.0.0.1";
-    private static final int PORT = 1337;
+    private final Thread readThread;
+    private final Thread writeThread;
 
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-
+    public ChatClient(String serverAddress, int port) {
         try {
-            Socket socket = new Socket(SERVER_ADDRESS, PORT);
-            InputStream inputStream = socket.getInputStream();
-            OutputStream outputStream = socket.getOutputStream();
-            PrintWriter writer = new PrintWriter(outputStream);
-            Thread writeThread = new Thread(() -> {
-                while(true) {
-                    String message = scanner.nextLine();
-                    writer.println(message);
-                    writer.flush();
-                }
-            });
-            Thread readThread = new Thread(() -> {
-                while(true) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                    try {
-                        String line = reader.readLine();
-                        if (line != null) {
-                            System.out.println(line);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-            writeThread.start();
-            readThread.start();
+            Socket socket = new Socket(serverAddress, port);
+            this.readThread = new Thread(new MessageWriter(socket));
+            this.writeThread = new Thread(new MessageReader(socket));
         } catch (IOException e) {
-            System.out.println("I/O Error: " + e.getMessage());
+            throw new Error("I/O Error: " + e.getMessage());
         }
+    }
+
+    public void start() {
+        this.readThread.start();
+        this.writeThread.start();
     }
 }
