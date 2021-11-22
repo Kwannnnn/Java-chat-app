@@ -6,7 +6,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 
-public class MessageWriter implements Runnable {
+public class MessageWriter extends ProtocolInterpreter implements Runnable {
     private Socket socket;
     private PrintWriter writer;
 
@@ -25,37 +25,33 @@ public class MessageWriter implements Runnable {
     public void run() {
         Scanner scanner = new Scanner(System.in);
         String message;
+        String input;
+        String header;
 
-//        while (!message.equals("QUIT")) {
-//
-//            if (message.equals("HELP")) {
-//                ChatClient.showMenu();
-//                continue;
-//            }
-//
-//            this.writer.println(message);
-//            this.writer.flush();
-//        }
+        // TODO: It does not break from this loop
+        do {
+            System.out.println(ChatClient.isLoggedIn);
+            message = scanner.nextLine();
+            sendMessageToServer(CMD_CONN, message);
+        }
+        while(!ChatClient.isLoggedIn);
 
         do {
-            message = scanner.nextLine();
-
-            if (message.equals("HELP")) {
-                ChatClient.showMenu();
-                continue;
+            System.out.println(ChatClient.isLoggedIn);
+            input = scanner.nextLine();
+            if (input.equals("?")) {
+                super.showMenu();
+            } else if (input.equals("B")) {
+                header = CMD_BCST;
+                message = scanner.nextLine();
+                sendMessageToServer(header, message);
             }
+        } while (!input.equals("Q"));
+    }
 
-            this.writer.println(message);
-            this.writer.flush();
-        } while (!message.equals("QUIT"));
-
-        // Close the connection whenever the message is quit
-//        try {
-//            socket.close();
-//        } catch (IOException e) {
-//            System.out.println(e.getMessage());
-//        }
-
+    private void sendMessageToServer(String header, String message) {
+        this.writer.println(header + ' ' + message);
+        this.writer.flush();
     }
 
 
