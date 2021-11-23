@@ -1,9 +1,6 @@
 package nl.saxion.internettech.client;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.Socket;
 
 public class MessageReader extends ProtocolInterpreter implements Runnable {
@@ -30,13 +27,13 @@ public class MessageReader extends ProtocolInterpreter implements Runnable {
                 String line = reader.readLine();
                 String[] splittedString = line.split(" ", 2);
                 String header = splittedString[0];
-                String payload = splittedString[1];
                 switch (header) {
                     case "INFO" -> {
                         super.showWelcomeMessage();
                         super.askUsernameMessage();
                     }
                     case "OK" -> {
+                        String payload = splittedString[1];
                         if (payload.split(" ").length > 1) {
                             System.out.println(payload);
                         } else {
@@ -44,6 +41,9 @@ public class MessageReader extends ProtocolInterpreter implements Runnable {
                             client.setCurrentUser(payload);
                             super.promptMenuMessage();
                         }
+                    }
+                    case "PING" -> {
+                        sendPong();
                     }
                     case "ER02" -> {
                         super.showInvalidUsernameMessage();
@@ -60,6 +60,17 @@ public class MessageReader extends ProtocolInterpreter implements Runnable {
                 e.printStackTrace();
                 break;
             }
+        }
+    }
+
+    public void sendPong() {
+        try {
+            OutputStream outputStream = socket.getOutputStream();
+            PrintWriter writer = new PrintWriter(outputStream);
+            writer.println("PONG");
+            writer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
