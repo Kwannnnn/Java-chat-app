@@ -9,9 +9,11 @@ import java.net.Socket;
 public class MessageReader extends ProtocolInterpreter implements Runnable {
     private Socket socket;
     private BufferedReader reader;
+    private ChatClient client;
 
-    public MessageReader(Socket socket) {
+    public MessageReader(Socket socket, ChatClient client) {
         this.socket = socket;
+        this.client = client;
 
         try {
             InputStream inputStream = this.socket.getInputStream();
@@ -26,19 +28,25 @@ public class MessageReader extends ProtocolInterpreter implements Runnable {
         while (true) {
             try {
                 String line = reader.readLine();
-                String header = line.split(" ")[0];
+                String[] splittedString = line.split(" ", 2);
+                String header = splittedString[0];
+                String payload = splittedString[1];
                 switch (header) {
                     case "INFO" -> {
                         super.showWelcomeMessage();
                         super.askUsernameMessage();
                     }
                     case "OK" -> {
-                        System.out.println("You have been successfully logged in!");
-                        ChatClient.isLoggedIn = true;
-                        super.promptMenuMessage();
+                        if (payload.split(" ").length > 1) {
+                            System.out.println(payload);
+                        } else {
+                            System.out.println("You have been successfully logged in!");
+                            client.setCurrentUser(payload);
+                            super.promptMenuMessage();
+                        }
                     }
                     case "ER02" -> {
-                        System.err.println("Username in invalid format!");
+                        super.showInvalidUsernameMessage();
                         super.askUsernameMessage();
                     }
                 }
@@ -48,17 +56,12 @@ public class MessageReader extends ProtocolInterpreter implements Runnable {
                     break;
                 }
 
-//                System.out.println(line);
             } catch (IOException e) {
                 e.printStackTrace();
                 break;
             }
         }
     }
-
-    // TODO: interface
-
-
 
     public void stopConnection() {
         try {

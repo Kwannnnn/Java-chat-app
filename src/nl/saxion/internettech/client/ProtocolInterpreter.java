@@ -3,6 +3,8 @@ package nl.saxion.internettech.client;
 public abstract class ProtocolInterpreter {
     protected static final String CMD_CONN = "CONN";
     protected static final String CMD_BCST = "BCST";
+    protected static final String CMD_PING = "PING";
+    protected static final String CMD_PONG = "PONG";
 
     protected void showMenu() {
         System.out.print(
@@ -26,5 +28,10 @@ public abstract class ProtocolInterpreter {
 
     protected void promptMenuMessage() {
         System.out.println("Type '?' to show menu.");
+    }
+
+    protected void showInvalidUsernameMessage() {
+        System.err.println("Username in invalid format!");
+        System.err.flush();
     }
 }

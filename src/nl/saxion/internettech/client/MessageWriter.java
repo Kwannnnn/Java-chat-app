@@ -9,9 +9,11 @@ import java.util.Scanner;
 public class MessageWriter extends ProtocolInterpreter implements Runnable {
     private Socket socket;
     private PrintWriter writer;
+    private ChatClient client;
 
-    public MessageWriter(Socket socket) {
+    public MessageWriter(Socket socket, ChatClient client) {
         this.socket = socket;
+        this.client = client;
 
         try {
             OutputStream outputStream = socket.getOutputStream();
@@ -28,31 +30,24 @@ public class MessageWriter extends ProtocolInterpreter implements Runnable {
         String input;
         String header;
 
-        // TODO: It does not break from this loop
         do {
-            System.out.println(ChatClient.isLoggedIn);
-            message = scanner.nextLine();
-            sendMessageToServer(CMD_CONN, message);
-        }
-        while(!ChatClient.isLoggedIn);
-
-        do {
-            System.out.println(ChatClient.isLoggedIn);
             input = scanner.nextLine();
-            if (input.equals("?")) {
-                super.showMenu();
-            } else if (input.equals("B")) {
-                header = CMD_BCST;
-                message = scanner.nextLine();
-                sendMessageToServer(header, message);
+            if (this.client.getCurrentUser() == null) {
+                sendMessageToServer(CMD_CONN, input);
+            } else {
+                if (input.equals("?")) {
+                    super.showMenu();
+                } else if (input.equalsIgnoreCase("B")) {
+                    header = CMD_BCST;
+                    message = scanner.nextLine();
+                    sendMessageToServer(header, message);
+                }
             }
-        } while (!input.equals("Q"));
+        } while (!input.equalsIgnoreCase("Q"));
     }
 
     private void sendMessageToServer(String header, String message) {
         this.writer.println(header + ' ' + message);
         this.writer.flush();
     }
-
-
 }
