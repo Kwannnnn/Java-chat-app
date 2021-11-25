@@ -8,13 +8,13 @@ public class ChatClient {
     private final Thread writeThread;
     private String currentUser;
 
-    public ChatClient(String serverAddress, int port) {
+    public ChatClient(String serverAddress, int port) throws IOException {
         try {
             Socket socket = new Socket(serverAddress, port);
-            this.readThread = new Thread(new MessageWriter(socket, this));
-            this.writeThread = new Thread(new MessageReader(socket, this));
+            this.readThread = new Thread(new MessageSender(socket, this));
+            this.writeThread = new Thread(new MessageReceiver(socket, this));
         } catch (IOException e) {
-            throw new Error("I/O Error: " + e.getMessage());
+            throw e;
         }
     }
 

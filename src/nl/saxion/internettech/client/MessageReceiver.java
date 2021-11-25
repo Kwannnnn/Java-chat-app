@@ -3,12 +3,12 @@ package nl.saxion.internettech.client;
 import java.io.*;
 import java.net.Socket;
 
-public class MessageReader extends ProtocolInterpreter implements Runnable {
-    private Socket socket;
+public class MessageReceiver extends ProtocolInterpreter implements Runnable {
+    private final Socket socket;
     private BufferedReader reader;
-    private ChatClient client;
+    private final ChatClient client;
 
-    public MessageReader(Socket socket, ChatClient client) {
+    public MessageReceiver(Socket socket, ChatClient client) {
         this.socket = socket;
         this.client = client;
 
@@ -22,10 +22,11 @@ public class MessageReader extends ProtocolInterpreter implements Runnable {
 
     @Override
     public void run() {
-
-        while (true) {
-            try {
+        try {
+            while (socket.isConnected()) {
                 String line = reader.readLine();
+                if (line == null) break;
+
                 String[] parsedLine = parseResponse(line);
 
                 switch (parsedLine[0]) {
@@ -43,22 +44,18 @@ public class MessageReader extends ProtocolInterpreter implements Runnable {
                             }
                         }
                     }
+                    case CMD_BCST -> super.displayMessage(parsedLine[1], parsedLine[2]);
                     case CMD_PING -> sendPong();
-                    case CMD_ER02 -> {
+                    case CMD_ER00, CMD_ER01, CMD_ER02, CMD_ER03 -> {
                         super.showErrorMessage(parsedLine[1]);
                         super.askUsernameMessage();
                     }
                 }
-
-                if (line == null) {
-                    stopConnection();
-                    break;
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                break;
             }
+
+            stopConnection();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -79,7 +76,10 @@ public class MessageReader extends ProtocolInterpreter implements Runnable {
 
     public void stopConnection() {
         try {
-            socket.close();
+            reader.close();
+            if (!socket.isClosed()) socket.close();
+            super.connectionLost();
+            Thread.currentThread().interrupt();
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }

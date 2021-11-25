@@ -6,12 +6,12 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 
-public class MessageWriter extends ProtocolInterpreter implements Runnable {
+public class MessageSender extends ProtocolInterpreter implements Runnable {
     private Socket socket;
     private PrintWriter writer;
     private ChatClient client;
 
-    public MessageWriter(Socket socket, ChatClient client) {
+    public MessageSender(Socket socket, ChatClient client) {
         this.socket = socket;
         this.client = client;
 
@@ -45,18 +45,13 @@ public class MessageWriter extends ProtocolInterpreter implements Runnable {
                     sendMessageToServer(header, message);
                 }
             }
-        } while (!input.equalsIgnoreCase("Q"));
+        } while (!input.equalsIgnoreCase("Q") && !socket.isClosed());
 
 //        do {
 //            input = scanner.nextLine();
 //            this.writer.println(input);
 //            this.writer.flush();
 //        } while (!input.equalsIgnoreCase("Q"));
-    }
-
-    private boolean isValidUsername(String username) {
-        var format = "^[a-zA-Z0-9_]{3,14}$";
-        return username.matches(format);
     }
 
     private void sendMessageToServer(String header, String message) {

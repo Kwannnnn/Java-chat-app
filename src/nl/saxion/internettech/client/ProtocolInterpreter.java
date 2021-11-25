@@ -7,7 +7,10 @@ public abstract class ProtocolInterpreter {
     protected static final String CMD_INFO = "INFO";
     protected static final String CMD_PING = "PING";
     protected static final String CMD_PONG = "PONG";
+    protected static final String CMD_ER00 = "ER00";
+    protected static final String CMD_ER01 = "ER01";
     protected static final String CMD_ER02 = "ER02";
+    protected static final String CMD_ER03 = "ER03";
 
     public static final String ANSI_RED = "\u001B[31m";
     public static final String ANSI_GREEN = "\u001B[32;51m";
@@ -55,6 +58,14 @@ public abstract class ProtocolInterpreter {
 
     protected void enterMessageMessage() {
         System.out.print(bold(">> Please enter your message: "));
+    }
+
+    protected void displayMessage(String sender, String message) {
+        System.out.println(bold("[" + sender + "]: " ) + message);
+    }
+
+    protected void connectionLost() {
+        System.out.println(ANSI_RED + "\nYou have been disconnected from the server!" + ANSI_RESET);
     }
 
     private String italic(String string) {
