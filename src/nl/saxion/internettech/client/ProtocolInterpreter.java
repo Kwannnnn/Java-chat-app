@@ -3,40 +3,65 @@ package nl.saxion.internettech.client;
 public abstract class ProtocolInterpreter {
     protected static final String CMD_CONN = "CONN";
     protected static final String CMD_BCST = "BCST";
+    protected static final String CMD_OK = "OK";
+    protected static final String CMD_INFO = "INFO";
     protected static final String CMD_PING = "PING";
     protected static final String CMD_PONG = "PONG";
+    protected static final String CMD_ER02 = "ER02";
 
     public static final String ANSI_RED = "\u001B[31m";
-    public static final String ANSI_GREEN = "\u001B[32m";
-    public static final String ANSI_YELLOW = "\u001B[33m";
+    public static final String ANSI_GREEN = "\u001B[32;51m";
+    public static final String ANSI_YELLOW = "\u001B[33;3m";
+    public static final String ANSI_MAGENTA = "\u001B[95m";
+    public static final String ANSI_BOLD = "\u001B[1m";
+    public static final String ANSI_ITALIC = "\u001B[3m";
     public static final String ANSI_RESET = "\u001B[0m";
 
 
     protected void showMenu() {
-        System.out.print(
+        System.out.print(ANSI_MAGENTA +
                 """
-                        L: \t\t Login to the server with a username
-                        B: \t\t Broadcast a message to every client on the server
-                        P: \t\t Reply to the server's PING request
-                        Q: \t\t Close connection with the server
-                        ?: \t\t Show this menu
-                        
-                        """);
+                B: \t Broadcast a message to every client on the server
+                Q: \t Close connection with the server
+                ?: \t Show this menu
+                """ + ANSI_RESET);
     }
 
     protected void showWelcomeMessage() {
-        System.out.println("Welcome to the server!");
+        System.out.println();
+        System.out.println(ANSI_GREEN + "Welcome to the server!" + ANSI_RESET);
+        System.out.println();
     }
 
     protected void askUsernameMessage() {
-        System.out.println("Please enter your username to log in:");
+        System.out.print(bold(">> Please enter your username to log in: "));
     }
 
     protected void promptMenuMessage() {
-        System.out.println("Type '?' to show menu.");
+        System.out.println(ANSI_YELLOW + "Type '?' to show menu." + ANSI_RESET);
     }
 
-    protected void showInvalidUsernameMessage() {
-        System.out.println(ANSI_RED + "Username in invalid format!" + ANSI_RESET);
+    protected void showErrorMessage(String message) {
+        System.out.println(ANSI_RED + message + ANSI_RESET);
+    }
+
+    protected void showSuccessfulLoginMessage() {
+        System.out.println(italic("You have been successfully logged in!"));
+    }
+
+    protected void showSuccessfulBroadcastMessage(String message) {
+        System.out.println(italic("Successfully broadcast message: ") + message);
+    }
+
+    protected void enterMessageMessage() {
+        System.out.print(bold(">> Please enter your message: "));
+    }
+
+    private String italic(String string) {
+        return ANSI_ITALIC + string + ANSI_RESET;
+    }
+
+    private String bold(String string) {
+        return ANSI_BOLD + string + ANSI_RESET;
     }
 }

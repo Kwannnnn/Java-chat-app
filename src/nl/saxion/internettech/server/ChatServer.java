@@ -1,4 +1,4 @@
-package server;
+package nl.saxion.internettech.server;
 
 import java.io.BufferedReader;
 import java.io.IOException;

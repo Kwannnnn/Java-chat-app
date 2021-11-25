@@ -1,6 +1,6 @@
-package server;
+package nl.saxion.internettech.server;
 
-import nl.saxion.internettech.client.ChatClient;
+import nl.saxion.internettech.server.ChatServer;
 
 public class Main {
     private static final String SERVER_ADDRESS = "127.0.0.1";

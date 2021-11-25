@@ -22,36 +22,33 @@ public class MessageReader extends ProtocolInterpreter implements Runnable {
 
     @Override
     public void run() {
+
         while (true) {
             try {
                 String line = reader.readLine();
-                String[] splitString = line.split(" ", 2);
-                String header = splitString[0];
-                switch (header) {
-                    case "INFO" -> {
+                String[] parsedLine = parseResponse(line);
+
+                switch (parsedLine[0]) {
+                    case CMD_INFO -> {
                         super.showWelcomeMessage();
                         super.askUsernameMessage();
                     }
-                    case "OK" -> {
-                        String payload = splitString[1];
-                        if (payload.split(" ").length > 1) {
-                            System.out.println(payload);
-                        } else {
-                            System.out.println("You have been successfully logged in!");
-                            client.setCurrentUser(payload);
-                            super.promptMenuMessage();
+                    case CMD_OK -> {
+                        switch (parsedLine[1]) {
+                            case CMD_BCST -> super.showSuccessfulBroadcastMessage(parsedLine[2]);
+                            default -> {
+                                super.showSuccessfulLoginMessage();
+                                super.promptMenuMessage();
+                                client.setCurrentUser(parsedLine[1]);
+                            }
                         }
                     }
-                    case "PING" -> {
-                        sendPong();
-                    }
-                    case "ER02" -> {
-                        super.showInvalidUsernameMessage();
+                    case CMD_PING -> sendPong();
+                    case CMD_ER02 -> {
+                        super.showErrorMessage(parsedLine[1]);
                         super.askUsernameMessage();
                     }
                 }
-
-//                System.out.println(line);
 
                 if (line == null) {
                     stopConnection();
@@ -65,7 +62,11 @@ public class MessageReader extends ProtocolInterpreter implements Runnable {
         }
     }
 
-    public void sendPong() {
+    private String[] parseResponse(String response) {
+        return response.split(" ", 3);
+    }
+
+    private void sendPong() {
         try {
             OutputStream outputStream = socket.getOutputStream();
             PrintWriter writer = new PrintWriter(outputStream);

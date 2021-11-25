@@ -32,12 +32,14 @@ public class MessageWriter extends ProtocolInterpreter implements Runnable {
 
         do {
             input = scanner.nextLine();
-            if (this.client.getCurrentUser() == null) {
+            String user = this.client.getCurrentUser();
+            if (user == null) {
                 sendMessageToServer(CMD_CONN, input);
             } else {
                 if (input.equals("?")) {
                     super.showMenu();
                 } else if (input.equalsIgnoreCase("B")) {
+                    super.enterMessageMessage();
                     header = CMD_BCST;
                     message = scanner.nextLine();
                     sendMessageToServer(header, message);
@@ -52,8 +54,15 @@ public class MessageWriter extends ProtocolInterpreter implements Runnable {
 //        } while (!input.equalsIgnoreCase("Q"));
     }
 
+    private boolean isValidUsername(String username) {
+        var format = "^[a-zA-Z0-9_]{3,14}$";
+        return username.matches(format);
+    }
+
     private void sendMessageToServer(String header, String message) {
         this.writer.println(header + ' ' + message);
         this.writer.flush();
     }
+
+
 }
