@@ -25,15 +25,15 @@ public class MessageReader extends ProtocolInterpreter implements Runnable {
         while (true) {
             try {
                 String line = reader.readLine();
-                String[] splittedString = line.split(" ", 2);
-                String header = splittedString[0];
+                String[] splitString = line.split(" ", 2);
+                String header = splitString[0];
                 switch (header) {
                     case "INFO" -> {
                         super.showWelcomeMessage();
                         super.askUsernameMessage();
                     }
                     case "OK" -> {
-                        String payload = splittedString[1];
+                        String payload = splitString[1];
                         if (payload.split(" ").length > 1) {
                             System.out.println(payload);
                         } else {
@@ -50,6 +50,8 @@ public class MessageReader extends ProtocolInterpreter implements Runnable {
                         super.askUsernameMessage();
                     }
                 }
+
+//                System.out.println(line);
 
                 if (line == null) {
                     stopConnection();

@@ -6,6 +6,12 @@ public abstract class ProtocolInterpreter {
     protected static final String CMD_PING = "PING";
     protected static final String CMD_PONG = "PONG";
 
+    public static final String ANSI_RED = "\u001B[31m";
+    public static final String ANSI_GREEN = "\u001B[32m";
+    public static final String ANSI_YELLOW = "\u001B[33m";
+    public static final String ANSI_RESET = "\u001B[0m";
+
+
     protected void showMenu() {
         System.out.print(
                 """
@@ -23,7 +29,7 @@ public abstract class ProtocolInterpreter {
     }
 
     protected void askUsernameMessage() {
-        System.out.println("Please enter your username to log in: ");
+        System.out.println("Please enter your username to log in:");
     }
 
     protected void promptMenuMessage() {
@@ -31,7 +37,6 @@ public abstract class ProtocolInterpreter {
     }
 
     protected void showInvalidUsernameMessage() {
-        System.err.println("Username in invalid format!");
-        System.err.flush();
+        System.out.println(ANSI_RED + "Username in invalid format!" + ANSI_RESET);
     }
 }

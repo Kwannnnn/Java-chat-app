@@ -44,6 +44,12 @@ public class MessageWriter extends ProtocolInterpreter implements Runnable {
                 }
             }
         } while (!input.equalsIgnoreCase("Q"));
+
+//        do {
+//            input = scanner.nextLine();
+//            this.writer.println(input);
+//            this.writer.flush();
+//        } while (!input.equalsIgnoreCase("Q"));
     }
 
     private void sendMessageToServer(String header, String message) {
