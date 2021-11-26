@@ -1,6 +1,8 @@
 package nl.saxion.internettech.client;
 
 public abstract class ProtocolInterpreter {
+    protected static final int TERMINAL_SIZE = 80;
+
     protected static final String CMD_CONN = "CONN";
     protected static final String CMD_BCST = "BCST";
     protected static final String CMD_OK = "OK";
@@ -30,9 +32,10 @@ public abstract class ProtocolInterpreter {
                 """ + ANSI_RESET);
     }
 
-    protected void showWelcomeMessage() {
+    protected void showWelcomeMessage(String message) {
         System.out.println();
-        System.out.println(ANSI_GREEN + "Welcome to the server!" + ANSI_RESET);
+        message = " ".repeat(TERMINAL_SIZE) + "\n" + message + "\n" + " ".repeat(TERMINAL_SIZE);
+        System.out.println(ANSI_GREEN + message + ANSI_RESET);
         System.out.println();
     }
 
@@ -74,5 +77,14 @@ public abstract class ProtocolInterpreter {
 
     private String bold(String string) {
         return ANSI_BOLD + string + ANSI_RESET;
+    }
+
+    protected String centerText(String text) {
+        String result = "";
+
+        String emptySpaces = " ".repeat((TERMINAL_SIZE - text.length()) / 2);
+
+        result = emptySpaces + text + emptySpaces;
+        return result;
     }
 }

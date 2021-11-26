@@ -2,6 +2,8 @@ package nl.saxion.internettech.client;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class MessageReceiver extends ProtocolInterpreter implements Runnable {
     private final Socket socket;
@@ -31,7 +33,8 @@ public class MessageReceiver extends ProtocolInterpreter implements Runnable {
 
                 switch (parsedLine[0]) {
                     case CMD_INFO -> {
-                        super.showWelcomeMessage();
+                        String message = String.join(" ", Arrays.copyOfRange(parsedLine, 1, parsedLine.length));
+                        super.showWelcomeMessage(super.centerText(message));
                         super.askUsernameMessage();
                     }
                     case CMD_OK -> {
