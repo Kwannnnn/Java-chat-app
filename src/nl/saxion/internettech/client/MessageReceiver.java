@@ -2,7 +2,6 @@ package nl.saxion.internettech.client;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class MessageReceiver extends ProtocolInterpreter implements Runnable {
@@ -25,40 +24,46 @@ public class MessageReceiver extends ProtocolInterpreter implements Runnable {
     @Override
     public void run() {
         try {
-            while (socket.isConnected()) {
+            while (socket.isConnected() && !socket.isClosed()) {
                 String line = reader.readLine();
-                if (line == null) break;
+                if (line == null) {
+                    stopConnection();
+                    break;
+                }
 
                 String[] parsedLine = parseResponse(line);
 
-                switch (parsedLine[0]) {
-                    case CMD_INFO -> {
-                        String message = String.join(" ", Arrays.copyOfRange(parsedLine, 1, parsedLine.length));
-                        super.showWelcomeMessage(super.centerText(message));
-                        super.askUsernameMessage();
-                    }
-                    case CMD_OK -> {
-                        switch (parsedLine[1]) {
-                            case CMD_BCST -> super.showSuccessfulBroadcastMessage(parsedLine[2]);
-                            default -> {
-                                super.showSuccessfulLoginMessage();
-                                super.promptMenuMessage();
-                                client.setCurrentUser(parsedLine[1]);
-                            }
-                        }
-                    }
-                    case CMD_BCST -> super.displayMessage(parsedLine[1], parsedLine[2]);
-                    case CMD_PING -> sendPong();
-                    case CMD_ER00, CMD_ER01, CMD_ER02, CMD_ER03 -> {
-                        super.showErrorMessage(parsedLine[1]);
-                        super.askUsernameMessage();
+                handleMessage(parsedLine);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleMessage(String[] parsedLine) {
+        switch (parsedLine[0]) {
+            case CMD_INFO -> {
+                String message = String.join(" ", Arrays.copyOfRange(parsedLine, 1, parsedLine.length));
+                super.showWelcomeMessage(super.centerText(message));
+                super.askUsernameMessage();
+            }
+            case CMD_OK -> {
+                switch (parsedLine[1]) {
+                    case CMD_BCST -> super.showSuccessfulBroadcastMessage(parsedLine[2]);
+                    case "Goodbye" -> stopConnection();
+                    default -> {
+                        super.showSuccessfulLoginMessage();
+                        super.promptMenuMessage();
+                        client.setCurrentUser(parsedLine[1]);
                     }
                 }
             }
-
-            stopConnection();
-        } catch (IOException e) {
-            e.printStackTrace();
+            case CMD_BCST -> super.displayMessage(parsedLine[1], parsedLine[2]);
+            case CMD_PING -> sendPong();
+            case CMD_ER00, CMD_ER01, CMD_ER02, CMD_ER03 -> {
+                super.showErrorMessage(parsedLine[1]);
+                super.askUsernameMessage();
+            }
         }
     }
 

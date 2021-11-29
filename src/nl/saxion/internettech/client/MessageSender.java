@@ -26,7 +26,6 @@ public class MessageSender extends ProtocolInterpreter implements Runnable {
     @Override
     public void run() {
         Scanner scanner = new Scanner(System.in);
-        String message;
         String input;
         String header;
 
@@ -41,17 +40,13 @@ public class MessageSender extends ProtocolInterpreter implements Runnable {
                 } else if (input.equalsIgnoreCase("B")) {
                     super.enterMessageMessage();
                     header = CMD_BCST;
-                    message = scanner.nextLine();
+                    String message = scanner.nextLine();
                     sendMessageToServer(header, message);
                 }
             }
         } while (!input.equalsIgnoreCase("Q") && !socket.isClosed());
 
-//        do {
-//            input = scanner.nextLine();
-//            this.writer.println(input);
-//            this.writer.flush();
-//        } while (!input.equalsIgnoreCase("Q"));
+        sendMessageToServer("QUIT", "");
     }
 
     private void sendMessageToServer(String header, String message) {

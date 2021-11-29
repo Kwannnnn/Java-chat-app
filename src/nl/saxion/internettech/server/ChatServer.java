@@ -3,8 +3,6 @@ package nl.saxion.internettech.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class ChatServer {
     private int port;
@@ -46,8 +44,7 @@ public class ChatServer {
     public static void stats() {
         System.out.printf("Total number of clients: %d\n", clients.size());
 //        int connected = clients.filter(c => c.status == STAT_CONNECTED)
-        Predicate<ClientThread> byStatus = ClientThread::isConnected;
-        int connected = (int) clients.stream().filter(byStatus).count();
+        long connected = clients.stream().filter(ClientThread::isConnected).count();
         System.out.printf("Total number of connected clients: %d\n", connected);
     }
 }

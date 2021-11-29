@@ -12,7 +12,6 @@ public class ClientThread extends Thread {
     private BufferedReader in;
     private boolean isConnected;
     private String username;
-    private String passwordHash;
     private boolean receivedPong;
 
     protected static final String CMD_CONN = "CONN";
