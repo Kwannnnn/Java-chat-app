@@ -1,4 +1,4 @@
-package nl.saxion.internettech.client;
+package nl.saxion.itech.client;
 
 import java.io.IOException;
 

@@ -1,4 +1,4 @@
-package nl.saxion.internettech.server;
+package nl.saxion.itech.server;
 
 import java.io.IOException;
 import java.net.ServerSocket;

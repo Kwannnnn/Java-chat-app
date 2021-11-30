@@ -1,4 +1,4 @@
-package nl.saxion.internettech.server;
+package nl.saxion.itech.server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -49,10 +49,15 @@ public class ClientThread extends Thread {
                 switch (command[0]) {
                     case CMD_CONN -> {
                         username = command[1];
-                        isConnected = true;
-                        ChatServer.addClient(this);
-                        sendMessageToClient(CMD_OK, username);
-                        heartbeat();
+                        if (validUsernameFormat(username)) {
+                            isConnected = true;
+                            ChatServer.addClient(this);
+                            sendMessageToClient(CMD_OK, username);
+                            heartbeat();
+                        } else {
+                            sendMessageToClient(CMD_ER02, "Username has an invalid format (only characters, numbers and underscores are allowed)");
+                        }
+
                         //TODO: print sth on the screen
                         ChatServer.stats();
                     }
@@ -109,6 +114,11 @@ public class ClientThread extends Thread {
 
     }
 
+    private boolean validUsernameFormat(String username) {
+        var pattern = "^[a-zA-Z0-9_]{3,14}$";
+        return username.matches(pattern);
+    }
+
     private void stopConnection() {
         try {
             in.close();
@@ -141,6 +151,7 @@ public class ClientThread extends Thread {
         });
     }
 
+//    TODO: convert this to java
 //    private boolean validUsernameFormat(String username) {
 //        String pattern = "^[a-zA-Z0-9_]{3,14}$";
 //        return username.match(pattern);
