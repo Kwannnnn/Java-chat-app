@@ -7,7 +7,7 @@ import java.util.ArrayList;
 public class ChatServer {
     private int port;
     private ServerSocket serverSocket;
-    private final ArrayList<ClientThread> clients = new ArrayList<>();
+    private static final ArrayList<ClientThread> clients = new ArrayList<>();
 
     public ChatServer(int port) {
         this.port = port;
@@ -33,15 +33,15 @@ public class ChatServer {
         }
     }
 
-    public ArrayList<ClientThread> getClients() {
+    public static ArrayList<ClientThread> getClients() {
         return clients;
     }
 
-    public void addClient(ClientThread client) {
+    public static void addClient(ClientThread client) {
         clients.add(client);
     }
 
-    public void stats() {
+    public static void stats() {
         System.out.printf("Total number of clients: %d\n", clients.size());
 //        int connected = clients.filter(c => c.status == STAT_CONNECTED)
         long connected = clients.stream().filter(ClientThread::isConnected).count();
