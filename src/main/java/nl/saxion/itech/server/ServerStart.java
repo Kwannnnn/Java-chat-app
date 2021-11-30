@@ -1,4 +1,4 @@
-package nl.saxion.internettech.server;
+package nl.saxion.itech.server;
 
 public class ServerStart {
     private static final int PORT = 1337;

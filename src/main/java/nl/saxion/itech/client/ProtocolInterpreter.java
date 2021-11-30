@@ -1,4 +1,4 @@
-package nl.saxion.internettech.client;
+package nl.saxion.itech.client;
 
 public abstract class ProtocolInterpreter {
     protected static final int TERMINAL_SIZE = 80;
