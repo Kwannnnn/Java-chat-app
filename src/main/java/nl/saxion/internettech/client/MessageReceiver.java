@@ -26,10 +26,10 @@ public class MessageReceiver extends ProtocolInterpreter implements Runnable {
         try {
             while (socket.isConnected() && !socket.isClosed()) {
                 String line = reader.readLine();
-                if (line == null) {
-                    stopConnection();
-                    break;
-                }
+//                if (line == null) {
+//                    stopConnection();
+//                    break;
+//                }
 
                 String[] parsedLine = parseResponse(line);
 
@@ -37,6 +37,8 @@ public class MessageReceiver extends ProtocolInterpreter implements Runnable {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            stopConnection();
         }
     }
 
