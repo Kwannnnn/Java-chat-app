@@ -48,7 +48,7 @@ class IntegrationSingleUserTests {
     @DisplayName("RQ-S100 - receiveInfoMessage")
     void receiveInfoMessage() {
         String firstLine = receiveLineWithTimeout(in);
-        assertTrue(firstLine.matches("INFO Welcome to the server 1\\..*"));
+        assertTrue(firstLine.matches("Welcome to the server 1"));
     }
 
     @Test

@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 public class ClientThread extends Thread {
     private Socket clientSocket;
@@ -50,12 +52,13 @@ public class ClientThread extends Thread {
                         isConnected = true;
                         ChatServer.addClient(this);
                         sendMessageToClient(CMD_OK, username);
+                        heartbeat();
                         //TODO: print sth on the screen
                         ChatServer.stats();
                     }
                     case CMD_BCST -> {
                         String message = command[1];
-                        for (ClientThread client: ChatServer.getClients()) {
+                        for (ClientThread client : ChatServer.getClients()) {
                             if (client != this) {
                                 client.sendMessageToClient(CMD_BCST, username + " " + message);
                                 //TODO: print sth on the screen
@@ -93,6 +96,11 @@ public class ClientThread extends Thread {
         this.out.flush();
     }
 
+    private void sendPing() {
+        this.out.println(CMD_PING);
+        this.out.flush();
+    }
+
     private String[] parseCommand(String input) {
         return input.split(" ", 2);
     }
@@ -118,24 +126,21 @@ public class ClientThread extends Thread {
     private void heartbeat() {
         System.out.printf("~~ %s Heartbeat initiated\n", username);
 
-//        TODO: convert this to java
-//        setTimeout(function () {
-//            client.receivedPong = false
-//            sendToClient(client, 'PING')
-//            setTimeout(function () {
-//                if (client.receivedPong) {
-//                    console.log(`~~ [${client.username}] Heartbeat expired - SUCCESS`)
-//                    heartbeat(client)
-//                } else {
-//                    console.log(`~~ [${client.username}] Heartbeat expired - FAILED`)
-//                    sendToClient(client, 'DCSN')
-//                    client.destroy()
-//                }
-//            }, 3 * 1000)
-//        }, 10 * 1000)
+        CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
+            receivedPong = false;
+            sendPing();
+
+            CompletableFuture.delayedExecutor(3, TimeUnit.SECONDS).execute(() -> {
+                if (receivedPong) {
+                    System.out.printf("~~ %s Heartbeat expired - SUCCESS\n", username);
+                    heartbeat();
+                } else {
+                    System.out.printf("~~ %s Heartbeat expired - FAILED\n", username);
+                }
+            });
+        });
     }
 
-//    TODO: convert this to java
 //    private boolean validUsernameFormat(String username) {
 //        String pattern = "^[a-zA-Z0-9_]{3,14}$";
 //        return username.match(pattern);
