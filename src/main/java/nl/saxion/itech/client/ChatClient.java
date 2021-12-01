@@ -1,20 +1,27 @@
 package nl.saxion.itech.client;
 
+import nl.saxion.itech.client.model.protocol.InfoMessage;
+import nl.saxion.itech.client.model.protocol.Message;
+
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Properties;
 
 public class ChatClient {
-    private final Thread readThread;
-    private final Thread writeThread;
+    private static final Properties props = new Properties();
+    private Thread readThread;
+    private Thread writeThread;
+    private Thread handlerThread;
     private String currentUser;
 
-    public ChatClient(String serverAddress, int port) throws IOException {
+    public ChatClient() {
         try {
-            Socket socket = new Socket(serverAddress, port);
+            props.load(ChatClient.class.getResourceAsStream("clientconfig.properties"));
+            Socket socket = new Socket(props.getProperty("host"), Integer.parseInt(props.getProperty("port")));
             this.readThread = new Thread(new MessageSender(socket, this));
             this.writeThread = new Thread(new MessageReceiver(socket, this));
         } catch (IOException e) {
-            throw e;
+            System.err.println(e.getMessage());
         }
     }
 
@@ -29,5 +36,9 @@ public class ChatClient {
 
     public synchronized String getCurrentUser() {
         return this.currentUser;
+    }
+
+    public Message collectMessage() {
+        return new InfoMessage();
     }
 }

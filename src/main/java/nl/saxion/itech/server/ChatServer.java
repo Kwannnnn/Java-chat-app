@@ -3,19 +3,27 @@ package nl.saxion.itech.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
+import java.util.Properties;
 
 public class ChatServer {
-    private int port;
+    private final int port;
+    private static final Properties props = new Properties();
     private ServerSocket serverSocket;
     private static final ArrayList<ClientThread> clients = new ArrayList<>();
 
-    public ChatServer(int port) {
-        this.port = port;
+    public ChatServer() {
+        try {
+            props.load(ChatServer.class.getResourceAsStream("serverconfig.properties"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        this.port = Integer.parseInt(props.getProperty("port"));
     }
 
     public void start() {
         try {
-            this.serverSocket = new ServerSocket(port);
+
+            this.serverSocket = new ServerSocket(this.port);
             System.out.printf("Server is running port %s.\n", this.port);
             while (true) {
                 new ClientThread(serverSocket.accept()).start();
