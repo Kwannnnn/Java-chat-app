@@ -1,22 +1,20 @@
 package nl.saxion.itech.client.model;
 
-import nl.saxion.itech.client.model.protocol.BroadcastMessage;
-import nl.saxion.itech.client.model.protocol.InfoMessage;
-import nl.saxion.itech.client.model.protocol.OkMessage;
+import nl.saxion.itech.client.model.protocol.*;
 
-public class SendMessageVisitor implements MessageVisitor {
+public class SendMessageVisitor implements SendableMessageVisitor {
     @Override
-    public void visit(OkMessage message) {
-
+    public String visit(ConnectMessage message) {
+        return "CONN" + message.toString();
     }
 
     @Override
-    public void visit(InfoMessage message) {
-
+    public String visit(BroadcastMessage message) {
+        return "BCST" + message.toString();
     }
 
     @Override
-    public void visit(BroadcastMessage message) {
-
+    public String visit(QuitMessage quitMessage) {
+        return "QUIT";
     }
 }
