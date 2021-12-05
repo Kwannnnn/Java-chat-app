@@ -34,11 +34,13 @@ public class MessageSender extends Thread {
                     sendMessageToServer(this.client.collectMessage());
                 } catch (InterruptedException e) {
                     System.err.println(e.getMessage());
+                    this.writer.close();
                 }
             }
         } while (hasConnection());
 
         sendMessageToServer(new QuitMessage());
+        this.writer.close();
     }
 
     private boolean hasConnection() {

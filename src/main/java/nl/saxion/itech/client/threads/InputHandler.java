@@ -24,10 +24,11 @@ public class InputHandler extends Thread {
     @Override
     public void run() {
         while (this.isRunning) {
-            if (isLoggedIn())
-                handleMenuInput();
-            else
+            if (!isLoggedIn()) {
                 handleUsernameInput();
+            } else {
+                handleMenuInput();
+            }
         }
     }
 
@@ -42,6 +43,7 @@ public class InputHandler extends Thread {
                     "only contain letters, numbers, and underscores" + ANSI_RESET);
             username = askForUsername();
         }
+
         addMessageToQueue(new ConnectMessage(username));
     }
 
@@ -91,10 +93,6 @@ public class InputHandler extends Thread {
     }
 
     private void addMessageToQueue(Message message) {
-        try {
-            this.client.addMessageToQueue(message);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        this.client.addMessageToQueue(message);
     }
 }

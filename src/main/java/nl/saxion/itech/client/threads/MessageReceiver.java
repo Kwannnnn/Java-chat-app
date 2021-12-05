@@ -25,7 +25,7 @@ public class MessageReceiver extends Thread {
     @Override
     public void run() {
         try {
-            while (socket.isConnected() && !socket.isClosed()) {
+            while (!socket.isClosed()) {
                 client.handleMessage(reader.readLine());
             }
         } catch (IOException e) {
@@ -38,8 +38,6 @@ public class MessageReceiver extends Thread {
     public void stopConnection() {
         try {
             reader.close();
-            if (!socket.isClosed()) socket.close();
-            Thread.currentThread().interrupt();
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
