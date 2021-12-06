@@ -20,7 +20,7 @@ public class MessageHandlerVisitor implements MessageVisitor {
     @Override
     public void visit(ConnectMessage message) {
         this.clientHandler.addClient(new Client(message.getMessage(), this.clientSocket));
-        this.visit(new OkMessage(message.toString()));
+        new OkMessage(message.toString()).accept(this);
     }
 
     @Override

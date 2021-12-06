@@ -19,6 +19,7 @@ public class ClientThread extends Thread {
     private Client client;
     private ClientHandler clientHandler;
     private MessageVisitor messageVisitor;
+    private MessageFactory messageFactory;
 
     private boolean isConnected;
     private String username;
@@ -43,6 +44,7 @@ public class ClientThread extends Thread {
             this.in = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
             this.clientHandler = ClientHandler.getInstance();
             this.messageVisitor = new MessageHandlerVisitor(this.clientSocket, this.out);
+            this.messageFactory = new MessageFactory();
         }  catch (IOException e) {
             e.printStackTrace();
             System.exit(1);
@@ -56,54 +58,19 @@ public class ClientThread extends Thread {
         try {
             String inputLine;
 
-            messageVisitor.visit(new InfoMessage("Welcome to server 1"));
+            new InfoMessage("Welcome to server 1").accept(messageVisitor);
 
             while ((inputLine = in.readLine()) != null) {
                 String[] command = parseCommand(inputLine);
                 String header = command[0];
-                String message = command[1];
+                String body =  command.length > 1 ? command[1] : "";
 
-                switch (header) {
-                    case CMD_CONN -> handleConnectMessage(message);
-                    case CMD_BCST -> handleBroadcastMessage(message);
-                    case CMD_PONG -> receivedPong = true;
-                    case CMD_QUIT -> handleQuitMessage();
-                    default -> handleUnknownCommand();
-                }
+                var message = this.messageFactory.getMessage(header, body);
+                message.accept(this.messageVisitor);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private void handleConnectMessage(String message) {
-        try {
-            messageVisitor.visit(new ConnectMessage(message));
-//            heartbeat();
-            //TODO: print sth on the screen
-//            Logger.stats();
-        } catch (InvalidUsernameException e) {
-            // Send error message
-            // TODO: make error message enumeration
-            messageVisitor.visit(new ErrorMessage(e.getCode(), e.getMessage()));
-        }
-    }
-
-    private void handleBroadcastMessage(String message) {
-        messageVisitor.visit(new BroadcastMessage(message));
-        //TODO: print sth on the screen
-    }
-
-    private void handleQuitMessage() {
-        messageVisitor.visit(new OkMessage("Goodbye"));
-        //TODO: print sth on the screen
-//        Logger.stats();
-
-        stopConnection();
-    }
-
-    private void handleUnknownCommand() {
-        messageVisitor.visit(new ErrorMessage("ER00", "Unknown command"));
     }
 
     private void sendPing() {

@@ -5,24 +5,28 @@ import java.net.ServerSocket;
 import java.util.Properties;
 
 public class ChatServer {
-    private final int port;
     private static final Properties props = new Properties();
+    private static final String CONFIG_FILENAME = "serverconfig.properties";
+
+    private int port;
     private ServerSocket serverSocket;
 
     public ChatServer() {
         try {
-            props.load(ChatServer.class.getResourceAsStream("serverconfig.properties"));
-        } catch (IOException e) {
-            e.printStackTrace();
+            props.load(ChatServer.class.getResourceAsStream(CONFIG_FILENAME));
+            this.port = Integer.parseInt(props.getProperty("port"));
+        } catch (NullPointerException | IOException e) {
+            System.err.println("Unable to find " + CONFIG_FILENAME + " file.");
+            System.exit(1);
         }
-        this.port = Integer.parseInt(props.getProperty("port"));
     }
 
     public void start() {
         try {
             this.serverSocket = new ServerSocket(this.port);
             System.out.printf("Server is running port %s.\n", this.port);
-            var clientHandler = ClientHandler.getInstance();
+            // Initialize the ClientHandler
+            ClientHandler.getInstance();
             while (true) {
                 new ClientThread(serverSocket.accept()).start();
             }
