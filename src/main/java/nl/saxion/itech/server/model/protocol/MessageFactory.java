@@ -16,18 +16,19 @@ public class MessageFactory {
     private static final String CMD_ER03 = "ER03";
 
     public Message getMessage(String header, String message) {
-        return switch (header) {
-            case CMD_INFO -> new InfoMessage(message);
-            case CMD_CONN -> {
-                try {
-                    new ConnectMessage(message);
-                } catch (InvalidUsernameException e) {
-                    new ErrorMessage(e.getCode(), e.getMessage());
-                }
+        Message result;
+        try {
+            switch (header) {
+                case CMD_INFO -> result = new InfoMessage(message);
+                case CMD_CONN -> result = new ConnectMessage(message);
+                case CMD_OK -> result = new OkMessage(message);
+                case CMD_BCST -> result = new BroadcastMessage(message);
+                default -> result = new ErrorMessage(header, message);
             }
-            case CMD_OK -> new OkMessage(message);
-            case CMD_BCST -> new BroadcastMessage(message);
-            default -> new ErrorMessage(header, message);
-        };
+        } catch (InvalidUsernameException e) {
+            result = new ErrorMessage(e.getCode(), e.getMessage());
+        }
+
+        return result;
     }
 }
