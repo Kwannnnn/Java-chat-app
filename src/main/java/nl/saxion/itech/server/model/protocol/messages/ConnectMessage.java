@@ -1,6 +1,7 @@
-package nl.saxion.itech.server.model.protocol;
+package nl.saxion.itech.server.model.protocol.messages;
 
-import nl.saxion.itech.server.model.InvalidUsernameException;
+import nl.saxion.itech.server.model.exceptions.InvalidUsernameException;
+import nl.saxion.itech.server.model.protocol.visitors.MessageVisitor;
 
 public class ConnectMessage implements Message {
     private static final String HEADER = "CONN";

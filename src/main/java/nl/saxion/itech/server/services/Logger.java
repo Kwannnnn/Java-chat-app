@@ -1,4 +1,4 @@
-package nl.saxion.itech.server;
+package nl.saxion.itech.server.services;
 
 public class Logger {
     private ClientHandler clientHandler;

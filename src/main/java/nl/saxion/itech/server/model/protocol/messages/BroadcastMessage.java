@@ -1,4 +1,6 @@
-package nl.saxion.itech.server.model.protocol;
+package nl.saxion.itech.server.model.protocol.messages;
+
+import nl.saxion.itech.server.model.protocol.visitors.MessageVisitor;
 
 public class BroadcastMessage implements Message {
     private static final String HEADER = "BCST";

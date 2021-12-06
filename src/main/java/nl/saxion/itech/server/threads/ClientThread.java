@@ -1,6 +1,9 @@
-package nl.saxion.itech.server;
+package nl.saxion.itech.server.threads;
 
 import nl.saxion.itech.server.model.protocol.*;
+import nl.saxion.itech.server.model.protocol.messages.InfoMessage;
+import nl.saxion.itech.server.model.protocol.visitors.MessageHandlerVisitor;
+import nl.saxion.itech.server.model.protocol.visitors.MessageVisitor;
 
 import java.io.BufferedReader;
 import java.io.IOException;

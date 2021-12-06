@@ -1,6 +1,7 @@
 package nl.saxion.itech.server.model.protocol;
 
-import nl.saxion.itech.server.model.InvalidUsernameException;
+import nl.saxion.itech.server.model.exceptions.InvalidUsernameException;
+import nl.saxion.itech.server.model.protocol.messages.*;
 
 public class MessageFactory {
     private static final String CMD_CONN = "CONN";

@@ -1,5 +1,8 @@
 package nl.saxion.itech.server;
 
+import nl.saxion.itech.server.services.ClientHandler;
+import nl.saxion.itech.server.threads.ClientThread;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Properties;

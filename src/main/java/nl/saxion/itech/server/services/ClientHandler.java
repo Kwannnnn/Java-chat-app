@@ -1,4 +1,4 @@
-package nl.saxion.itech.server;
+package nl.saxion.itech.server.services;
 
 import nl.saxion.itech.server.model.Client;
 

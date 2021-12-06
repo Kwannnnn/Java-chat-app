@@ -1,7 +1,8 @@
-package nl.saxion.itech.server.model.protocol;
+package nl.saxion.itech.server.model.protocol.visitors;
 
-import nl.saxion.itech.server.ClientHandler;
+import nl.saxion.itech.server.services.ClientHandler;
 import nl.saxion.itech.server.model.Client;
+import nl.saxion.itech.server.model.protocol.messages.*;
 
 import java.io.PrintWriter;
 import java.net.Socket;
