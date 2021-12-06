@@ -47,7 +47,8 @@ class IntegrationLineEndings {
         out.print("CONN myname\r\nBCST a\r\n");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK myname", serverResponse);
+        // TODO: reflect in documentation updated protocol
+        assertEquals("OK CONN myname", serverResponse);
         serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK BCST a", serverResponse);
     }
@@ -59,7 +60,8 @@ class IntegrationLineEndings {
         out.print("CONN myname\nBCST a\n");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK myname", serverResponse);
+        // TODO: reflect in documentation updated protocol
+        assertEquals("OK CONN myname", serverResponse);
         serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK BCST a", serverResponse);
     }

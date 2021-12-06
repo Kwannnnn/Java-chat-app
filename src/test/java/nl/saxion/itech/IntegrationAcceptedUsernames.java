@@ -45,7 +45,8 @@ class IntegrationAcceptedUsernames {
         out.println("CONN mym");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK mym", serverResponse);
+        // TODO: reflect in documentation updated protocol
+        assertEquals("OK CONN mym", serverResponse);
     }
 
     @Test
@@ -65,7 +66,8 @@ class IntegrationAcceptedUsernames {
         out.println("CONN abcdefghijklmn");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK abcdefghijklmn", serverResponse);
+        // TODO: reflect in documentation updated protocol
+        assertEquals("OK CONN abcdefghijklmn", serverResponse);
     }
 
     @Test

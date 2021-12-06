@@ -48,7 +48,8 @@ class IntegrationSingleUserTests {
     @DisplayName("RQ-S100 - receiveInfoMessage")
     void receiveInfoMessage() {
         String firstLine = receiveLineWithTimeout(in);
-        assertTrue(firstLine.matches("Welcome to the server 1"));
+        // TODO: reflect in documentation updated protocol
+        assertTrue(firstLine.matches("INFO Welcome to server 1"));
     }
 
     @Test
@@ -58,7 +59,8 @@ class IntegrationSingleUserTests {
         out.println("CONN myname");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("OK myname", serverResponse);
+        // TODO: reflect in documentation updated protocol
+        assertEquals("OK CONN myname", serverResponse);
     }
 
     @Test
