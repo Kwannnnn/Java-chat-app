@@ -1,7 +1,6 @@
 package nl.saxion.itech.client.threads;
 
 import nl.saxion.itech.client.ChatClient;
-import nl.saxion.itech.client.model.InvalidUsernameException;
 import nl.saxion.itech.client.model.protocol.messages.sendable.BroadcastMessage;
 import nl.saxion.itech.client.model.protocol.messages.sendable.ConnectMessage;
 import nl.saxion.itech.client.model.protocol.messages.sendable.QuitMessage;
@@ -47,20 +46,29 @@ public class InputHandler extends Thread {
     private void handleUsernameInput() {
         String username = askForUsername();
 
-        try {
-            addMessageToQueue(new ConnectMessage(username));
-        } catch (InvalidUsernameException e) {
+        while (!isValidUsername(username)) {
             System.out.println(ANSI_RED + "Invalid username! Usernames must be between 3 and 14 characters, and can " +
                     "only contain letters, numbers, and underscores" + ANSI_RESET);
-            handleUsernameInput();
+            username = askForUsername();
         }
+
+        addMessageToQueue(new ConnectMessage(username));
+    }
+
+    /**
+     * Checks whether a username conforms to a certain pattern. Usernames must be between 3 and 14 characters, and can
+     * only contain letters, numbers, and underscores.
+     * @param username the username to be checked
+     * @return true if the username matches the described patter, otherwise false.
+     */
+    private boolean isValidUsername(String username) {
+        return username.matches("^[a-zA-Z0-9_]{3,14}$");
     }
 
     private String askForUsername() {
         System.out.print(">> Please enter your username to log in: ");
         return scanner.nextLine();
     }
-
 
     private void handleMenuInput() {
         String input = scanner.nextLine().toUpperCase();
