@@ -8,6 +8,7 @@ public class OkMessage implements Message {
 
     private final String message;
 
+
     public OkMessage(String message) {
         this.message = message;
     }
