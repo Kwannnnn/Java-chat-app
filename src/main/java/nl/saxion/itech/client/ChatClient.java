@@ -56,11 +56,11 @@ public class ChatClient {
     }
 
     public void handleMessage(String rawMessage) {
-        var parsedMessage = parseMessage(rawMessage);
-        var header = parsedMessage[0];
-        var body = parsedMessage[1];
+//        var parsedMessage = parseMessage(rawMessage);
+//        var header = parsedMessage[0];
+//        var body = parsedMessage[1];
 
-        var message = new MessageFactory().getMessage(header, body);
+        var message = new MessageFactory().getMessage(rawMessage);
         message.accept(new ReadMessageVisitor(this));
     }
 

@@ -5,6 +5,7 @@ import nl.saxion.itech.server.model.protocol.visitors.MessageVisitor;
 
 public class OkMessage implements Message {
     private static final String HEADER = "OK";
+
     private final String message;
 
     public OkMessage(String message) {
