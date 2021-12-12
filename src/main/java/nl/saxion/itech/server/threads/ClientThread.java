@@ -33,16 +33,12 @@ public class ClientThread extends Thread {
 
     public void run() {
         try {
-            String inputLine;
+            String rawMessage;
 
             new InfoMessage("Welcome to server 1").accept(messageVisitor);
 
-            while ((inputLine = in.readLine()) != null) {
-                String[] command = parseCommand(inputLine);
-                String header = command[0];
-                String body =  command.length > 1 ? command[1] : "";
-
-                var message = this.messageFactory.getMessage(header, body);
+            while ((rawMessage = in.readLine()) != null) {
+                var message = this.messageFactory.getMessage(rawMessage);
                 message.accept(this.messageVisitor);
             }
         } catch (IOException e) {
@@ -54,10 +50,6 @@ public class ClientThread extends Thread {
 //        this.out.println("PING");
 //        this.out.flush();
 //    }
-
-    private String[] parseCommand(String input) {
-        return input.split(" ", 2);
-    }
 
     private void stopConnection() {
         try {

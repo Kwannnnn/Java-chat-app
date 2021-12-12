@@ -32,7 +32,8 @@ public class MessageSender extends Thread {
         do {
             if (this.client.hasPendingMessages()) {
                 try {
-                    this.client.collectMessage().accept(this.messageVisitor);
+                    var message = this.client.collectMessage().toString();
+                    writer.println(message);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

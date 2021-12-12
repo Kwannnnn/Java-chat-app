@@ -4,10 +4,10 @@ import nl.saxion.itech.client.model.protocol.visitors.SendableMessageVisitor;
 
 public class ConnectMessage implements SendableMessage {
     private static final String HEADER = "CONN";
-    private String message;
+    private String body;
 
-    public ConnectMessage(String message) {
-        this.message = message;
+    public ConnectMessage(String body) {
+        this.body = body;
     }
 
     @Override
@@ -17,6 +17,6 @@ public class ConnectMessage implements SendableMessage {
 
     @Override
     public String toString() {
-        return HEADER + " " + message;
+        return HEADER + " " + body;
     }
 }

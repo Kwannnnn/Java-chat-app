@@ -2,12 +2,10 @@ package nl.saxion.itech.client.model.protocol.messages.receivable;
 
 import nl.saxion.itech.client.model.protocol.visitors.ReceivableMessageVisitor;
 
-public class ErrorMessage implements ReceivableMessage {
-    private String code;
+public class ReceivableGroupJoinMessage implements ReceivableMessage{
     private String body;
 
-    public ErrorMessage(String code, String body) {
-        this.code = code;
+    public ReceivableGroupJoinMessage(String body) {
         this.body = body;
     }
 

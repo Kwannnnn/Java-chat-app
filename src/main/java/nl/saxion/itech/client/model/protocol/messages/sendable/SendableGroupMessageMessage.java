@@ -2,11 +2,11 @@ package nl.saxion.itech.client.model.protocol.messages.sendable;
 
 import nl.saxion.itech.client.model.protocol.visitors.SendableMessageVisitor;
 
-public class BroadcastMessage implements SendableMessage {
-    private static final String HEADER = "BCST";
+public class SendableGroupMessageMessage implements SendableMessage{
+    private static final String HEADER = "GRP MSG";
     private String body;
 
-    public BroadcastMessage(String body) {
+    public SendableGroupMessageMessage(String body) {
         this.body = body;
     }
 

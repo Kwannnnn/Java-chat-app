@@ -19,6 +19,7 @@ public class ChatClient {
     private Thread writeThread;
     private Thread CLIThread;
     private String currentUser;
+    private MessageFactory messageFactory;
     private BlockingQueue<SendableMessage> messagesQueue = new LinkedBlockingQueue<>();
 
     public ChatClient() {
@@ -28,6 +29,7 @@ public class ChatClient {
             this.readThread = new Thread(new MessageSender(socket, this));
             this.writeThread = new Thread(new MessageReceiver(socket, this));
             this.CLIThread = new InputHandler(this);
+            this.messageFactory = new MessageFactory();
         } catch (IOException e) {
             System.err.println(e.getMessage());
         }
@@ -56,10 +58,6 @@ public class ChatClient {
     }
 
     public void handleMessage(String rawMessage) {
-//        var parsedMessage = parseMessage(rawMessage);
-//        var header = parsedMessage[0];
-//        var body = parsedMessage[1];
-
         var message = new MessageFactory().getMessage(rawMessage);
         message.accept(new ReadMessageVisitor(this));
     }
