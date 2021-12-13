@@ -48,7 +48,7 @@ public class MessageFactory {
     }
 
 
-    private OkMessage handleOkMessage(String message) {
+    private Message handleOkMessage(String message) {
         String[] splitMessage = parseMessage(message);
         String header = splitMessage[0];
         String body = splitMessage.length > 1 ? splitMessage[1] : "";
@@ -72,6 +72,7 @@ public class MessageFactory {
             case CMD_JOIN -> new OkGroupJoinMessage(body);
             case CMD_MSG -> new OkGroupMessageMessage(body);
             case CMD_DSCN -> new OkGroupDisconnectMessage(body);
+            default -> new ErrorMessage("ERXX", "Unknown header"); // TODO: figure this out
         };
     }
 //

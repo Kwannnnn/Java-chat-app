@@ -2,7 +2,7 @@ package nl.saxion.itech.client.model.protocol.messages.sendable;
 
 import nl.saxion.itech.client.model.protocol.messages.Message;
 
-public class BroadcastMessage implements SendableMessage {
+public class BroadcastMessage implements Message {
     private static final String HEADER = "BCST";
     private String body;
 

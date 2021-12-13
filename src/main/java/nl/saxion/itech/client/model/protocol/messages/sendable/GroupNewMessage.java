@@ -1,8 +1,11 @@
 package nl.saxion.itech.client.model.protocol.messages.sendable;
 
-import nl.saxion.itech.client.model.protocol.visitors.SendableMessageVisitor;
+import nl.saxion.itech.client.model.protocol.messages.Message;
+import nl.saxion.itech.client.model.protocol.messages.Visitable;
+import nl.saxion.itech.client.model.protocol.visitors.MessageVisitor;
 
-public class GroupNewMessage implements SendableMessage{
+
+public class GroupNewMessage implements Message, Visitable {
     private static final String HEADER = "GRP NEW";
     private String body;
 
@@ -11,8 +14,8 @@ public class GroupNewMessage implements SendableMessage{
     }
 
     @Override
-    public void accept(SendableMessageVisitor messageVisitor) {
-        messageVisitor.visit(this);
+    public void accept(MessageVisitor visitor) {
+        visitor.visit(this);
     }
 
     @Override
