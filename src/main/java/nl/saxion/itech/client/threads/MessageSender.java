@@ -1,7 +1,6 @@
 package nl.saxion.itech.client.threads;
 
 import nl.saxion.itech.client.ChatClient;
-import nl.saxion.itech.client.model.protocol.visitors.SendMessageVisitor;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,7 +11,6 @@ public class MessageSender extends Thread {
     private Socket socket;
     private PrintWriter writer;
     private ChatClient client;
-    private SendMessageVisitor messageVisitor;
 
     public MessageSender(Socket socket, ChatClient client) {
         this.socket = socket;
@@ -21,7 +19,6 @@ public class MessageSender extends Thread {
         try {
             OutputStream outputStream = socket.getOutputStream();
             this.writer = new PrintWriter(outputStream, true);
-            this.messageVisitor = new SendMessageVisitor(this.writer);
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }

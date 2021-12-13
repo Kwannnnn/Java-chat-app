@@ -1,8 +1,10 @@
 package nl.saxion.itech.client.model.protocol.messages.receivable;
 
-import nl.saxion.itech.client.model.protocol.visitors.ReceivableMessageVisitor;
+import nl.saxion.itech.client.model.protocol.messages.Message;
+import nl.saxion.itech.client.model.protocol.messages.Visitable;
+import nl.saxion.itech.client.model.protocol.visitors.MessageVisitor;
 
-public class InfoMessage implements ReceivableMessage {
+public class InfoMessage implements Message, Visitable {
     private String message;
 
     public InfoMessage(String message) {
@@ -12,9 +14,9 @@ public class InfoMessage implements ReceivableMessage {
     public String getMessage() {
         return this.message;
     }
-
+    
     @Override
-    public void accept(ReceivableMessageVisitor messageVisitor) {
-        messageVisitor.visit(this);
+    public void accept(MessageVisitor visitor) {
+        visitor.visit(this);
     }
 }

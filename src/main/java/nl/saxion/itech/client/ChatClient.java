@@ -1,11 +1,12 @@
 package nl.saxion.itech.client;
 
 import nl.saxion.itech.client.model.protocol.MessageFactory;
-import nl.saxion.itech.client.model.protocol.messages.sendable.SendableMessage;
+import nl.saxion.itech.client.model.protocol.messages.Visitable;
 import nl.saxion.itech.client.model.protocol.visitors.ReadMessageVisitor;
 import nl.saxion.itech.client.threads.InputHandler;
 import nl.saxion.itech.client.threads.MessageReceiver;
 import nl.saxion.itech.client.threads.MessageSender;
+import nl.saxion.itech.client.model.protocol.messages.Message;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -20,7 +21,7 @@ public class ChatClient {
     private Thread CLIThread;
     private String currentUser;
     private MessageFactory messageFactory;
-    private BlockingQueue<SendableMessage> messagesQueue = new LinkedBlockingQueue<>();
+    private BlockingQueue<Message> messagesQueue = new LinkedBlockingQueue<>();
 
     public ChatClient() {
         try {
@@ -53,16 +54,16 @@ public class ChatClient {
         return this.messagesQueue.isEmpty();
     }
 
-    public SendableMessage collectMessage() throws InterruptedException {
+    public Message collectMessage() throws InterruptedException {
         return this.messagesQueue.take();
     }
 
     public void handleMessage(String rawMessage) {
         var message = new MessageFactory().getMessage(rawMessage);
-        message.accept(new ReadMessageVisitor(this));
+        ((Visitable) message).accept(new ReadMessageVisitor(this));
     }
 
-    public void addMessageToQueue(SendableMessage message) {
+    public void addMessageToQueue(Message message) {
         try {
             messagesQueue.put(message);
         } catch (InterruptedException e) {

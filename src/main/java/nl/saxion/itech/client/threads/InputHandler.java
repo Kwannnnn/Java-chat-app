@@ -1,10 +1,10 @@
 package nl.saxion.itech.client.threads;
 
 import nl.saxion.itech.client.ChatClient;
+import nl.saxion.itech.client.model.protocol.messages.Message;
 import nl.saxion.itech.client.model.protocol.messages.sendable.BroadcastMessage;
 import nl.saxion.itech.client.model.protocol.messages.sendable.ConnectMessage;
 import nl.saxion.itech.client.model.protocol.messages.sendable.QuitMessage;
-import nl.saxion.itech.client.model.protocol.messages.sendable.SendableMessage;
 
 import java.util.Scanner;
 
@@ -105,7 +105,7 @@ public class InputHandler extends Thread {
         addMessageToQueue(new QuitMessage());
     }
 
-    private void addMessageToQueue(SendableMessage message) {
+    private void addMessageToQueue(Message message) {
         this.client.addMessageToQueue(message);
     }
 }

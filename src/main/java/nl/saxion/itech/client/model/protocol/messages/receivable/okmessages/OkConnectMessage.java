@@ -1,6 +1,6 @@
 package nl.saxion.itech.client.model.protocol.messages.receivable.okmessages;
 
-import nl.saxion.itech.client.model.protocol.visitors.ReceivableMessageVisitor;
+import nl.saxion.itech.client.model.protocol.visitors.MessageVisitor;
 
 public class OkConnectMessage extends OkMessage {
 
@@ -9,7 +9,7 @@ public class OkConnectMessage extends OkMessage {
     }
 
     @Override
-    public void accept(ReceivableMessageVisitor messageVisitor) {
-        messageVisitor.visit(this);
+    public void accept(MessageVisitor visitor) {
+        visitor.visit(this);
     }
 }

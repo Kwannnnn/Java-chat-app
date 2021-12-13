@@ -2,8 +2,6 @@ package nl.saxion.itech.client.model.protocol.visitors;
 
 import nl.saxion.itech.client.ChatClient;
 import nl.saxion.itech.client.model.protocol.messages.receivable.InfoMessage;
-import nl.saxion.itech.client.model.protocol.messages.receivable.ReceivableGroupJoinMessage;
-import nl.saxion.itech.client.model.protocol.messages.receivable.ReceivableGroupMessageMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.OkBroadcastMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.OkConnectMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.ErrorMessage;
@@ -11,8 +9,9 @@ import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.grou
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.groupMessages.OkGroupDisconnectMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.groupMessages.OkGroupJoinMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.groupMessages.OkGroupMessageMessage;
+import nl.saxion.itech.client.model.protocol.messages.sendable.*;
 
-public class ReadMessageVisitor implements ReceivableMessageVisitor {
+public class ReadMessageVisitor implements MessageVisitor {
     private ChatClient client;
 
     public static final String ANSI_YELLOW = "\u001B[33;3m";
@@ -78,7 +77,7 @@ public class ReadMessageVisitor implements ReceivableMessageVisitor {
     }
 
     @Override
-    public void visit(ReceivableGroupJoinMessage message) {
+    public void visit(GroupJoinMessage message) {
         //the body of this message contains 2 parts: group name and the new group member
         String[] messageParts = parseMessageBody(message.getBody(), " ", 2);
         String groupName = messageParts[0];
@@ -88,13 +87,28 @@ public class ReadMessageVisitor implements ReceivableMessageVisitor {
     }
 
     @Override
-    public void visit(ReceivableGroupMessageMessage message) {
+    public void visit(GroupMessageMessage message) {
         //the body of this message contains 2 parts: group name and the message that was sent
         String[] messageParts = parseMessageBody(message.getBody(), " ", 2);
         String groupName = messageParts[0];
         String receivedMessage = messageParts[1];
 
         System.out.println("New message in group \"" + groupName + "\": " + receivedMessage);
+    }
+
+    @Override
+    public void visit(GroupDisconnectMessage message) {
+
+    }
+
+    @Override
+    public void visit(GroupNewMessage message) {
+
+    }
+
+    @Override
+    public void visit(QuitMessage message) {
+
     }
 
     private String[] parseMessageBody(String body, String delimiter) {
@@ -104,4 +118,6 @@ public class ReadMessageVisitor implements ReceivableMessageVisitor {
     private String[] parseMessageBody(String body, String delimiter, int limit) {
         return body.split(delimiter, limit);
     }
+
+
 }

@@ -1,11 +1,14 @@
 package nl.saxion.itech.client.model.protocol;
 
+import nl.saxion.itech.client.model.protocol.messages.Message;
 import nl.saxion.itech.client.model.protocol.messages.receivable.*;
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.*;
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.groupMessages.OkGroupAllMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.groupMessages.OkGroupDisconnectMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.groupMessages.OkGroupJoinMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.groupMessages.OkGroupMessageMessage;
+import nl.saxion.itech.client.model.protocol.messages.sendable.GroupJoinMessage;
+import nl.saxion.itech.client.model.protocol.messages.sendable.GroupMessageMessage;
 
 public class MessageFactory {
     private static final String CMD_OK = "OK";
@@ -19,7 +22,7 @@ public class MessageFactory {
     private static final String CMD_JOIN = "JOIN";
     private static final String CMD_DSCN = "DSCN";
 
-    public ReceivableMessage getMessage(String message) {
+    public Message getMessage(String message) {
         String[] splitMessage = parseMessage(message);
         String header = splitMessage[0];
         String body = splitMessage[1];
@@ -32,14 +35,15 @@ public class MessageFactory {
         };
     }
 
-    private ReceivableMessage handleGroupMessage(String message) {
+    private Message handleGroupMessage(String message) {
         String[] splitMessage = parseMessage(message);
         String header = splitMessage[0];
         String body = splitMessage[1];
 
         return switch (header) {
-            case CMD_JOIN -> new ReceivableGroupJoinMessage(body);
-            case CMD_MSG -> new ReceivableGroupMessageMessage(body);
+            case CMD_JOIN -> new GroupJoinMessage(body);
+            case CMD_MSG -> new GroupMessageMessage(body);
+            default -> new ErrorMessage("ERXX", "Unknown header"); // TODO: figure this out
         };
     }
 
@@ -58,7 +62,7 @@ public class MessageFactory {
         };
     }
 
-    private OkMessage handleOkGroupMessage(String message) {
+    private Message handleOkGroupMessage(String message) {
         String[] splitMessage = parseMessage(message);
         String header = splitMessage[0];
         String body = splitMessage[1];

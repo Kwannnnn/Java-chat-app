@@ -20,11 +20,6 @@ public class ConnectMessage implements Message {
     }
 
     @Override
-    public void accept(MessageVisitor visitor) {
-        visitor.visit(this);
-    }
-
-    @Override
     public String toString() {
         return HEADER + " " + message;
     }
@@ -32,5 +27,10 @@ public class ConnectMessage implements Message {
     private boolean validUsernameFormat(String username) {
         var pattern = "^[a-zA-Z0-9_]{3,14}$";
         return username.matches(pattern);
+    }
+
+    @Override
+    public void accept(MessageVisitor visitor) {
+        visitor.visit(this);
     }
 }

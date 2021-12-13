@@ -1,7 +1,7 @@
 package nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.groupMessages;
 
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.OkMessage;
-import nl.saxion.itech.client.model.protocol.visitors.ReceivableMessageVisitor;
+import nl.saxion.itech.client.model.protocol.visitors.MessageVisitor;
 
 public class OkGroupJoinMessage extends OkMessage {
     public OkGroupJoinMessage(String message) {
@@ -9,7 +9,7 @@ public class OkGroupJoinMessage extends OkMessage {
     }
 
     @Override
-    public void accept(ReceivableMessageVisitor messageVisitor) {
-        messageVisitor.visit(this);
+    public void accept(MessageVisitor visitor) {
+        visitor.visit(this);
     }
 }

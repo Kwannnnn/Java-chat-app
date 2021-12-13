@@ -1,6 +1,6 @@
 package nl.saxion.itech.client.model.protocol.messages.sendable;
 
-import nl.saxion.itech.client.model.protocol.visitors.SendableMessageVisitor;
+import nl.saxion.itech.client.model.protocol.messages.Message;
 
 public class BroadcastMessage implements SendableMessage {
     private static final String HEADER = "BCST";
@@ -8,11 +8,6 @@ public class BroadcastMessage implements SendableMessage {
 
     public BroadcastMessage(String body) {
         this.body = body;
-    }
-
-    @Override
-    public void accept(SendableMessageVisitor messageVisitor) {
-        messageVisitor.visit(this);
     }
 
     @Override

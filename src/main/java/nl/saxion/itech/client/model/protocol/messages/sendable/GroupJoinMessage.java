@@ -2,12 +2,16 @@ package nl.saxion.itech.client.model.protocol.messages.sendable;
 
 import nl.saxion.itech.client.model.protocol.visitors.SendableMessageVisitor;
 
-public class SendableGroupMessageMessage implements SendableMessage{
-    private static final String HEADER = "GRP MSG";
+public class SendableGroupJoinMessage implements SendableMessage{
+    private static final String HEADER = "GRP JOIN";
     private String body;
 
-    public SendableGroupMessageMessage(String body) {
+    public SendableGroupJoinMessage(String body) {
         this.body = body;
+    }
+
+    public String getBody() {
+        return this.body;
     }
 
     @Override
