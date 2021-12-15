@@ -47,6 +47,10 @@ class IntegrationAcceptedUsernames {
         String serverResponse = receiveLineWithTimeout(in);
         // TODO: reflect in documentation updated protocol
         assertEquals("OK CONN mym", serverResponse);
+        // logout to make sure tests succeed without restarting the server
+        // Since a state of connected users is kept in memory
+        out.println("QUIT");
+        out.flush();
     }
 
     @Test
@@ -68,6 +72,10 @@ class IntegrationAcceptedUsernames {
         String serverResponse = receiveLineWithTimeout(in);
         // TODO: reflect in documentation updated protocol
         assertEquals("OK CONN abcdefghijklmn", serverResponse);
+        // logout to make sure tests succeed without restarting the server
+        // Since a state of connected users is kept in memory
+        out.println("QUIT");
+        out.flush();
     }
 
     @Test

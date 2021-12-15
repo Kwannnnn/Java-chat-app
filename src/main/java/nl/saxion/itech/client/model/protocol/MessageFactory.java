@@ -9,6 +9,7 @@ import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.grou
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.groupMessages.OkGroupMessageMessage;
 import nl.saxion.itech.client.model.protocol.messages.sendable.GroupJoinMessage;
 import nl.saxion.itech.client.model.protocol.messages.sendable.GroupMessageMessage;
+import nl.saxion.itech.client.model.protocol.messages.sendable.PongMessage;
 
 public class MessageFactory {
     private static final String CMD_OK = "OK";
@@ -21,16 +22,18 @@ public class MessageFactory {
     private static final String CMD_NEW = "NEW";
     private static final String CMD_JOIN = "JOIN";
     private static final String CMD_DSCN = "DSCN";
+    private static final String CMD_PING = "PING";
 
     public Message getMessage(String message) {
         String[] splitMessage = parseMessage(message);
         String header = splitMessage[0];
-        String body = splitMessage[1];
+        String body = splitMessage.length > 1 ? splitMessage[1] : "";
 
         return switch (header) {
             case CMD_INFO -> new InfoMessage(body);
             case CMD_OK -> handleOkMessage(body);
             case CMD_GRP -> handleGroupMessage(body);
+            case CMD_PING -> new PingMessage();
             default -> new ErrorMessage(header, body);
         };
     }

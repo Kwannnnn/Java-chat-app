@@ -1,7 +1,9 @@
 package nl.saxion.itech.client.model.protocol.visitors;
 
+import nl.saxion.itech.client.model.protocol.messages.Visitable;
 import nl.saxion.itech.client.model.protocol.messages.receivable.ErrorMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.InfoMessage;
+import nl.saxion.itech.client.model.protocol.messages.receivable.PingMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.OkBroadcastMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.OkConnectMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.groupMessages.OkGroupAllMessage;
@@ -24,4 +26,5 @@ public interface MessageVisitor {
     void visit(GroupMessageMessage message);
     void visit(GroupNewMessage message);
     void visit(QuitMessage message);
+    void visit(PingMessage message);
 }

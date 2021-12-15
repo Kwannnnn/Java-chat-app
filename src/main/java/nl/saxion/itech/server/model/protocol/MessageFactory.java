@@ -1,38 +1,21 @@
 package nl.saxion.itech.server.model.protocol;
 
-import nl.saxion.itech.server.model.exceptions.InvalidUsernameException;
-import nl.saxion.itech.server.model.protocol.messages.*;
-
 public class MessageFactory {
-    private static final String CMD_CONN = "CONN";
-    private static final String CMD_BCST = "BCST";
-    private static final String CMD_OK = "OK";
-    private static final String CMD_INFO = "INFO";
-    private static final String CMD_PING = "PING";
-    private static final String CMD_PONG = "PONG";
-    private static final String CMD_QUIT = "QUIT";
-    private static final String CMD_ER00 = "ER00";
-    private static final String CMD_ER01 = "ER01";
-    private static final String CMD_ER02 = "ER02";
-    private static final String CMD_ER03 = "ER03";
-
-    public Message getMessage(String message) {
-        String[] splitMessage = parseMessage(message);
-        String header = splitMessage[0];
-        String body = splitMessage[1];
+    public BaseMessage getMessage(String message) {
+        var splitMessage = parseMessage(message);
+        var header = splitMessage[0];
+        var body = splitMessage.length > 1 ? splitMessage[1] : "";
 
         return switch (header) {
-                case CMD_INFO -> new InfoMessage(message);
-//                case CMD_CONN -> new ConnectMessage(message);
-                case CMD_OK -> new OkMessage(message);
-                case CMD_BCST -> new BroadcastMessage(message);
-                default -> new ErrorMessage(header, message);
-            };
-
+            case ProtocolConstants.CMD_CONN -> new BaseMessage(ProtocolConstants.CMD_CONN, body);
+            case ProtocolConstants.CMD_BCST -> new BaseMessage(ProtocolConstants.CMD_BCST, body);
+            case ProtocolConstants.CMD_QUIT -> new BaseMessage(ProtocolConstants.CMD_QUIT, null);
+            case ProtocolConstants.CMD_PONG -> new BaseMessage(ProtocolConstants.CMD_PONG, null);
+            default -> new BaseMessage(ProtocolConstants.CMD_ER00, ProtocolConstants.ER00_BODY);
+        };
     }
 
     private String[] parseMessage(String message) {
         return message.split(" ", 2);
     }
-
 }

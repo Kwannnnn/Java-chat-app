@@ -79,6 +79,12 @@ class IntegrationMultipleUserTests {
 
         fromUser1 = receiveLineWithTimeout(inUser1); //BCST from user2
         assertEquals("BCST user2 messagefromuser2", fromUser1);
+        // logout to make sure tests succeed without restarting the server
+        // Since a state of connected users is kept in memory
+        outUser1.println("QUIT");
+        outUser1.flush();
+        outUser2.println("QUIT");
+        outUser2.flush();
     }
 
     @Test
@@ -98,6 +104,10 @@ class IntegrationMultipleUserTests {
         outUser2.flush();
         String resUser2 = receiveLineWithTimeout(inUser2);
         assertEquals("ER01 User already logged in", resUser2);
+        // logout to make sure tests succeed without restarting the server
+        // Since a state of connected users is kept in memory
+        outUser1.println("QUIT");
+        outUser1.flush();
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){

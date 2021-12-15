@@ -1,9 +1,7 @@
 package nl.saxion.itech.server.threads;
 
-import nl.saxion.itech.server.model.protocol.*;
-import nl.saxion.itech.server.model.protocol.messages.InfoMessage;
-import nl.saxion.itech.server.model.protocol.visitors.MessageHandlerVisitor;
-import nl.saxion.itech.server.model.protocol.visitors.MessageVisitor;
+import nl.saxion.itech.server.model.Client;
+import nl.saxion.itech.server.model.protocol.MessageFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,70 +10,53 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 public class ClientThread extends Thread {
+    private Client client;
     private final Socket clientSocket;
+    private final MessageDispatcher dispatcher;
+    private final MessageFactory messageFactory;
     private PrintWriter out;
     private BufferedReader in;
-    private MessageVisitor messageVisitor;
-    private MessageFactory messageFactory;
 
-    public ClientThread(Socket socket) {
+    public ClientThread(Socket socket, MessageDispatcher dispatcher) {
         this.clientSocket = socket;
+        this.dispatcher = dispatcher;
+        this.messageFactory = new MessageFactory();
+        this.client = new Client(socket);
+    }
+
+    @Override
+    public void run() {
+        instantiateStreams();
+        handleMessages();
+    }
+
+    private void instantiateStreams() {
         try {
             this.out = new PrintWriter(this.clientSocket.getOutputStream(), true);
             this.in = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()));
-            this.messageVisitor = new MessageHandlerVisitor(this.clientSocket, this.out);
-            this.messageFactory = new MessageFactory();
-        }  catch (IOException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-    }
-
-    public void run() {
-        try {
-            String rawMessage;
-
-            new InfoMessage("Welcome to server 1").accept(messageVisitor);
-
-            while ((rawMessage = in.readLine()) != null) {
-                var message = this.messageFactory.getMessage(rawMessage);
-                message.accept(this.messageVisitor);
-            }
         } catch (IOException e) {
+            System.err.println("Error while instantiating the input and output streams");
             e.printStackTrace();
         }
     }
 
-//    private void sendPing() {
-//        this.out.println("PING");
-//        this.out.flush();
-//    }
+    private void handleMessages() {
+        while (!isInterrupted()) {
+            var message = readLine();
+            if (message == null) break;
 
-    private void stopConnection() {
+            var messageObject = this.messageFactory.getMessage(message);
+            messageObject.setClient(this.client);
+            this.dispatcher.dispatchMessage(messageObject);
+        }
+        this.dispatcher.removeClient(this.client);
+    }
+
+    private String readLine() {
         try {
-            in.close();
-            out.close();
-            clientSocket.close();
+            return in.readLine();
         } catch (IOException e) {
-            e.printStackTrace();
+            return null;
         }
     }
-
-//    private void heartbeat() {
-//        System.out.printf("~~ %s Heartbeat initiated\n", username);
-//
-//        CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
-//            receivedPong = false;
-//            sendPing();
-//
-//            CompletableFuture.delayedExecutor(3, TimeUnit.SECONDS).execute(() -> {
-//                if (receivedPong) {
-//                    System.out.printf("~~ %s Heartbeat expired - SUCCESS\n", username);
-//                    heartbeat();
-//                } else {
-//                    System.out.printf("~~ %s Heartbeat expired - FAILED\n", username);
-//                }
-//            });
-//        });
-//    }
 }

@@ -61,6 +61,9 @@ class IntegrationSingleUserTests {
         String serverResponse = receiveLineWithTimeout(in);
         // TODO: reflect in documentation updated protocol
         assertEquals("OK CONN myname", serverResponse);
+        // logout to make sure other tests do not complain that user is logged in
+        out.println("QUIT");
+        out.flush();
     }
 
     @Test
@@ -105,6 +108,9 @@ class IntegrationSingleUserTests {
             testReporter.publishEntry("timeElapsed", ""+timeElapsed);
             assertTrue(timeElapsed > ping_time_ms - ping_time_ms_delta_allowed);
         });
+        // logout to make sure other tests do not complain that user is logged in
+        out.println("QUIT");
+        out.flush();
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){

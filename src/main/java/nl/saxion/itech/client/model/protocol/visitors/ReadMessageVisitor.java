@@ -2,6 +2,7 @@ package nl.saxion.itech.client.model.protocol.visitors;
 
 import nl.saxion.itech.client.ChatClient;
 import nl.saxion.itech.client.model.protocol.messages.receivable.InfoMessage;
+import nl.saxion.itech.client.model.protocol.messages.receivable.PingMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.OkBroadcastMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.okmessages.OkConnectMessage;
 import nl.saxion.itech.client.model.protocol.messages.receivable.ErrorMessage;
@@ -109,6 +110,11 @@ public class ReadMessageVisitor implements MessageVisitor {
     @Override
     public void visit(QuitMessage message) {
 
+    }
+
+    @Override
+    public void visit(PingMessage message) {
+        this.client.addMessageToQueue(new PongMessage());
     }
 
     private String[] parseMessageBody(String body, String delimiter) {
