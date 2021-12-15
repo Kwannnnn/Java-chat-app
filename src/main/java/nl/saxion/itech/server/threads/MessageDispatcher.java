@@ -4,6 +4,7 @@ import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.protocol.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,7 +31,7 @@ public class MessageDispatcher extends Thread {
                 client.getUsername(),
                 client
         );
-        this.messageQueue.add(message);
+        this.dispatchMessage(message);
         new PingThread(client, this).start();
     }
 
@@ -46,7 +47,7 @@ public class MessageDispatcher extends Thread {
                     null,
                     client
             );
-            this.messageQueue.add(response);
+            this.dispatchMessage(response);
             try {
                 client.getSocket().close();
             } catch (IOException e) {
@@ -60,6 +61,26 @@ public class MessageDispatcher extends Thread {
         notify();
     }
 
+    public synchronized void sendPrivateMessage(Message message, String recipient, Client replyTo) {
+        if (!this.hasClient(recipient)) {
+            // User is not connected
+            this.dispatchMessage(new BaseMessage(
+                    ProtocolConstants.CMD_ER04,
+                    ProtocolConstants.ER04_BODY,
+                    replyTo
+            ));
+            return;
+        }
+
+        message.setClient(this.clients.get(recipient));
+        this.dispatchMessage(message);
+        this.dispatchMessage(new BaseMessage(
+                ProtocolConstants.CMD_OK + " " + ProtocolConstants.CMD_MSG + " " + recipient,
+                message.getBody(),
+                replyTo
+        ));
+    }
+
     public synchronized void broadcastMessage(Message message) {
         for (var client : this.clients.values()) {
             if (!client.equals(message.getClient())) {
@@ -69,7 +90,7 @@ public class MessageDispatcher extends Thread {
                         message.getBody(),
                         client
                 );
-                this.messageQueue.add(broadcastMessage);
+                this.dispatchMessage(broadcastMessage);
             }
         }
     }

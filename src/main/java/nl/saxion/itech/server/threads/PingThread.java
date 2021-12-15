@@ -26,12 +26,12 @@ public class PingThread extends Thread {
             while (!isInterrupted()) {
                 this.client.setHasPonged(false);
                 Thread.sleep(10 * 1000);
-                this.out.println("PING");
-                Thread.sleep(3 * 1000);
-                if (!client.isHasPonged()) {
-                    this.dispatcher.removeClient(client);
-                    Thread.currentThread().interrupt();
-                }
+//                this.out.println("PING");
+//                Thread.sleep(3 * 1000);
+//                if (!client.isHasPonged()) {
+//                    this.dispatcher.removeClient(client);
+//                    Thread.currentThread().interrupt();
+//                }
             }
         } catch (InterruptedException e) {
             e.printStackTrace();

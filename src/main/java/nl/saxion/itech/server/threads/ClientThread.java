@@ -41,22 +41,22 @@ public class ClientThread extends Thread {
     }
 
     private void handleMessages() {
-        while (!isInterrupted()) {
-            var message = readLine();
-            if (message == null) break;
-
-            var messageObject = this.messageFactory.getMessage(message);
-            messageObject.setClient(this.client);
-            this.dispatcher.dispatchMessage(messageObject);
-        }
-        this.dispatcher.removeClient(this.client);
-    }
-
-    private String readLine() {
         try {
-            return in.readLine();
+            while (!isInterrupted() || this.clientSocket.isClosed()) {
+                var message = in.readLine();
+
+                System.out.println(message);
+                if (message == null) break;
+
+                var messageObject = this.messageFactory.getMessage(message);
+                messageObject.setClient(this.client);
+                this.dispatcher.dispatchMessage(messageObject);
+            }
         } catch (IOException e) {
-            return null;
+            if (this.client.getUsername() != null) {
+                this.dispatcher.removeClient(this.client);
+            }
+            Thread.currentThread().interrupt();
         }
     }
 }

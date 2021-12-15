@@ -11,6 +11,8 @@ public class MessageFactory {
             case ProtocolConstants.CMD_BCST -> new BaseMessage(ProtocolConstants.CMD_BCST, body);
             case ProtocolConstants.CMD_QUIT -> new BaseMessage(ProtocolConstants.CMD_QUIT, null);
             case ProtocolConstants.CMD_PONG -> new BaseMessage(ProtocolConstants.CMD_PONG, null);
+            case ProtocolConstants.CMD_MSG -> new BaseMessage(ProtocolConstants.CMD_MSG, body);
+            case ProtocolConstants.CMD_ALL -> new BaseMessage(ProtocolConstants.CMD_ALL, null);
             default -> new BaseMessage(ProtocolConstants.CMD_ER00, ProtocolConstants.ER00_BODY);
         };
     }

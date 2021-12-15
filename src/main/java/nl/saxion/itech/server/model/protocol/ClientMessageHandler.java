@@ -2,7 +2,6 @@ package nl.saxion.itech.server.model.protocol;
 
 import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.threads.MessageDispatcher;
-import nl.saxion.itech.server.threads.PingThread;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -21,8 +20,64 @@ public class ClientMessageHandler implements MessageHandler {
             case ProtocolConstants.CMD_QUIT -> handleQuitMessage(message);
             case ProtocolConstants.CMD_BCST -> handleBroadcast(message);
             case ProtocolConstants.CMD_PONG -> handlePong(message);
+            case ProtocolConstants.CMD_MSG -> handleDirectMessage(message);
+            case ProtocolConstants.CMD_ALL -> handleAllMessage(message);
             default -> sendMessageToClient(message);
         }
+    }
+
+    private void handleAllMessage(Message message) {
+        var sender = message.getClient();
+
+        if (message.getClient().getUsername() == null) {
+            // Please login first
+            this.dispatcher.dispatchMessage(new BaseMessage(
+                    ProtocolConstants.CMD_ER03,
+                    ProtocolConstants.ER03_BODY,
+                    message.getClient()
+            ));
+            return;
+        }
+
+        String listString = String.join(",", dispatcher.getClients());
+
+        this.dispatcher.dispatchMessage(new BaseMessage(
+                ProtocolConstants.CMD_OK
+                + " " +
+                ProtocolConstants.CMD_ALL, listString,
+                sender));
+    }
+
+    private void handleDirectMessage(Message message) {
+        var splitMessage = parseMessage(message.getBody());
+        if (message.getClient().getUsername() == null) {
+            // Please login first
+            this.dispatcher.dispatchMessage(new BaseMessage(
+                    ProtocolConstants.CMD_ER03,
+                    ProtocolConstants.ER03_BODY,
+                    message.getClient()
+            ));
+            return;
+        }
+
+        if (splitMessage.length < 2) {
+            // Missing parameters
+            this.dispatcher.dispatchMessage(new BaseMessage(
+                    ProtocolConstants.CMD_ER08,
+                    ProtocolConstants.ER08_BODY,
+                    message.getClient()
+            ));
+            return;
+        }
+
+        var recipient = splitMessage[0];
+        var body = splitMessage[1];
+        var dm = new BaseMessage(
+                ProtocolConstants.CMD_MSG + " " + message.getClient().getUsername(),
+                body
+        );
+
+        this.dispatcher.sendPrivateMessage(dm, recipient, message.getClient());
     }
 
     private void sendMessageToClient(Message message) {
@@ -41,7 +96,7 @@ public class ClientMessageHandler implements MessageHandler {
         if (sender.getUsername() == null) {
             this.dispatcher.dispatchMessage(new BaseMessage(
                     ProtocolConstants.CMD_ER03,
-                    ProtocolConstants.CMD_ER03,
+                    ProtocolConstants.ER03_BODY,
                     sender
             ));
             return;
@@ -60,7 +115,7 @@ public class ClientMessageHandler implements MessageHandler {
     }
 
     private void handleConnectMessage(Message message) {
-        var error = getError(message);
+        var error = getConnectError(message);
         if  (error == null) {
             message.getClient().setUsername(message.getBody());
             this.dispatcher.addClient(message.getClient());
@@ -69,7 +124,7 @@ public class ClientMessageHandler implements MessageHandler {
         }
     }
 
-    private Message getError(Message message) {
+    private Message getConnectError(Message message) {
         var username = message.getBody();
         var client = message.getClient();
 
@@ -97,5 +152,9 @@ public class ClientMessageHandler implements MessageHandler {
             this.dispatcher.removeClient(client);
             return null;
         }
+    }
+
+    private String[] parseMessage(String message) {
+        return message.split(" ", 2);
     }
 }

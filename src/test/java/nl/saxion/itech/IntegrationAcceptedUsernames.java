@@ -74,8 +74,8 @@ class IntegrationAcceptedUsernames {
         assertEquals("OK CONN abcdefghijklmn", serverResponse);
         // logout to make sure tests succeed without restarting the server
         // Since a state of connected users is kept in memory
-        out.println("QUIT");
-        out.flush();
+//        out.println("QUIT");
+//        out.flush();
     }
 
     @Test

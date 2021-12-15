@@ -3,7 +3,10 @@ package nl.saxion.itech.server;
 import nl.saxion.itech.server.threads.ClientThread;
 import nl.saxion.itech.server.threads.MessageDispatcher;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.Properties;
