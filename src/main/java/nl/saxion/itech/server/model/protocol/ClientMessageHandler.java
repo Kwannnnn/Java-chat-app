@@ -15,7 +15,7 @@ public class ClientMessageHandler implements MessageHandler {
     }
 
     @Override
-    public void handle(BaseMessage message) {
+    public void handle(Message message) {
         switch (message.getHeader()) {
             case ProtocolConstants.CMD_CONN -> handleConnectMessage(message);
             case ProtocolConstants.CMD_QUIT -> handleQuitMessage(message);
@@ -25,17 +25,17 @@ public class ClientMessageHandler implements MessageHandler {
         }
     }
 
-    private void sendMessageToClient(BaseMessage message) {
+    private void sendMessageToClient(Message message) {
         var printWriter = getPrintWriter(message.getClient());
         if (printWriter == null) return; // The client socket has been closed
         printWriter.println(message);
     }
 
-    private void handlePong(BaseMessage message) {
+    private void handlePong(Message message) {
         message.getClient().setHasPonged(true);
     }
 
-    private void handleBroadcast(BaseMessage message) {
+    private void handleBroadcast(Message message) {
         var sender = message.getClient();
 
         if (sender.getUsername() == null) {
@@ -55,11 +55,11 @@ public class ClientMessageHandler implements MessageHandler {
         ));
     }
 
-    private void handleQuitMessage(BaseMessage message) {
+    private void handleQuitMessage(Message message) {
         this.dispatcher.removeClient(message.getClient());
     }
 
-    private void handleConnectMessage(BaseMessage message) {
+    private void handleConnectMessage(Message message) {
         var error = getError(message);
         if  (error == null) {
             message.getClient().setUsername(message.getBody());
@@ -70,7 +70,7 @@ public class ClientMessageHandler implements MessageHandler {
         new PingThread(message.getClient(), this.dispatcher).start();
     }
 
-    private BaseMessage getError(BaseMessage message) {
+    private Message getError(Message message) {
         var username = message.getBody();
         var client = message.getClient();
 

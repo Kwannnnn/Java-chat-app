@@ -1,10 +1,7 @@
 package nl.saxion.itech.server.threads;
 
 import nl.saxion.itech.server.model.Client;
-import nl.saxion.itech.server.model.protocol.BaseMessage;
-import nl.saxion.itech.server.model.protocol.ClientMessageHandler;
-import nl.saxion.itech.server.model.protocol.MessageHandler;
-import nl.saxion.itech.server.model.protocol.ProtocolConstants;
+import nl.saxion.itech.server.model.protocol.*;
 
 import java.io.IOException;
 import java.util.Vector;
@@ -12,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MessageDispatcher extends Thread {
     private final ConcurrentHashMap<String, Client> clients;
-    private final Vector<BaseMessage> messageQueue;
+    private final Vector<Message> messageQueue;
     private final MessageHandler messageHandler;
 
     public MessageDispatcher() {
@@ -57,12 +54,12 @@ public class MessageDispatcher extends Thread {
         }
     }
 
-    public synchronized void dispatchMessage(BaseMessage message) {
+    public synchronized void dispatchMessage(Message message) {
         this.messageQueue.add(message);
         notify();
     }
 
-    public synchronized void broadcastMessage(BaseMessage message) {
+    public synchronized void broadcastMessage(Message message) {
         for (var client : this.clients.values()) {
             if (!client.equals(message.getClient())) {
                 var broadcastMessage = new BaseMessage(
@@ -87,7 +84,7 @@ public class MessageDispatcher extends Thread {
         }
     }
 
-    private synchronized BaseMessage getNextMessage() throws InterruptedException {
+    private synchronized Message getNextMessage() throws InterruptedException {
         while (this.messageQueue.size() == 0) {
             wait();
         }
