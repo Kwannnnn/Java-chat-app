@@ -25,7 +25,7 @@ public class ChatClient {
 
     public ChatClient() {
         try {
-            props.load(ChatClient.class.getResourceAsStream("clientconfig.properties"));
+            props.load(ChatClient.class.getResourceAsStream("config.properties"));
             Socket socket = new Socket(props.getProperty("host"), Integer.parseInt(props.getProperty("port")));
             this.readThread = new Thread(new MessageSender(socket, this));
             this.writeThread = new Thread(new MessageReceiver(socket, this));
