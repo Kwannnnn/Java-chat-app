@@ -115,4 +115,8 @@ public class MessageDispatcher extends Thread {
         this.messageQueue.removeElementAt(0);
         return message;
     }
+
+    public ArrayList<String> getClients() {
+        return new ArrayList<>(clients.keySet());
+    }
 }
