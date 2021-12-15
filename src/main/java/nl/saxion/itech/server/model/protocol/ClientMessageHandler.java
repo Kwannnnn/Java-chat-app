@@ -22,8 +22,13 @@ public class ClientMessageHandler implements MessageHandler {
             case ProtocolConstants.CMD_PONG -> handlePong(message);
             case ProtocolConstants.CMD_MSG -> handleDirectMessage(message);
             case ProtocolConstants.CMD_ALL -> handleAllMessage(message);
+            case ProtocolConstants.CMD_GRP -> handleGroupMessage(message);
             default -> sendMessageToClient(message);
         }
+    }
+    
+    private void handleGroupMessage(Message message) {
+        
     }
 
     private void handleAllMessage(Message message) {

@@ -10,6 +10,8 @@ public final class ProtocolConstants {
     public static final String CMD_ALL = "ALL";
     public static final String CMD_MSG = "MSG";
     public static final String CMD_JOIN = "JOIN";
+    public static final String CMD_GRP = "GRP";
+    public static final String CMD_NEW = "NEW";
 
     public static final String CMD_ER00 = "ER00";
     public static final String CMD_ER01 = "ER01";
