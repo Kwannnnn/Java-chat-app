@@ -67,7 +67,6 @@ public class ClientMessageHandler implements MessageHandler {
         } else {
             this.dispatcher.dispatchMessage(error);
         }
-        new PingThread(message.getClient(), this.dispatcher).start();
     }
 
     private Message getError(Message message) {

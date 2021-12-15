@@ -26,11 +26,12 @@ public class MessageDispatcher extends Thread {
     public synchronized void addClient(Client client) {
         this.clients.put(client.getUsername(), client);
         var message = new BaseMessage(
-                ProtocolConstants.CMD_OK + " " + ProtocolConstants.CMD_CONN + " " + client.getUsername(),
-                null,
+                ProtocolConstants.CMD_OK + " " + ProtocolConstants.CMD_CONN,
+                client.getUsername(),
                 client
         );
         this.messageQueue.add(message);
+        new PingThread(client, this).start();
     }
 
     public synchronized boolean hasClient(String username) {
