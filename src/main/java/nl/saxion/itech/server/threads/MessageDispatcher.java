@@ -2,6 +2,8 @@ package nl.saxion.itech.server.threads;
 
 import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.protocol.*;
+import nl.saxion.itech.server.service.GroupService;
+import nl.saxion.itech.server.service.MessageService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,11 +14,15 @@ public class MessageDispatcher extends Thread {
     private final ConcurrentHashMap<String, Client> clients;
     private final Vector<Message> messageQueue;
     private final MessageHandler messageHandler;
+    private final GroupService groupService;
+    private final MessageService messageService;
 
     public MessageDispatcher() {
         this.clients = new ConcurrentHashMap<>();
         this.messageQueue = new Vector<>();
         this.messageHandler = new ClientMessageHandler(this);
+        this.groupService = new GroupService();
+        this.messageService = new MessageService();
     }
 
     @Override
