@@ -5,7 +5,7 @@ import nl.saxion.itech.server.model.Client;
 public interface Message {
     String getHeader();
     String getBody();
-    Client getClient();
-    void setClient(Client client);
+    Client getSender();
+    void setSender(Client sender);
     void accept(MessageHandler messageHandler);
 }

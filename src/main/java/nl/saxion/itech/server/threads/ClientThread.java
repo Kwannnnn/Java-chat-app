@@ -1,7 +1,6 @@
 package nl.saxion.itech.server.threads;
 
 import nl.saxion.itech.server.model.Client;
-import nl.saxion.itech.server.model.protocol.MessageFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,17 +9,15 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 public class ClientThread extends Thread {
-    private Client client;
+    private final Client client;
     private final Socket clientSocket;
-    private final MessageDispatcher dispatcher;
-    private final MessageFactory messageFactory;
+    private final ServiceManager manager;
     private PrintWriter out;
     private BufferedReader in;
 
-    public ClientThread(Socket socket, MessageDispatcher dispatcher) {
+    public ClientThread(Socket socket, ServiceManager manager) {
         this.clientSocket = socket;
-        this.dispatcher = dispatcher;
-        this.messageFactory = new MessageFactory();
+        this.manager = manager;
         this.client = new Client(socket);
     }
 
@@ -43,18 +40,15 @@ public class ClientThread extends Thread {
     private void handleMessages() {
         try {
             while (!isInterrupted() || this.clientSocket.isClosed()) {
-                var message = in.readLine();
+                String rawMessage = in.readLine();
 
-                System.out.println(message);
-                if (message == null) break;
+                if (rawMessage == null) break;
 
-                var messageObject = this.messageFactory.getMessage(message);
-                messageObject.setClient(this.client);
-                this.dispatcher.dispatchMessage(messageObject);
+                this.manager.handleMessage(rawMessage, this.client);
             }
         } catch (IOException e) {
             if (this.client.getUsername() != null) {
-                this.dispatcher.removeClient(this.client);
+                this.manager.removeClient(this.client);
             }
             Thread.currentThread().interrupt();
         }

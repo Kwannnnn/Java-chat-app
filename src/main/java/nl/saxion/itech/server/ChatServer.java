@@ -1,12 +1,9 @@
 package nl.saxion.itech.server;
 
 import nl.saxion.itech.server.threads.ClientThread;
-import nl.saxion.itech.server.threads.MessageDispatcher;
+import nl.saxion.itech.server.threads.ServiceManager;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.Properties;
@@ -54,13 +51,13 @@ public class ChatServer {
     }
 
     private void handleConnections() {
-        var dispatcher = new MessageDispatcher();
-        dispatcher.start();
+        var manager = new ServiceManager();
+        manager.start();
 
         while (!this.serverSocket.isClosed()) {
             try {
                 var clientSocket = this.serverSocket.accept();
-                new ClientThread(clientSocket, dispatcher).start();
+                new ClientThread(clientSocket, manager).start();
             } catch (SocketException e) {
                 System.err.println(e.getMessage());
             } catch (IOException e) {

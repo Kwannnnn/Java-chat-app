@@ -7,12 +7,12 @@ import java.io.PrintWriter;
 
 public class PingThread extends Thread {
     private Client client;
-    private final MessageDispatcher dispatcher;
+    private final ServiceManager serviceManager;
     private PrintWriter out;
 
-    public PingThread(Client client, MessageDispatcher dispatcher) {
+    public PingThread(Client client, ServiceManager serviceManager) {
         this.client = client;
-        this.dispatcher = dispatcher;
+        this.serviceManager = serviceManager;
     }
 
     @Override

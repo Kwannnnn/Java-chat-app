@@ -1,29 +1,34 @@
 package nl.saxion.itech.server.model.protocol;
 
 import nl.saxion.itech.server.model.Client;
-import nl.saxion.itech.server.threads.MessageDispatcher;
+import nl.saxion.itech.server.threads.ServiceManager;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.stream.Collectors;
 
-public class ClientMessageHandler implements MessageHandler {
-    private final MessageDispatcher dispatcher;
+public class ClientMessageHandler{
+    private final ServiceManager serviceManager;
 
-    public ClientMessageHandler(MessageDispatcher dispatcher) {
-        this.dispatcher = dispatcher;
+    public ClientMessageHandler(ServiceManager dispatcher) {
+        this.serviceManager = dispatcher;
     }
 
-    @Override
-    public void handle(Message message) {
-        switch (message.getHeader()) {
-            case ProtocolConstants.CMD_CONN -> handleConnectMessage(message);
-            case ProtocolConstants.CMD_QUIT -> handleQuitMessage(message);
-            case ProtocolConstants.CMD_BCST -> handleBroadcast(message);
-            case ProtocolConstants.CMD_PONG -> handlePong(message);
-            case ProtocolConstants.CMD_MSG -> handleDirectMessage(message);
-            case ProtocolConstants.CMD_ALL -> handleAllMessage(message);
-            case ProtocolConstants.CMD_GRP -> handleGroupMessage(message);
-            default -> sendMessageToClient(message);
+    public void handle(String rawMessage, Client sender) {
+        String[] splitMessage = parseMessage(rawMessage);
+        String header = splitMessage[0];
+        String body = splitMessage.length > 1 ? splitMessage[1] : null;
+
+        switch (header) {
+            case ProtocolConstants.CMD_CONN -> handleConnectMessage(body, sender);
+            case ProtocolConstants.CMD_QUIT -> handleQuitMessage(sender);
+            case ProtocolConstants.CMD_BCST -> handleBroadcast(body, sender);
+            case ProtocolConstants.CMD_PONG -> handlePong(sender);
+            case ProtocolConstants.CMD_MSG -> handleDirectMessage(body, sender);
+            case ProtocolConstants.CMD_ALL -> handleAllMessage(sender);
+//            case ProtocolConstants.CMD_GRP -> handleGroupMessage(message);
+            default -> this.serviceManager.dispatchMessage(
+                    new BaseMessage(ProtocolConstants.CMD_ER00, ProtocolConstants.ER00_BODY));
         }
     }
     
@@ -31,132 +36,197 @@ public class ClientMessageHandler implements MessageHandler {
         
     }
 
-    private void handleAllMessage(Message message) {
-        var sender = message.getClient();
-
-        if (message.getClient().getUsername() == null) {
+    private void handleAllMessage(Client replyTo) {
+        if (replyTo.getUsername() == null) {
             // Please login first
-            this.dispatcher.dispatchMessage(new BaseMessage(
+            this.serviceManager.dispatchMessage(new BaseMessage(
                     ProtocolConstants.CMD_ER03,
                     ProtocolConstants.ER03_BODY,
-                    message.getClient()
+                    replyTo
             ));
             return;
         }
 
-        String listString = String.join(",", dispatcher.getClients());
+        String listString = serviceManager.getClients().stream().map(Client::getUsername).collect(Collectors.joining(","));
 
-        this.dispatcher.dispatchMessage(new BaseMessage(
+        this.serviceManager.dispatchMessage(new BaseMessage(
                 ProtocolConstants.CMD_OK
                 + " " +
-                ProtocolConstants.CMD_ALL, listString,
-                sender));
+                ProtocolConstants.CMD_ALL,
+                listString,
+                replyTo));
     }
 
-    private void handleDirectMessage(Message message) {
-        var splitMessage = parseMessage(message.getBody());
-        if (message.getClient().getUsername() == null) {
+    private void handleDirectMessage(String message, Client sender) {
+        var splitMessage = parseMessage(message);
+
+        Message error = getDirectMessageError(splitMessage, sender);
+
+        if (error == null) {
+            String recipientUsername = splitMessage[0];
+            String body = splitMessage[1];
+
+            //TODO: which client to send to if there are duplicates????
+            Client recipient = this.serviceManager.getClientByUsername(recipientUsername);
+
+            String messageToRecipient = ProtocolConstants.CMD_MSG + " " + sender.getUsername() + body;
+            sendPrivateMessage(messageToRecipient, recipient, sender);
+        } else {
+            this.serviceManager.dispatchMessage(error);
+        }
+    }
+
+    private synchronized void sendPrivateMessage(String message, Client recipient, Client replyTo) {
+        var messageToRecipient = new BaseMessage(
+                ProtocolConstants.CMD_MSG + " " + replyTo.getUsername(),
+                message,
+                recipient
+        );
+        this.serviceManager.dispatchMessage(messageToRecipient);
+
+        //send confirmation message back to sender
+        this.serviceManager.dispatchMessage(new BaseMessage(
+                ProtocolConstants.CMD_OK + " " + ProtocolConstants.CMD_MSG + " " + recipient.getUsername(),
+                message,
+                replyTo
+        ));
+    }
+
+    private Message getDirectMessageError(String[] splitMessage, Client sender) {
+        if (sender.getUsername() == null) {
             // Please login first
-            this.dispatcher.dispatchMessage(new BaseMessage(
+            return new BaseMessage(
                     ProtocolConstants.CMD_ER03,
                     ProtocolConstants.ER03_BODY,
-                    message.getClient()
-            ));
-            return;
+                    sender
+            );
         }
 
         if (splitMessage.length < 2) {
             // Missing parameters
-            this.dispatcher.dispatchMessage(new BaseMessage(
+            return new BaseMessage(
                     ProtocolConstants.CMD_ER08,
                     ProtocolConstants.ER08_BODY,
-                    message.getClient()
-            ));
-            return;
+                    sender
+            );
         }
 
-        var recipient = splitMessage[0];
-        var body = splitMessage[1];
-        var dm = new BaseMessage(
-                ProtocolConstants.CMD_MSG + " " + message.getClient().getUsername(),
-                body
-        );
+        String recipientUsername = splitMessage[0];
 
-        this.dispatcher.sendPrivateMessage(dm, recipient, message.getClient());
+        if (!this.serviceManager.hasClient(recipientUsername)) {
+            // User is not connected
+            return new BaseMessage(
+                    ProtocolConstants.CMD_ER04,
+                    ProtocolConstants.ER04_BODY,
+                    sender
+            );
+        }
+
+        return null;
     }
 
-    private void sendMessageToClient(Message message) {
-        var printWriter = getPrintWriter(message.getClient());
-        if (printWriter == null) return; // The client socket has been closed
-        printWriter.println(message);
+    private void handlePong(Client sender) {
+        //TODO: decide if we should check if message body is empty
+        sender.setHasPonged(true);
     }
 
-    private void handlePong(Message message) {
-        message.getClient().setHasPonged(true);
-    }
-
-    private void handleBroadcast(Message message) {
-        var sender = message.getClient();
-
-        if (sender.getUsername() == null) {
-            this.dispatcher.dispatchMessage(new BaseMessage(
+    private void handleBroadcast(String messageToBroadcast, Client replyTo) {
+        if (replyTo.getUsername() == null) {
+            this.serviceManager.dispatchMessage(new BaseMessage(
                     ProtocolConstants.CMD_ER03,
                     ProtocolConstants.ER03_BODY,
-                    sender
+                    replyTo
             ));
+
             return;
         }
 
-        this.dispatcher.broadcastMessage(message);
-        this.dispatcher.dispatchMessage(new BaseMessage(
+        broadcastMessage(messageToBroadcast, replyTo);
+
+        this.serviceManager.dispatchMessage(new BaseMessage(
                 ProtocolConstants.CMD_OK + " " + ProtocolConstants.CMD_BCST,
-                message.getBody(),
-                sender
+                messageToBroadcast,
+                replyTo
         ));
     }
 
-    private void handleQuitMessage(Message message) {
-        this.dispatcher.removeClient(message.getClient());
-    }
-
-    private void handleConnectMessage(Message message) {
-        var error = getConnectError(message);
-        if  (error == null) {
-            message.getClient().setUsername(message.getBody());
-            this.dispatcher.addClient(message.getClient());
-        } else {
-            this.dispatcher.dispatchMessage(error);
+    private synchronized void broadcastMessage(String messageToBroadcast, Client sender) {
+        for (var client : this.serviceManager.getClients()) {
+            if (!client.equals(sender)) {
+                var broadcastMessage = new BaseMessage(
+                        ProtocolConstants.CMD_BCST
+                                + " " + sender.getUsername(),
+                        messageToBroadcast,
+                        client
+                );
+                this.serviceManager.dispatchMessage(broadcastMessage);
+            }
         }
     }
 
-    private Message getConnectError(Message message) {
-        var username = message.getBody();
-        var client = message.getClient();
+    private void handleQuitMessage(Client client) {
+        this.serviceManager.removeClient(client);
 
-        if (client.getUsername() != null) return new BaseMessage(ProtocolConstants.CMD_ER66, ProtocolConstants.ER66_BODY, client);
-        if (!isValidUsername(username)) return new BaseMessage(ProtocolConstants.CMD_ER02, ProtocolConstants.ER02_BODY, client);
-        if (isLoggedIn(username)) return new BaseMessage(ProtocolConstants.CMD_ER01, ProtocolConstants.ER01_BODY, client);
+        var response = new BaseMessage(
+                ProtocolConstants.CMD_OK + " " + ProtocolConstants.CMD_QUIT,
+                null,
+                client
+        );
+
+        this.serviceManager.dispatchMessage(response);
+
+        try {
+            client.getSocket().close();
+        } catch (IOException e) {
+            System.err.println("Client socket has already been closed.");
+        }
+    }
+
+    private void handleConnectMessage(String username, Client replyTo) {
+        var error = getConnectError(username, replyTo);
+
+        if  (error == null) {
+            replyTo.setUsername(username);
+            this.serviceManager.addClient(replyTo);
+
+            //send confirmation back to client
+            var message = new BaseMessage(
+                    ProtocolConstants.CMD_OK + " " + ProtocolConstants.CMD_CONN,
+                    username,
+                    replyTo
+            );
+            this.serviceManager.dispatchMessage(message);
+
+            //start ping thread for new client
+            this.serviceManager.startNewPingThread(replyTo);
+        } else {
+            this.serviceManager.dispatchMessage(error);
+        }
+    }
+
+    private Message getConnectError(String username, Client replyTo) {
+        if (username.equals(replyTo.getUsername())) {
+            return new BaseMessage(ProtocolConstants.CMD_ER66, ProtocolConstants.ER66_BODY, replyTo);
+        }
+
+        if (!isValidUsername(username)) {
+            return new BaseMessage(ProtocolConstants.CMD_ER02, ProtocolConstants.ER02_BODY, replyTo);
+        }
+
+        if (isLoggedIn(username)) {
+            return new BaseMessage(ProtocolConstants.CMD_ER01, ProtocolConstants.ER01_BODY, replyTo);
+        }
 
         return null;
     }
 
     private boolean isLoggedIn(String username) {
-        return this.dispatcher.hasClient(username);
+        return this.serviceManager.hasClient(username);
     }
 
     private boolean isValidUsername(String username) {
         var pattern = "^[a-zA-Z0-9_]{3,14}$";
         return username.matches(pattern);
-    }
-
-    public PrintWriter getPrintWriter(Client client) {
-        var socket = client.getSocket();
-        try {
-            return new PrintWriter(socket.getOutputStream(), true);
-        } catch (IOException e) {
-            this.dispatcher.removeClient(client);
-            return null;
-        }
     }
 
     private String[] parseMessage(String message) {
