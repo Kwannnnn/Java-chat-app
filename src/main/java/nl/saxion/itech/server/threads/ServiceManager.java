@@ -1,6 +1,7 @@
 package nl.saxion.itech.server.threads;
 
 import nl.saxion.itech.server.model.Client;
+import nl.saxion.itech.server.model.Group;
 import nl.saxion.itech.server.model.protocol.*;
 import nl.saxion.itech.server.service.ClientService;
 import nl.saxion.itech.server.service.GroupService;
@@ -8,6 +9,7 @@ import nl.saxion.itech.server.service.MessageService;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,7 +42,6 @@ public class ServiceManager extends Thread {
         this.messageHandler.handle(message, sender);
     }
 
-
     public void addClient(Client client) {
         this.clientService.addClient(client);
     }
@@ -52,6 +53,7 @@ public class ServiceManager extends Thread {
     public boolean hasClient(String username) {
         return this.clientService.hasClient(username);
     }
+
     public Client getClientByUsername(String username) {
         return this.clientService.getClientByUsername(username);
     }
@@ -68,13 +70,17 @@ public class ServiceManager extends Thread {
         return this.clientService.getClients();
     }
 
+    public ConcurrentHashMap<String, Group> getGroups() {
+        return groupService.getGroups();
+    }
+
     private void sendMessageToClient(Message message) {
         var printWriter = getPrintWriter(message.getSender());
         if (printWriter == null) return; // The client socket has been closed
         printWriter.println(message);
     }
 
-    public PrintWriter getPrintWriter(Client client) {
+    private PrintWriter getPrintWriter(Client client) {
         var socket = client.getSocket();
         try {
             return new PrintWriter(socket.getOutputStream(), true);
@@ -82,5 +88,25 @@ public class ServiceManager extends Thread {
             removeClient(client);
             return null;
         }
+    }
+
+    public boolean hasGroup(String groupName) {
+        return this.groupService.hasGroup(groupName);
+    }
+
+    public void addGroup(String groupName) {
+        this.groupService.addGroup(groupName);
+    }
+
+    public boolean groupHasClient(String groupName, Client client) {
+        return this.groupService.groupHasClient(groupName, client);
+    }
+
+    public void addClientToGroup(String groupName, Client sender) {
+        this.groupService.addClientToGroup(groupName, sender);
+    }
+
+    public ArrayList<Client> getGroupMembers(String groupName) {
+        return this.groupService.getGroupMembers(groupName);
     }
 }

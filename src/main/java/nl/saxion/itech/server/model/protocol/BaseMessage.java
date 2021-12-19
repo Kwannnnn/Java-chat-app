@@ -7,11 +7,6 @@ public class BaseMessage implements Message {
     private Client sender;
     private String body;
 
-    public BaseMessage(String header, String body) {
-        this.header = header;
-        this.body = body;
-    }
-
     public BaseMessage(String header, String body, Client sender) {
         this.header = header;
         this.body = body;

@@ -4,6 +4,7 @@ public final class ProtocolConstants {
     public static final String CMD_INFO = "INFO";
     public static final String CMD_CONN = "CONN";
     public static final String CMD_BCST = "BCST";
+    public static final String CMD_PING = "PING";
     public static final String CMD_PONG = "PONG";
     public static final String CMD_OK = "OK";
     public static final String CMD_QUIT = "QUIT";
@@ -18,7 +19,15 @@ public final class ProtocolConstants {
     public static final String CMD_ER02 = "ER02";
     public static final String CMD_ER03 = "ER03";
     public static final String CMD_ER04 = "ER04";
+    public static final String CMD_ER05 = "ER05";
+    public static final String CMD_ER06 = "ER06";
+    public static final String CMD_ER07 = "ER07";
     public static final String CMD_ER08 = "ER08";
+    public static final String CMD_ER09 = "ER09";
+    public static final String CMD_ER10 = "ER10";
+    public static final String CMD_ER11 = "ER11";
+    public static final String CMD_ER12 = "ER12";
+    public static final String CMD_ER13 = "ER13";
     public static final String CMD_ER66 = "ER66";
 
     public static final String ER00_BODY = "Unknown command";
@@ -26,9 +35,16 @@ public final class ProtocolConstants {
     public static final String ER02_BODY = "Username has an invalid format (only characters, numbers and underscores are allowed)";
     public static final String ER03_BODY = "Please log in first";
     public static final String ER04_BODY = "The user you are trying to reach is not connected.";
+    public static final String ER05_BODY = "Group name has an invalid format (only characters, numbers and underscores are allowed)";
+    public static final String ER06_BODY = "A group with this name already exists";
+    public static final String ER07_BODY = "A group with this name does not exist";
     public static final String ER08_BODY = "Missing parameters";
+    public static final String ER09_BODY = "You are already in this group";
+    public static final String ER10_BODY = "You are not part of this group";
+    public static final String ER11_BODY = "Password does not match";
+    public static final String ER12_BODY = "You have already been authenticated";
+    public static final String ER13_BODY = "User with this username does not exist";
     public static final String ER66_BODY = "You are already logged in";
-
 
     private ProtocolConstants() {
 
