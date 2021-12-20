@@ -2,13 +2,19 @@ package nl.saxion.itech.server.service;
 
 import nl.saxion.itech.server.model.Client;
 
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.Vector;
 
 public class ClientService {
+    // TODO: change to concurrent hashmap
     private final Vector<Client> clients;
+    private final HashMap<String, Instant> lastMessageTimeStamp;
+
 
     public ClientService() {
         this.clients = new Vector<>();
+        this.lastMessageTimeStamp = new HashMap<>();
     }
 
     public synchronized void removeClient(Client client) {

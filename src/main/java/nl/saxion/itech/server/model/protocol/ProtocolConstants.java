@@ -1,13 +1,15 @@
 package nl.saxion.itech.server.model.protocol;
 
 public final class ProtocolConstants {
+    public static final String INFO_BODY = "Welcome to the server";
+
     public static final String CMD_INFO = "INFO";
     public static final String CMD_CONN = "CONN";
     public static final String CMD_BCST = "BCST";
     public static final String CMD_PING = "PING";
     public static final String CMD_PONG = "PONG";
     public static final String CMD_OK = "OK";
-    public static final String CMD_QUIT = "QUIT";
+    public static final String CMD_DCSN = "DCSN";
     public static final String CMD_ALL = "ALL";
     public static final String CMD_MSG = "MSG";
     public static final String CMD_JOIN = "JOIN";

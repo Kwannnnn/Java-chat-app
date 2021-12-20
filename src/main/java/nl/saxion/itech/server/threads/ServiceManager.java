@@ -10,6 +10,7 @@ import nl.saxion.itech.server.service.MessageService;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -94,19 +95,35 @@ public class ServiceManager extends Thread {
         return this.groupService.hasGroup(groupName);
     }
 
-    public void addGroup(String groupName) {
-        this.groupService.addGroup(groupName);
+    public Group addGroup(String groupName) {
+        return this.groupService.addGroup(groupName);
     }
 
-    public boolean groupHasClient(String groupName, Client client) {
-        return this.groupService.groupHasClient(groupName, client);
+    public boolean groupHasClient(String groupName, String clientUsername) {
+        return this.groupService.groupHasClient(groupName, clientUsername);
     }
 
     public void addClientToGroup(String groupName, Client sender) {
         this.groupService.addClientToGroup(groupName, sender);
     }
 
-    public ArrayList<Client> getGroupMembers(String groupName) {
+    public void removeClientFromGroup(String groupName, String clientUsername) {
+        this.groupService.removeClientFromGroup(groupName, clientUsername);
+    }
+
+    public Collection<Client> getGroupMembers(String groupName) {
         return this.groupService.getGroupMembers(groupName);
+    }
+
+    public void sendInfoMessage(Client sender) {
+        sendMessageToClient(new BaseMessage(
+                ProtocolConstants.CMD_INFO,
+                ProtocolConstants.INFO_BODY,
+                sender
+        ));
+    }
+
+    public void updateTimestampOfClient(String groupName, String username) {
+        this.groupService.updateTimestampOfClient(groupName, username);
     }
 }

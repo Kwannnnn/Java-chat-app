@@ -24,7 +24,12 @@ public class ClientThread extends Thread {
     @Override
     public void run() {
         instantiateStreams();
+        sendInfoMessage();
         handleMessages();
+    }
+
+    private void sendInfoMessage() {
+        this.manager.sendInfoMessage(this.client);
     }
 
     private void instantiateStreams() {

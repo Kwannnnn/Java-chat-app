@@ -3,7 +3,9 @@ package nl.saxion.itech.server.service;
 import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.Group;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class GroupService {
@@ -17,8 +19,10 @@ public class GroupService {
         groups.put(group.getName(), group);
     }
 
-    public void addGroup(String groupName) {
-        groups.put(groupName, new Group(groupName));
+    public Group addGroup(String groupName) {
+        Group group = new Group(groupName);
+        groups.put(groupName, group);
+        return group;
     }
 
     public ConcurrentHashMap<String, Group> getGroups() {
@@ -29,19 +33,25 @@ public class GroupService {
         return groups.containsKey(groupName);
     }
 
-    public boolean groupHasClient(String groupName, Client client) {
+    public boolean groupHasClient(String groupName, String clientUsername) {
         Group foundGroup = groups.get(groupName);
-        if (foundGroup != null) {
-            return foundGroup.hasClient(client);
-        }
-        return false;
+        return foundGroup != null && foundGroup.hasClient(clientUsername);
     }
 
-    public void addClientToGroup(String groupName, Client sender) {
-        this.groups.get(groupName).addClient(sender);
+    public void addClientToGroup(String groupName, Client client) {
+        this.groups.get(groupName).addClient(client);
     }
 
-    public ArrayList<Client> getGroupMembers(String groupName) {
+    public Collection<Client> getGroupMembers(String groupName) {
         return this.groups.get(groupName).getClients();
+    }
+
+    public void removeClientFromGroup(String groupName, String clientUsername) {
+        Group foundGroup = groups.get(groupName);
+        foundGroup.removeClient(clientUsername);
+    }
+
+    public void updateTimestampOfClient(String groupName, String clientUsername) {
+        this.groups.get(groupName).updateTimestampOfClient(clientUsername);
     }
 }

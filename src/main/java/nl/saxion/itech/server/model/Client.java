@@ -5,7 +5,6 @@ import java.net.Socket;
 public class Client {
     private String username;
     private Socket socket;
-    private boolean hasPonged;
 
     public Client(Socket socket) {
         this.socket = socket;
@@ -17,14 +16,6 @@ public class Client {
 
     public Socket getSocket() {
         return this.socket;
-    }
-
-    public void setHasPonged(boolean hasPonged) {
-        this.hasPonged = hasPonged;
-    }
-
-    public boolean isHasPonged() {
-        return hasPonged;
     }
 
     public void setUsername(String username) {
