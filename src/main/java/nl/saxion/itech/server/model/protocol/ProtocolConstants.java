@@ -9,7 +9,7 @@ public final class ProtocolConstants {
     public static final String CMD_PING = "PING";
     public static final String CMD_PONG = "PONG";
     public static final String CMD_OK = "OK";
-    public static final String CMD_DCSN = "DCSN";
+    public static final String CMD_DSCN = "DSCN";
     public static final String CMD_ALL = "ALL";
     public static final String CMD_MSG = "MSG";
     public static final String CMD_JOIN = "JOIN";
@@ -47,6 +47,10 @@ public final class ProtocolConstants {
     public static final String ER12_BODY = "You have already been authenticated";
     public static final String ER13_BODY = "User with this username does not exist";
     public static final String ER66_BODY = "You are already logged in";
+    public static final String DSCN_BODY = "Goodbye";
+
+    public static final int GROUP_TIMEOUT_DURATION = 120;
+    public static final int CLIENT_TIMEOUT_DURATION = 20;
 
     private ProtocolConstants() {
 

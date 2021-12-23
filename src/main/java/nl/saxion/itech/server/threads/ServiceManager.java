@@ -9,10 +9,10 @@ import nl.saxion.itech.server.service.MessageService;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
+import java.time.Instant;
 import java.util.Collection;
-import java.util.Vector;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class ServiceManager extends Thread {
     private final ClientMessageHandler messageHandler;
@@ -30,13 +30,21 @@ public class ServiceManager extends Thread {
     @Override
     public void run() {
         try {
+            startPingThread();
             while (true) {
                 var message = messageService.getNextMessage();
                 sendMessageToClient(message);
+                displayOutgoingMessage(message);
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | IOException e) {
             // Thread interrupted
+            e.printStackTrace();
         }
+    }
+
+    private void displayOutgoingMessage(Message message) {
+        String username = message.getSender().getUsername() == null ? "-" : message.getSender().getUsername();
+        System.out.printf("<< [%s] %s\n", username, message);
     }
 
     public void handleMessage(String message, Client sender) {
@@ -47,48 +55,42 @@ public class ServiceManager extends Thread {
         this.clientService.addClient(client);
     }
 
-    public void startNewPingThread(Client client) {
-        new PingThread(client, this).start();
+    public void startPingThread() {
+        new PingThread(this).start();
     }
 
     public boolean hasClient(String username) {
         return this.clientService.hasClient(username);
     }
 
-    public Client getClientByUsername(String username) {
+    public Client getClient(String username) {
         return this.clientService.getClientByUsername(username);
     }
 
-    public void removeClient(Client client) {
-        this.clientService.removeClient(client);
+    public void removeClient(String username) {
+        this.clientService.removeClient(username);
     }
 
     public void dispatchMessage(Message message) {
         this.messageService.addMessage(message);
     }
 
-    public Vector<Client> getClients() {
+    public Collection<Client> getClients() {
         return this.clientService.getClients();
     }
 
-    public ConcurrentHashMap<String, Group> getGroups() {
+    public Collection<Group> getGroups() {
         return groupService.getGroups();
     }
 
-    private void sendMessageToClient(Message message) {
+    private void sendMessageToClient(Message message) throws IOException {
         var printWriter = getPrintWriter(message.getSender());
-        if (printWriter == null) return; // The client socket has been closed
         printWriter.println(message);
     }
 
-    private PrintWriter getPrintWriter(Client client) {
+    private PrintWriter getPrintWriter(Client client) throws IOException {
         var socket = client.getSocket();
-        try {
-            return new PrintWriter(socket.getOutputStream(), true);
-        } catch (IOException e) {
-            removeClient(client);
-            return null;
-        }
+        return new PrintWriter(socket.getOutputStream(), true);
     }
 
     public boolean hasGroup(String groupName) {
@@ -115,7 +117,7 @@ public class ServiceManager extends Thread {
         return this.groupService.getGroupMembers(groupName);
     }
 
-    public void sendInfoMessage(Client sender) {
+    public void sendInfoMessage(Client sender) throws IOException {
         sendMessageToClient(new BaseMessage(
                 ProtocolConstants.CMD_INFO,
                 ProtocolConstants.INFO_BODY,
@@ -123,7 +125,15 @@ public class ServiceManager extends Thread {
         ));
     }
 
-    public void updateTimestampOfClient(String groupName, String username) {
+    public void updateTimestampOfClientInGroup(String groupName, String username) {
         this.groupService.updateTimestampOfClient(groupName, username);
+    }
+
+    public Set<Map.Entry<String, Instant>> getTimestampsOfClients() {
+        return this.clientService.getLastMessageTimeStamp();
+    }
+
+    public void updateTimestampOfClient(String username) {
+        this.clientService.updateTimestampOfClient(username);
     }
 }

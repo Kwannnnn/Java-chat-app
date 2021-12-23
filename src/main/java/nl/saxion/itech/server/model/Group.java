@@ -2,16 +2,17 @@ package nl.saxion.itech.server.model;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Group {
     private final String name;
-    private final HashMap<String, Client> clients;
-    private final HashMap<String, Instant> lastMessageTimeStamp;
+    private final ConcurrentHashMap<String, Client> clients;
+    private final ConcurrentHashMap<String, Instant> lastMessageTimeStamp;
 
     public Group(String name) {
         this.name = name;
-        this.clients = new HashMap<>();
-        lastMessageTimeStamp = new HashMap<>();
+        this.clients = new ConcurrentHashMap<>();
+        lastMessageTimeStamp = new ConcurrentHashMap<>();
     }
 
     public String getName() {

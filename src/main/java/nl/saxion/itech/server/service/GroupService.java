@@ -4,8 +4,9 @@ import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.Group;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class GroupService {
@@ -14,10 +15,6 @@ public class GroupService {
     public GroupService() {
         this.groups = new ConcurrentHashMap<>();
     }
-    
-    public void addGroup(Group group) {
-        groups.put(group.getName(), group);
-    }
 
     public Group addGroup(String groupName) {
         Group group = new Group(groupName);
@@ -25,8 +22,8 @@ public class GroupService {
         return group;
     }
 
-    public ConcurrentHashMap<String, Group> getGroups() {
-        return groups;
+    public Collection<Group> getGroups() {
+        return groups.values();
     }
 
     public boolean hasGroup(String groupName) {

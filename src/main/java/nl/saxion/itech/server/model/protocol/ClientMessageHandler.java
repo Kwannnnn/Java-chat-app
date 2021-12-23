@@ -4,6 +4,7 @@ import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.Group;
 import nl.saxion.itech.server.threads.GroupPingThread;
 import nl.saxion.itech.server.threads.ServiceManager;
+import static nl.saxion.itech.server.model.protocol.ProtocolConstants.*;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -21,15 +22,15 @@ public class ClientMessageHandler {
         String body = splitMessage.length > 1 ? splitMessage[1] : " ";
 
         switch (header) {
-            case ProtocolConstants.CMD_CONN -> handleConnectMessage(body, sender);
-            case ProtocolConstants.CMD_DCSN -> handleDisconnectMessage(sender);
-            case ProtocolConstants.CMD_BCST -> handleBroadcast(body, sender);
-            case ProtocolConstants.CMD_PONG -> handlePong(sender);
-            case ProtocolConstants.CMD_MSG -> handleDirectMessage(body, sender);
-            case ProtocolConstants.CMD_ALL -> handleAllMessage(sender);
-            case ProtocolConstants.CMD_GRP -> handleGroupMessage(body, sender);
+            case CMD_CONN -> handleConnectMessage(body, sender);
+            case CMD_DSCN -> handleDisconnectMessage(sender);
+            case CMD_BCST -> handleBroadcast(body, sender);
+            case CMD_PONG -> handlePong(sender);
+            case CMD_MSG -> handleDirectMessage(body, sender);
+            case CMD_ALL -> handleAllMessage(sender);
+            case CMD_GRP -> handleGroupMessage(body, sender);
             default -> this.serviceManager.dispatchMessage(
-                    new BaseMessage(ProtocolConstants.CMD_ER00, ProtocolConstants.ER00_BODY, sender));
+                    new BaseMessage(CMD_ER00, ER00_BODY, sender));
         }
     }
 
@@ -39,13 +40,13 @@ public class ClientMessageHandler {
         String body = splitMessage.length > 1 ? splitMessage[1] : " ";
 
         switch (header) {
-            case ProtocolConstants.CMD_ALL -> handleGroupAllMessage(sender);
-            case ProtocolConstants.CMD_NEW -> handleGroupNewMessage(body, sender);
-            case ProtocolConstants.CMD_JOIN -> handleGroupJoinMessage(body, sender);
-            case ProtocolConstants.CMD_MSG -> handleGroupMessageMessage(body, sender);
-            case ProtocolConstants.CMD_DCSN -> handleGroupDisconnectMessage(body, sender);
+            case CMD_ALL -> handleGroupAllMessage(sender);
+            case CMD_NEW -> handleGroupNewMessage(body, sender);
+            case CMD_JOIN -> handleGroupJoinMessage(body, sender);
+            case CMD_MSG -> handleGroupMessageMessage(body, sender);
+            case CMD_DSCN -> handleGroupDisconnectMessage(body, sender);
             default -> this.serviceManager.dispatchMessage(
-                    new BaseMessage(ProtocolConstants.CMD_ER00, ProtocolConstants.ER00_BODY, sender));
+                    new BaseMessage(CMD_ER00, ER00_BODY, sender));
         }
     }
 
@@ -61,9 +62,7 @@ public class ClientMessageHandler {
 
             // send confirmation message back to sender
             this.serviceManager.dispatchMessage(new BaseMessage(
-                    ProtocolConstants.CMD_OK
-                            + " " + ProtocolConstants.CMD_GRP
-                            + " " + ProtocolConstants.CMD_DCSN,
+                    CMD_OK + " " + CMD_GRP + " " + CMD_DSCN,
                     groupName,
                     sender));
         } else {
@@ -74,18 +73,12 @@ public class ClientMessageHandler {
     private Message getGroupDisconnectMessageError(String[] splitMessage, Client sender) {
         if (sender.getUsername() == null) {
             // Please login first
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER03,
-                    ProtocolConstants.ER03_BODY,
-                    sender);
+            return new BaseMessage(CMD_ER03, ER03_BODY, sender);
         }
 
         if (splitMessage.length == 0) {
             // Missing parameters
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER08,
-                    ProtocolConstants.ER08_BODY,
-                    sender
+            return new BaseMessage(CMD_ER08,ER08_BODY, sender
             );
         }
 
@@ -93,10 +86,7 @@ public class ClientMessageHandler {
 
         if (!this.serviceManager.groupHasClient(groupName, sender.getUsername())) {
             // Client not part of group
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER10,
-                    ProtocolConstants.ER10_BODY,
-                    sender);
+            return new BaseMessage(CMD_ER10,ER10_BODY,sender);
         }
 
         return null;
@@ -117,7 +107,7 @@ public class ClientMessageHandler {
             for (Client member : memberList) {
                 if (!member.equals(sender)) {
                     Message m = new BaseMessage(
-                            ProtocolConstants.CMD_GRP + " " + ProtocolConstants.CMD_MSG,
+                            CMD_GRP + " " + CMD_MSG,
                             groupName + " " + groupMessage,
                             member);
 
@@ -126,13 +116,11 @@ public class ClientMessageHandler {
             }
 
             // update last message timestamp
-            this.serviceManager.updateTimestampOfClient(groupName, sender.getUsername());
+            this.serviceManager.updateTimestampOfClientInGroup(groupName, sender.getUsername());
 
             // send confirmation message back to sender
             this.serviceManager.dispatchMessage(new BaseMessage(
-                    ProtocolConstants.CMD_OK
-                            + " " + ProtocolConstants.CMD_GRP
-                            + " " + ProtocolConstants.CMD_MSG,
+                    CMD_OK + " " + CMD_GRP + " " + CMD_MSG,
                     groupName + " " + groupMessage,
                     sender));
         } else {
@@ -143,18 +131,12 @@ public class ClientMessageHandler {
     private Message getGroupMessageMessageError(String[] splitMessage, Client sender) {
         if (sender.getUsername() == null) {
             // Please login first
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER03,
-                    ProtocolConstants.ER03_BODY,
-                    sender);
+            return new BaseMessage(CMD_ER03,ER03_BODY, sender);
         }
 
         if (splitMessage.length < 2) {
             // Missing parameters
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER08,
-                    ProtocolConstants.ER08_BODY,
-                    sender
+            return new BaseMessage(CMD_ER08,ER08_BODY, sender
             );
         }
 
@@ -162,18 +144,12 @@ public class ClientMessageHandler {
 
         if (!this.serviceManager.hasGroup(groupName)) {
             // Group doesn't exist
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER07,
-                    ProtocolConstants.ER07_BODY,
-                    sender);
+            return new BaseMessage(CMD_ER07, ER07_BODY, sender);
         }
 
         if (!this.serviceManager.groupHasClient(groupName, sender.getUsername())) {
             // Client not part of group
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER10,
-                    ProtocolConstants.ER10_BODY,
-                    sender);
+            return new BaseMessage(CMD_ER10,ER10_BODY, sender);
         }
 
         return null;
@@ -195,7 +171,7 @@ public class ClientMessageHandler {
             for (Client member : memberList) {
                 if (!member.equals(sender)) {
                     Message notification = new BaseMessage(
-                            ProtocolConstants.CMD_GRP + " " + ProtocolConstants.CMD_JOIN,
+                            CMD_GRP + " " + CMD_JOIN,
                             groupName + " " + sender.getUsername(),
                             member);
 
@@ -205,9 +181,7 @@ public class ClientMessageHandler {
 
             // send confirmation message back to sender
             this.serviceManager.dispatchMessage(new BaseMessage(
-                    ProtocolConstants.CMD_OK
-                            + " " + ProtocolConstants.CMD_GRP
-                            + " " + ProtocolConstants.CMD_JOIN,
+                    CMD_OK + " " + CMD_GRP + " " + CMD_JOIN,
                     groupName,
                     sender));
         } else {
@@ -218,45 +192,29 @@ public class ClientMessageHandler {
     private Message getGroupJoinMessageError(String[] splitMessage, Client sender) {
         if (sender.getUsername() == null) {
             // Please login first
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER03,
-                    ProtocolConstants.ER03_BODY,
-                    sender);
+            return new BaseMessage(CMD_ER03, ER03_BODY, sender);
         }
 
         if (splitMessage.length == 0) {
             // Missing parameters
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER08,
-                    ProtocolConstants.ER08_BODY,
-                    sender
-            );
+            return new BaseMessage(CMD_ER08, ER08_BODY, sender);
         }
 
         String groupName = splitMessage[0];
 
         if (!isValidGroupName(groupName)) {
             // Invalid group name
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER05,
-                    ProtocolConstants.ER05_BODY,
-                    sender);
+            return new BaseMessage(CMD_ER05, ER05_BODY, sender);
         }
 
         if (!this.serviceManager.hasGroup(groupName)) {
             // Group doesn't exist
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER07,
-                    ProtocolConstants.ER07_BODY,
-                    sender);
+            return new BaseMessage(CMD_ER07, ER07_BODY, sender);
         }
 
         if (this.serviceManager.groupHasClient(groupName, sender.getUsername())) {
             // Client already joined group
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER09,
-                    ProtocolConstants.ER09_BODY,
-                    sender);
+            return new BaseMessage(CMD_ER09, ER09_BODY, sender);
         }
 
         return null;
@@ -275,9 +233,7 @@ public class ClientMessageHandler {
 
             //send confirmation message back to sender
             this.serviceManager.dispatchMessage(new BaseMessage(
-                    ProtocolConstants.CMD_OK
-                            + " " + ProtocolConstants.CMD_GRP
-                            + " " + ProtocolConstants.CMD_NEW,
+                    CMD_OK + " " + CMD_GRP + " " + CMD_NEW,
                     groupName,
                     sender
             ));
@@ -289,28 +245,19 @@ public class ClientMessageHandler {
     private Message getGroupNewMessageError(String[] splitMessage, Client sender) {
         if (sender.getUsername() == null) {
             // Please login first
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER03,
-                    ProtocolConstants.ER03_BODY,
-                    sender);
+            return new BaseMessage(CMD_ER03, ER03_BODY, sender);
         }
 
         String groupName = splitMessage[0];
 
         if (!isValidGroupName(groupName)) {
             // invalid group name
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER05,
-                    ProtocolConstants.ER05_BODY,
-                    sender);
+            return new BaseMessage(CMD_ER05, ER05_BODY, sender);
         }
 
         if (this.serviceManager.hasGroup(groupName)) {
             // group already exists
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER06,
-                    ProtocolConstants.ER06_BODY,
-                    sender);
+            return new BaseMessage(CMD_ER06, ER06_BODY, sender);
         }
 
         return null;
@@ -319,19 +266,13 @@ public class ClientMessageHandler {
     private void handleGroupAllMessage(Client sender) {
         if (sender.getUsername() == null) {
             // Please login first
-            this.serviceManager.dispatchMessage(new BaseMessage(
-                    ProtocolConstants.CMD_ER03,
-                    ProtocolConstants.ER03_BODY,
-                    sender
-            ));
+            this.serviceManager.dispatchMessage(new BaseMessage(CMD_ER03, ER03_BODY, sender));
         }
 
-        String listString = String.join(",", serviceManager.getGroups().keySet());
+        String listString = serviceManager.getGroups().stream().map(Group::getName).collect(Collectors.joining(","));
 
         this.serviceManager.dispatchMessage(new BaseMessage(
-                ProtocolConstants.CMD_OK
-                        + " " + ProtocolConstants.CMD_GRP
-                        + " " + ProtocolConstants.CMD_ALL,
+                CMD_OK + " " + CMD_GRP + " " + CMD_ALL,
                 listString,
                 sender));
     }
@@ -339,11 +280,7 @@ public class ClientMessageHandler {
     private void handleAllMessage(Client sender) {
         if (sender.getUsername() == null) {
             // Please login first
-            this.serviceManager.dispatchMessage(new BaseMessage(
-                    ProtocolConstants.CMD_ER03,
-                    ProtocolConstants.ER03_BODY,
-                    sender
-            ));
+            this.serviceManager.dispatchMessage(new BaseMessage(CMD_ER03, ER03_BODY, sender));
             return;
         }
 
@@ -351,9 +288,7 @@ public class ClientMessageHandler {
 
         // send confirmation message back to sender
         this.serviceManager.dispatchMessage(new BaseMessage(
-                ProtocolConstants.CMD_OK
-                        + " " +
-                        ProtocolConstants.CMD_ALL,
+                CMD_OK + " " + CMD_ALL,
                 listString,
                 sender));
     }
@@ -367,10 +302,9 @@ public class ClientMessageHandler {
             String recipientUsername = splitMessage[0];
             String body = splitMessage[1];
 
-            //TODO: which client to send to if there are duplicates????
-            Client recipient = this.serviceManager.getClientByUsername(recipientUsername);
+            Client recipient = this.serviceManager.getClient(recipientUsername);
 
-            String messageToRecipient = ProtocolConstants.CMD_MSG + " " + sender.getUsername() + body;
+            String messageToRecipient = CMD_MSG + " " + sender.getUsername() + body;
             sendPrivateMessage(messageToRecipient, recipient, sender);
         } else {
             this.serviceManager.dispatchMessage(error);
@@ -379,7 +313,7 @@ public class ClientMessageHandler {
 
     private void sendPrivateMessage(String message, Client recipient, Client sender) {
         var messageToRecipient = new BaseMessage(
-                ProtocolConstants.CMD_MSG + " " + sender.getUsername(),
+                CMD_MSG + " " + sender.getUsername(),
                 message,
                 recipient
         );
@@ -387,7 +321,7 @@ public class ClientMessageHandler {
 
         //send confirmation message back to sender
         this.serviceManager.dispatchMessage(new BaseMessage(
-                ProtocolConstants.CMD_OK + " " + ProtocolConstants.CMD_MSG + " " + recipient.getUsername(),
+                CMD_OK + " " + CMD_MSG + " " + recipient.getUsername(),
                 message,
                 sender
         ));
@@ -396,56 +330,38 @@ public class ClientMessageHandler {
     private Message getDirectMessageError(String[] splitMessage, Client sender) {
         if (sender.getUsername() == null) {
             // Please login first
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER03,
-                    ProtocolConstants.ER03_BODY,
-                    sender
-            );
+            return new BaseMessage(CMD_ER03,ER03_BODY, sender);
         }
 
         if (splitMessage.length < 2) {
             // Missing parameters
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER08,
-                    ProtocolConstants.ER08_BODY,
-                    sender
-            );
+            return new BaseMessage(CMD_ER08, ER08_BODY, sender);
         }
 
         String recipientUsername = splitMessage[0];
 
         if (!this.serviceManager.hasClient(recipientUsername)) {
             // User is not connected
-            return new BaseMessage(
-                    ProtocolConstants.CMD_ER04,
-                    ProtocolConstants.ER04_BODY,
-                    sender
-            );
+            return new BaseMessage(CMD_ER04, ER04_BODY, sender);
         }
 
         return null;
     }
 
     private void handlePong(Client sender) {
-        //TODO: decide if we should check if message body is empty
-        sender.setHasPonged(true);
+        this.serviceManager.updateTimestampOfClient(sender.getUsername());
     }
 
     private void handleBroadcast(String messageToBroadcast, Client sender) {
         if (sender.getUsername() == null) {
-            this.serviceManager.dispatchMessage(new BaseMessage(
-                    ProtocolConstants.CMD_ER03,
-                    ProtocolConstants.ER03_BODY,
-                    sender
-            ));
-
+            this.serviceManager.dispatchMessage(new BaseMessage(CMD_ER03, ER03_BODY, sender));
             return;
         }
 
         broadcastMessage(messageToBroadcast, sender);
 
         this.serviceManager.dispatchMessage(new BaseMessage(
-                ProtocolConstants.CMD_OK + " " + ProtocolConstants.CMD_BCST,
+                CMD_OK + " " + CMD_BCST,
                 messageToBroadcast,
                 sender
         ));
@@ -455,8 +371,7 @@ public class ClientMessageHandler {
         for (var client : this.serviceManager.getClients()) {
             if (!client.equals(sender)) {
                 var broadcastMessage = new BaseMessage(
-                        ProtocolConstants.CMD_BCST
-                                + " " + sender.getUsername(),
+                        CMD_BCST + " " + sender.getUsername(),
                         messageToBroadcast,
                         client
                 );
@@ -466,15 +381,14 @@ public class ClientMessageHandler {
     }
 
     private void handleDisconnectMessage(Client sender) {
-        this.serviceManager.removeClient(sender);
-
         var response = new BaseMessage(
-                ProtocolConstants.CMD_OK + " " + ProtocolConstants.CMD_DCSN,
-                null,
+                CMD_OK + " " + CMD_DSCN,
+                DSCN_BODY,
                 sender
         );
 
         this.serviceManager.dispatchMessage(response);
+        this.serviceManager.removeClient(sender.getUsername());
 
         try {
             sender.getSocket().close();
@@ -492,14 +406,11 @@ public class ClientMessageHandler {
 
             //send confirmation back to client
             var message = new BaseMessage(
-                    ProtocolConstants.CMD_OK + " " + ProtocolConstants.CMD_CONN,
+                    CMD_OK + " " + CMD_CONN,
                     username,
                     sender
             );
             this.serviceManager.dispatchMessage(message);
-
-            //start ping thread for new client
-            this.serviceManager.startNewPingThread(sender);
         } else {
             this.serviceManager.dispatchMessage(error);
         }
@@ -507,15 +418,15 @@ public class ClientMessageHandler {
 
     private Message getConnectError(String username, Client sender) {
         if (sender.getUsername() != null) {
-            return new BaseMessage(ProtocolConstants.CMD_ER66, ProtocolConstants.ER66_BODY, sender);
+            return new BaseMessage(CMD_ER66, ER66_BODY, sender);
         }
 
         if (!isValidUsername(username)) {
-            return new BaseMessage(ProtocolConstants.CMD_ER02, ProtocolConstants.ER02_BODY, sender);
+            return new BaseMessage(CMD_ER02, ER02_BODY, sender);
         }
 
         if (isLoggedIn(username)) {
-            return new BaseMessage(ProtocolConstants.CMD_ER01, ProtocolConstants.ER01_BODY, sender);
+            return new BaseMessage(CMD_ER01, ER01_BODY, sender);
         }
 
         return null;

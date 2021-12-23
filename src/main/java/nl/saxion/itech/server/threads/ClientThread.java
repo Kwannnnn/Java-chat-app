@@ -23,12 +23,16 @@ public class ClientThread extends Thread {
 
     @Override
     public void run() {
-        instantiateStreams();
-        sendInfoMessage();
-        handleMessages();
+        try {
+            instantiateStreams();
+            sendInfoMessage();
+            handleMessages();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    private void sendInfoMessage() {
+    private void sendInfoMessage() throws IOException {
         this.manager.sendInfoMessage(this.client);
     }
 
@@ -44,18 +48,24 @@ public class ClientThread extends Thread {
 
     private void handleMessages() {
         try {
-            while (!isInterrupted() || this.clientSocket.isClosed()) {
+            while (!isInterrupted()) {
                 String rawMessage = in.readLine();
 
                 if (rawMessage == null) break;
 
+                displayIncomingMessage(rawMessage);
                 this.manager.handleMessage(rawMessage, this.client);
             }
         } catch (IOException e) {
             if (this.client.getUsername() != null) {
-                this.manager.removeClient(this.client);
+                this.manager.removeClient(this.client.getUsername());
             }
             Thread.currentThread().interrupt();
         }
+    }
+
+    private void displayIncomingMessage(String message) {
+        String username = this.client.getUsername() == null ? "-" : this.client.getUsername();
+        System.out.printf(">> [%s] %s\n", username, message);
     }
 }

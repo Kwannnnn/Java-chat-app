@@ -1,41 +1,46 @@
 package nl.saxion.itech.server.threads;
 
-import nl.saxion.itech.server.model.Client;
-import nl.saxion.itech.server.model.protocol.ProtocolConstants;
+import nl.saxion.itech.server.model.protocol.BaseMessage;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.time.Duration;
+import java.time.Instant;
+
+import static nl.saxion.itech.server.model.protocol.ProtocolConstants.*;
 
 public class PingThread extends Thread {
-    private Client client;
-    private final ServiceManager serviceManager;
-    private PrintWriter out;
+    private final ServiceManager manager;
 
-    public PingThread(Client client, ServiceManager serviceManager) {
-        this.client = client;
-        this.serviceManager = serviceManager;
+    public PingThread(ServiceManager manager) {
+        this.manager = manager;
     }
 
     @Override
     public void run() {
-//        try {
-//            try {
-//                this.out = new PrintWriter(this.client.getSocket().getOutputStream(), true);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//            while (!isInterrupted()) {
-//                this.client.setHasPonged(false);
-//                Thread.sleep(10 * 1000);
-//                this.out.println(ProtocolConstants.CMD_PING);
-//                Thread.sleep(3 * 1000);
-//                if (!client.isHasPonged()) {
-//                    this.serviceManager.removeClient(client);
-//                    Thread.currentThread().interrupt();
-//                }
-//            }
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            while (!isInterrupted()) {
+                Thread.sleep(CLIENT_TIMEOUT_DURATION * 1000);
+                Instant now = Instant.now();
+                for (var entry : this.manager.getTimestampsOfClients()) {
+                    Duration difference = Duration.between(entry.getValue(), now);
+                    if (difference.toMillis() > CLIENT_TIMEOUT_DURATION * 1000) {
+                        String username = entry.getKey();
+                        this.manager.dispatchMessage(new BaseMessage(
+                                CMD_DSCN + " " + CMD_PONG,
+                                "timeout",
+                                this.manager.getClient(username)
+                        ));
+                        this.manager.removeClient(username);
+                    } else {
+                        this.manager.dispatchMessage(new BaseMessage(
+                                CMD_PING,
+                                "",
+                                this.manager.getClient(entry.getKey())
+                        ));
+                    }
+                }
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
