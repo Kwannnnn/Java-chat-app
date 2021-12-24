@@ -1,85 +1,108 @@
 package nl.saxion.itech.client;
 
-public abstract class ProtocolInterpreter {
-    protected static final int TERMINAL_SIZE = 80;
+import static nl.saxion.itech.shared.ANSIColorCodes.*;
 
-    protected static final String CMD_CONN = "CONN";
-    protected static final String CMD_BCST = "BCST";
-    protected static final String CMD_OK = "OK";
-    protected static final String CMD_INFO = "INFO";
-    protected static final String CMD_PING = "PING";
-    protected static final String CMD_PONG = "PONG";
-    protected static final String CMD_ER00 = "ER00";
-    protected static final String CMD_ER01 = "ER01";
-    protected static final String CMD_ER02 = "ER02";
-    protected static final String CMD_ER03 = "ER03";
+public final class ProtocolInterpreter {
+    public static final int TERMINAL_SIZE = 80;
 
-    public static final String ANSI_RED = "\u001B[31m";
-    public static final String ANSI_GREEN = "\u001B[32;51m";
-    public static final String ANSI_YELLOW = "\u001B[33;3m";
-    public static final String ANSI_MAGENTA = "\u001B[95m";
-    public static final String ANSI_BOLD = "\u001B[1m";
-    public static final String ANSI_ITALIC = "\u001B[3m";
-    public static final String ANSI_RESET = "\u001B[0m";
-
-
-    protected void showMenu() {
+    public static void showMenu() {
         System.out.print(ANSI_MAGENTA +
                 """
-                B: \t Broadcast a message to every client on the server
-                Q: \t Close connection with the server
-                ?: \t Show this menu
-                """ + ANSI_RESET);
+                        B: \t Broadcast a message to every client on the server
+                        Q: \t Close connection with the server
+                        ?: \t Show this menu
+                        """ + ANSI_RESET);
     }
 
-    protected void showWelcomeMessage(String message) {
+    public static void showWelcomeMessage(String message) {
         System.out.println();
-        message = " ".repeat(TERMINAL_SIZE) + "\n" + message + "\n" + " ".repeat(TERMINAL_SIZE);
+        message = " ".repeat(TERMINAL_SIZE) + "\n" + centerText(message) + "\n" + " ".repeat(TERMINAL_SIZE);
         System.out.println(ANSI_GREEN + message + ANSI_RESET);
         System.out.println();
     }
 
-    protected void askUsernameMessage() {
+    public static void askUsernameMessage() {
         System.out.print(bold(">> Please enter your username to log in: "));
     }
 
-    protected void promptMenuMessage() {
+    public static void showInvalidUsernameMessage() {
+        System.out.println(ANSI_RED + "Invalid username! Usernames must be between 3 and 14 characters, and can " +
+                "only contain letters, numbers, and underscores" + ANSI_RESET);
+    }
+
+    public static void promptMenuMessage() {
         System.out.println(ANSI_YELLOW + "Type '?' to show menu." + ANSI_RESET);
     }
 
-    protected void showErrorMessage(String message) {
+    public static void showErrorMessage(String message) {
         System.out.println(ANSI_RED + message + ANSI_RESET);
     }
 
-    protected void showSuccessfulLoginMessage() {
+    public static void showSuccessfulLoginMessage() {
         System.out.println(italic("You have been successfully logged in!"));
     }
 
-    protected void showSuccessfulBroadcastMessage(String message) {
+    public static void showBroadcastMessage(String sender, String message) {
+        System.out.println("New broadcast message by " + bold(sender) + ": " + message);
+
+    }
+
+    public static void showSuccessfulBroadcastMessage(String message) {
         System.out.println(italic("Successfully broadcast message: ") + message);
     }
 
-    protected void enterMessageMessage() {
+    public static void showSuccessfulAllMessage(String[] clients) {
+        System.out.println("====List of clients====");
+        for (String client : clients) {
+            System.out.println(client);
+        }
+        System.out.println("======================");    }
+
+    public static void showSuccessfulGroupNewMessage(String groupName) {
+        System.out.println(italic("New group successfully created: ") + groupName);
+    }
+
+    public static void showSuccessfulGroupJoinMessage(String groupName) {
+        System.out.println(italic("Successfully joined group: ") + groupName);
+    }
+
+    public static void showSuccessfulGroupAllMessage(String[] groups) {
+        System.out.println("====List of groups====");
+        for (String group : groups) {
+            System.out.println(group);
+        }
+        System.out.println("======================");
+    }
+
+    public static void showSuccessfulGroupDisconnectMessage(String groupName) {
+        System.out.println(italic("Successfully disconnected from group: ") + groupName);
+    }
+
+    public static void showSuccessfulGroupMessageMessage(String groupName, String message) {
+        System.out.println(italic("Successfully sent to group " + bold(groupName) + " message: ") + bold(message));
+    }
+
+    public static void enterMessageMessage() {
         System.out.print(bold(">> Please enter your message: "));
     }
 
-    protected void displayMessage(String sender, String message) {
-        System.out.println(bold("[" + sender + "]: " ) + message);
+    public static void showIncomingDirectMessage(String sender, String message) {
+        System.out.println("New direct message from " + bold(sender) + ": " + message);
     }
 
-    protected void connectionLost() {
-        System.out.println(ANSI_RED + "\nYou have been disconnected from the server!" + ANSI_RESET);
+    public static void connectionLost() {
+        System.out.println(ANSI_RED + "\nAn error occurred! You have been disconnected from the server!" + ANSI_RESET);
     }
 
-    private String italic(String string) {
-        return ANSI_ITALIC + string + ANSI_RESET;
+    public static void showSuccessfulDirectMessage(String recipient, String message) {
+        System.out.println(italic("Successfully sent to user " + bold(recipient) +" message: " + message));
     }
 
-    private String bold(String string) {
-        return ANSI_BOLD + string + ANSI_RESET;
+    public static void showSuccessfulDisconnectMessage() {
+        System.out.println(italic("You have been successfully disconnected from the server"));
     }
 
-    protected String centerText(String text) {
+    public static String centerText(String text) {
         String result = "";
 
         String emptySpaces = " ".repeat((TERMINAL_SIZE - text.length()) / 2);
@@ -87,4 +110,21 @@ public abstract class ProtocolInterpreter {
         result = emptySpaces + text + emptySpaces;
         return result;
     }
+
+    public static void showGroupJoinMessage(String groupName, String newMember) {
+        System.out.println(italic("User " + bold(newMember) + " just joined group " + bold(groupName)));
+    }
+
+    public static void showGroupMessageMessage(String groupName, String message) {
+        System.out.println(bold("New message in group " + bold(groupName) + ": " + message));
+    }
+
+    public static String italic(String string) {
+        return ANSI_ITALIC + string + ANSI_RESET;
+    }
+
+    public static String bold(String string) {
+        return ANSI_BOLD + string + ANSI_RESET;
+    }
+
 }

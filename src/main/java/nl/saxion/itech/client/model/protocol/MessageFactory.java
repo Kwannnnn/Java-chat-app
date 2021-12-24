@@ -27,7 +27,7 @@ public class MessageFactory {
     public Message getMessage(String message) {
         String[] splitMessage = parseMessage(message);
         String header = splitMessage[0];
-        String body = splitMessage.length > 1 ? splitMessage[1] : "";
+        String body = splitMessage.length > 1 ? splitMessage[1] : " ";
 
         return switch (header) {
             case CMD_INFO -> new InfoMessage(body);
@@ -54,7 +54,7 @@ public class MessageFactory {
     private Message handleOkMessage(String message) {
         String[] splitMessage = parseMessage(message);
         String header = splitMessage[0];
-        String body = splitMessage.length > 1 ? splitMessage[1] : "";
+        String body = splitMessage.length > 1 ? splitMessage[1] : " ";
 
         return switch (header) {
             case CMD_CONN -> new OkConnectMessage(body);

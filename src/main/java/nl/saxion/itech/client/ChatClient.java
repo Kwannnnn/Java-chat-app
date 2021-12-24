@@ -1,12 +1,10 @@
 package nl.saxion.itech.client;
 
-import nl.saxion.itech.client.model.protocol.MessageFactory;
-import nl.saxion.itech.client.model.protocol.messages.Visitable;
-import nl.saxion.itech.client.model.protocol.visitors.ReadMessageVisitor;
+import nl.saxion.itech.client.newDesign.Message;
+import nl.saxion.itech.client.newDesign.ServerMessageHandler;
 import nl.saxion.itech.client.threads.InputHandler;
 import nl.saxion.itech.client.threads.MessageReceiver;
 import nl.saxion.itech.client.threads.MessageSender;
-import nl.saxion.itech.client.model.protocol.messages.Message;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -20,7 +18,7 @@ public class ChatClient {
     private Thread writeThread;
     private Thread CLIThread;
     private String currentUser;
-    private MessageFactory messageFactory;
+    private ServerMessageHandler messageHandler;
     private BlockingQueue<Message> messagesQueue = new LinkedBlockingQueue<>();
 
     public ChatClient() {
@@ -30,7 +28,7 @@ public class ChatClient {
             this.readThread = new Thread(new MessageSender(socket, this));
             this.writeThread = new Thread(new MessageReceiver(socket, this));
             this.CLIThread = new InputHandler(this);
-            this.messageFactory = new MessageFactory();
+            this.messageHandler = new ServerMessageHandler(this);
         } catch (IOException e) {
             System.err.println(e.getMessage());
         }
@@ -59,8 +57,7 @@ public class ChatClient {
     }
 
     public void handleMessage(String rawMessage) {
-        var message = new MessageFactory().getMessage(rawMessage);
-        ((Visitable) message).accept(new ReadMessageVisitor(this));
+        this.messageHandler.handle(rawMessage);
     }
 
     public void addMessageToQueue(Message message) {
@@ -71,8 +68,7 @@ public class ChatClient {
         }
     }
 
-
-    private String[] parseMessage(String response) {
-        return response.split(" ", 2);
+    public void closeConnection() {
+        this.CLIThread.interrupt();
     }
 }

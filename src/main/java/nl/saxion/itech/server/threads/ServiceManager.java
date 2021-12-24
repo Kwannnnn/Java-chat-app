@@ -1,5 +1,6 @@
 package nl.saxion.itech.server.threads;
 
+import nl.saxion.itech.shared.ProtocolConstants;
 import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.Group;
 import nl.saxion.itech.server.model.protocol.*;
@@ -135,5 +136,13 @@ public class ServiceManager extends Thread {
 
     public void updateTimestampOfClient(String username) {
         this.clientService.updateTimestampOfClient(username);
+    }
+
+    public void closeConnection(Client sender) {
+        try {
+            sender.getSocket().close();
+        } catch (IOException e) {
+            System.err.println("Client socket has already been closed.");
+        }
     }
 }

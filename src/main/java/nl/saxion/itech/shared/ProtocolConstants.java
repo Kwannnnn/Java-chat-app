@@ -1,4 +1,4 @@
-package nl.saxion.itech.server.model.protocol;
+package nl.saxion.itech.shared;
 
 public final class ProtocolConstants {
     public static final String INFO_BODY = "Welcome to the server";
@@ -51,8 +51,4 @@ public final class ProtocolConstants {
 
     public static final int GROUP_TIMEOUT_DURATION = 120;
     public static final int CLIENT_TIMEOUT_DURATION = 20;
-
-    private ProtocolConstants() {
-
-    }
 }

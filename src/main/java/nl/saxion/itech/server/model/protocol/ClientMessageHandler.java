@@ -4,7 +4,7 @@ import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.Group;
 import nl.saxion.itech.server.threads.GroupPingThread;
 import nl.saxion.itech.server.threads.ServiceManager;
-import static nl.saxion.itech.server.model.protocol.ProtocolConstants.*;
+import static nl.saxion.itech.shared.ProtocolConstants.*;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -304,27 +304,22 @@ public class ClientMessageHandler {
 
             Client recipient = this.serviceManager.getClient(recipientUsername);
 
-            String messageToRecipient = CMD_MSG + " " + sender.getUsername() + body;
-            sendPrivateMessage(messageToRecipient, recipient, sender);
+            var messageToRecipient = new BaseMessage(
+                    CMD_MSG + " " + sender.getUsername(),
+                    body,
+                    recipient
+            );
+            this.serviceManager.dispatchMessage(messageToRecipient);
+
+            //send confirmation message back to sender
+            this.serviceManager.dispatchMessage(new BaseMessage(
+                    CMD_OK + " " + CMD_MSG + " " + recipient.getUsername(),
+                    body,
+                    sender
+            ));
         } else {
             this.serviceManager.dispatchMessage(error);
         }
-    }
-
-    private void sendPrivateMessage(String message, Client recipient, Client sender) {
-        var messageToRecipient = new BaseMessage(
-                CMD_MSG + " " + sender.getUsername(),
-                message,
-                recipient
-        );
-        this.serviceManager.dispatchMessage(messageToRecipient);
-
-        //send confirmation message back to sender
-        this.serviceManager.dispatchMessage(new BaseMessage(
-                CMD_OK + " " + CMD_MSG + " " + recipient.getUsername(),
-                message,
-                sender
-        ));
     }
 
     private Message getDirectMessageError(String[] splitMessage, Client sender) {
@@ -390,11 +385,8 @@ public class ClientMessageHandler {
         this.serviceManager.dispatchMessage(response);
         this.serviceManager.removeClient(sender.getUsername());
 
-        try {
-            sender.getSocket().close();
-        } catch (IOException e) {
-            System.err.println("Client socket has already been closed.");
-        }
+        //TODO: maybe this shouldn't be here
+        this.serviceManager.closeConnection(sender);
     }
 
     private void handleConnectMessage(String username, Client sender) {

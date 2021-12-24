@@ -5,7 +5,7 @@ import nl.saxion.itech.server.model.protocol.BaseMessage;
 import java.time.Duration;
 import java.time.Instant;
 
-import static nl.saxion.itech.server.model.protocol.ProtocolConstants.*;
+import static nl.saxion.itech.shared.ProtocolConstants.*;
 
 public class PingThread extends Thread {
     private final ServiceManager manager;
@@ -18,7 +18,7 @@ public class PingThread extends Thread {
     public void run() {
         try {
             while (!isInterrupted()) {
-                Thread.sleep(CLIENT_TIMEOUT_DURATION * 1000);
+                Thread.sleep(CLIENT_TIMEOUT_DURATION * 500);
                 Instant now = Instant.now();
                 for (var entry : this.manager.getTimestampsOfClients()) {
                     Duration difference = Duration.between(entry.getValue(), now);

@@ -6,6 +6,4 @@ public interface Message {
     String getHeader();
     String getBody();
     Client getSender();
-    void setSender(Client sender);
-    void accept(MessageHandler messageHandler);
 }

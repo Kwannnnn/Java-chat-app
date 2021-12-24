@@ -3,7 +3,7 @@ package nl.saxion.itech.server.threads;
 import nl.saxion.itech.server.model.Group;
 import nl.saxion.itech.server.model.protocol.BaseMessage;
 
-import static nl.saxion.itech.server.model.protocol.ProtocolConstants.*;
+import static nl.saxion.itech.shared.ProtocolConstants.*;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -21,7 +21,7 @@ public class GroupPingThread extends Thread {
     public void run() {
         try {
             while (!isInterrupted()) {
-                Thread.sleep(GROUP_TIMEOUT_DURATION * 1000);
+                Thread.sleep(GROUP_TIMEOUT_DURATION * 500);
                 Instant now = Instant.now();
                 for (var entry : this.group.getLastMessageTimeStamp()) {
                     Duration difference = Duration.between(entry.getValue(), now);

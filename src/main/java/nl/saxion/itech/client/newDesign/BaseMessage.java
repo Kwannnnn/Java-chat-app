@@ -1,17 +1,15 @@
-package nl.saxion.itech.server.model.protocol;
-
-import nl.saxion.itech.server.model.Client;
+package nl.saxion.itech.client.newDesign;
 
 public class BaseMessage implements Message {
     private final String header;
-    private final Client sender;
     private final String body;
 
-    public BaseMessage(String header, String body, Client sender) {
+    public BaseMessage(String header, String body) {
         this.header = header;
         this.body = body;
-        this.sender = sender;
     }
+
+
 
     public String getHeader() {
         return this.header;
@@ -19,10 +17,6 @@ public class BaseMessage implements Message {
 
     public String getBody() {
         return this.body;
-    }
-
-    public Client getSender() {
-        return this.sender;
     }
 
     @Override
