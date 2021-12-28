@@ -3,6 +3,7 @@ package nl.saxion.itech.server.model;
 import java.net.Socket;
 
 public class Client {
+    // TODO: With Optional<String>
     private String username;
     private Socket socket;
 

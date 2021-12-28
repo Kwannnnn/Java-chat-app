@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ServiceManager extends Thread {
     private final ClientMessageHandler messageHandler;
@@ -76,12 +77,28 @@ public class ServiceManager extends Thread {
         this.messageService.addMessage(message);
     }
 
-    public Collection<Client> getClients() {
-        return this.clientService.getClients();
+    public void broadcastMessage(Message message) {
+        for (var client :
+                this.clientService.getClients()) {
+            message.setSender(client);
+            dispatchMessage(message);
+        }
     }
 
-    public Collection<Group> getGroups() {
-        return groupService.getGroups();
+    public String getClients() {
+        return this.clientService
+                .getClients()
+                .stream()
+                .map(Client::getUsername)
+                .collect(Collectors.joining(","));
+    }
+
+    public String getGroups() {
+        return this.groupService
+                .getGroups()
+                .stream()
+                .map(Group::getName)
+                .collect(Collectors.joining(","));
     }
 
     private void sendMessageToClient(Message message) throws IOException {
@@ -98,8 +115,9 @@ public class ServiceManager extends Thread {
         return this.groupService.hasGroup(groupName);
     }
 
-    public Group addGroup(String groupName) {
-        return this.groupService.addGroup(groupName);
+    public void addGroup(String groupName) {
+        var addedGroup = this.groupService.addGroup(groupName);
+        new GroupPingThread(addedGroup, this).start();
     }
 
     public boolean groupHasClient(String groupName, String clientUsername) {

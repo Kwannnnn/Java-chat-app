@@ -3,10 +3,7 @@ package nl.saxion.itech.server.service;
 import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.Group;
 
-import java.time.Instant;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class GroupService {
@@ -17,7 +14,7 @@ public class GroupService {
     }
 
     public Group addGroup(String groupName) {
-        Group group = new Group(groupName);
+        var group = new Group(groupName);
         groups.put(groupName, group);
         return group;
     }

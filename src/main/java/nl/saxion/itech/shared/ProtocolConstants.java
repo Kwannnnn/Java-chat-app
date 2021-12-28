@@ -50,5 +50,5 @@ public final class ProtocolConstants {
     public static final String DSCN_BODY = "Goodbye";
 
     public static final int GROUP_TIMEOUT_DURATION = 120;
-    public static final int CLIENT_TIMEOUT_DURATION = 20;
+    public static final int CLIENT_TIMEOUT_DURATION = 2770;
 }

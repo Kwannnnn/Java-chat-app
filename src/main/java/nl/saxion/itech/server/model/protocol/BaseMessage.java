@@ -4,13 +4,22 @@ import nl.saxion.itech.server.model.Client;
 
 public class BaseMessage implements Message {
     private final String header;
-    private final Client sender;
     private final String body;
+    private Client client;
 
-    public BaseMessage(String header, String body, Client sender) {
+    public BaseMessage(String header, String body, Client client) {
         this.header = header;
         this.body = body;
-        this.sender = sender;
+        this.client = client;
+    }
+
+    public BaseMessage(String header, String body) {
+        this.header = header;
+        this.body = body;
+    }
+
+    public void setSender(Client client) {
+        this.client = client;
     }
 
     public String getHeader() {
@@ -22,7 +31,7 @@ public class BaseMessage implements Message {
     }
 
     public Client getSender() {
-        return this.sender;
+        return this.client;
     }
 
     @Override

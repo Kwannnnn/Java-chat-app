@@ -1,13 +1,10 @@
 package nl.saxion.itech.server.model.protocol;
 
 import nl.saxion.itech.server.model.Client;
-import nl.saxion.itech.server.model.Group;
-import nl.saxion.itech.server.threads.GroupPingThread;
 import nl.saxion.itech.server.threads.ServiceManager;
 import static nl.saxion.itech.shared.ProtocolConstants.*;
 
-import java.io.IOException;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class ClientMessageHandler {
     private final ServiceManager serviceManager;
@@ -53,294 +50,173 @@ public class ClientMessageHandler {
     private void handleGroupDisconnectMessage(String message, Client sender) {
         String[] splitMessage = parseMessage(message);
 
-        Message error = getGroupDisconnectMessageError(splitMessage, sender);
-
-        if (error == null) {
-            String groupName = splitMessage[0];
-
-            this.serviceManager.removeClientFromGroup(groupName, sender.getUsername());
-
-            // send confirmation message back to sender
-            this.serviceManager.dispatchMessage(new BaseMessage(
-                    CMD_OK + " " + CMD_GRP + " " + CMD_DSCN,
-                    groupName,
-                    sender));
-        } else {
-            this.serviceManager.dispatchMessage(error);
-        }
-    }
-
-    private Message getGroupDisconnectMessageError(String[] splitMessage, Client sender) {
-        if (sender.getUsername() == null) {
-            // Please login first
-            return new BaseMessage(CMD_ER03, ER03_BODY, sender);
+        var error = getGroupDisconnectMessageError(splitMessage, sender);
+        if (error.isPresent()) {
+            // An error message has occurred
+            dispatchMessage(error.get());
+            return;
         }
 
-        if (splitMessage.length == 0) {
-            // Missing parameters
-            return new BaseMessage(CMD_ER08,ER08_BODY, sender
-            );
-        }
+        var groupName = splitMessage[0];
 
-        String groupName = splitMessage[0];
+        this.serviceManager.removeClientFromGroup(groupName, sender.getUsername());
 
-        if (!this.serviceManager.groupHasClient(groupName, sender.getUsername())) {
-            // Client not part of group
-            return new BaseMessage(CMD_ER10,ER10_BODY,sender);
-        }
-
-        return null;
+        // send confirmation message back to sender
+        dispatchMessage(new BaseMessage(
+                CMD_OK + " " + CMD_GRP + " " + CMD_DSCN,
+                groupName,
+                sender)
+        );
     }
 
     private void handleGroupMessageMessage(String message, Client sender) {
         String[] splitMessage = parseMessage(message);
 
-        Message error = getGroupMessageMessageError(splitMessage, sender);
+        var error = getGroupMessageMessageError(splitMessage, sender);
+        if (error.isPresent()) {
+            // An error message has occurred
+            dispatchMessage(error.get());
+            return;
+        }
 
-        if (error == null) {
-            String groupName = splitMessage[0];
-            String groupMessage = splitMessage[1];
+        var groupName = splitMessage[0];
+        var groupMessage = splitMessage[1];
 
-            // send message to other members of the group
-            var memberList = this.serviceManager.getGroupMembers(groupName);
+        // send message to other members of the group
+        var memberList = this.serviceManager.getGroupMembers(groupName);
 
-            for (Client member : memberList) {
-                if (!member.equals(sender)) {
-                    Message m = new BaseMessage(
-                            CMD_GRP + " " + CMD_MSG,
-                            groupName + " " + groupMessage,
-                            member);
+        for (var member : memberList) {
+            if (!member.equals(sender)) {
+                var m = new BaseMessage(
+                        CMD_GRP + " " + CMD_MSG,
+                        groupName + " " + groupMessage,
+                        member);
 
-                    this.serviceManager.dispatchMessage(m);
-                }
+                dispatchMessage(m);
             }
-
-            // update last message timestamp
-            this.serviceManager.updateTimestampOfClientInGroup(groupName, sender.getUsername());
-
-            // send confirmation message back to sender
-            this.serviceManager.dispatchMessage(new BaseMessage(
-                    CMD_OK + " " + CMD_GRP + " " + CMD_MSG,
-                    groupName + " " + groupMessage,
-                    sender));
-        } else {
-            this.serviceManager.dispatchMessage(error);
-        }
-    }
-
-    private Message getGroupMessageMessageError(String[] splitMessage, Client sender) {
-        if (sender.getUsername() == null) {
-            // Please login first
-            return new BaseMessage(CMD_ER03,ER03_BODY, sender);
         }
 
-        if (splitMessage.length < 2) {
-            // Missing parameters
-            return new BaseMessage(CMD_ER08,ER08_BODY, sender
-            );
-        }
+        // update last message timestamp
+        this.serviceManager.updateTimestampOfClientInGroup(groupName, sender.getUsername());
 
-        String groupName = splitMessage[0];
-
-        if (!this.serviceManager.hasGroup(groupName)) {
-            // Group doesn't exist
-            return new BaseMessage(CMD_ER07, ER07_BODY, sender);
-        }
-
-        if (!this.serviceManager.groupHasClient(groupName, sender.getUsername())) {
-            // Client not part of group
-            return new BaseMessage(CMD_ER10,ER10_BODY, sender);
-        }
-
-        return null;
+        // send confirmation message back to sender
+        dispatchMessage(new BaseMessage(
+                CMD_OK + " " + CMD_GRP + " " + CMD_MSG,
+                groupName + " " + groupMessage,
+                sender)
+        );
     }
 
     private void handleGroupJoinMessage(String message, Client sender) {
         String[] splitMessage = parseMessage(message);
 
-        Message error = getGroupJoinMessageError(splitMessage, sender);
-
-        if (error == null) {
-            String groupName = splitMessage[0];
-
-            this.serviceManager.addClientToGroup(groupName, sender);
-
-            // send notification to other members of the group
-            var memberList = this.serviceManager.getGroupMembers(groupName);
-
-            for (Client member : memberList) {
-                if (!member.equals(sender)) {
-                    Message notification = new BaseMessage(
-                            CMD_GRP + " " + CMD_JOIN,
-                            groupName + " " + sender.getUsername(),
-                            member);
-
-                    this.serviceManager.dispatchMessage(notification);
-                }
-            }
-
-            // send confirmation message back to sender
-            this.serviceManager.dispatchMessage(new BaseMessage(
-                    CMD_OK + " " + CMD_GRP + " " + CMD_JOIN,
-                    groupName,
-                    sender));
-        } else {
-            this.serviceManager.dispatchMessage(error);
-        }
-    }
-
-    private Message getGroupJoinMessageError(String[] splitMessage, Client sender) {
-        if (sender.getUsername() == null) {
-            // Please login first
-            return new BaseMessage(CMD_ER03, ER03_BODY, sender);
-        }
-
-        if (splitMessage.length == 0) {
-            // Missing parameters
-            return new BaseMessage(CMD_ER08, ER08_BODY, sender);
-        }
-
-        String groupName = splitMessage[0];
-
-        if (!isValidGroupName(groupName)) {
-            // Invalid group name
-            return new BaseMessage(CMD_ER05, ER05_BODY, sender);
-        }
-
-        if (!this.serviceManager.hasGroup(groupName)) {
-            // Group doesn't exist
-            return new BaseMessage(CMD_ER07, ER07_BODY, sender);
-        }
-
-        if (this.serviceManager.groupHasClient(groupName, sender.getUsername())) {
-            // Client already joined group
-            return new BaseMessage(CMD_ER09, ER09_BODY, sender);
-        }
-
-        return null;
-    }
-
-    private void handleGroupNewMessage(String message, Client sender) {
-        String[] splitMessage = parseMessage(message);
-
-        Message error = getGroupNewMessageError(splitMessage, sender);
-
-        if (error == null) {
-            String groupName = splitMessage[0];
-            Group addedGroup = this.serviceManager.addGroup(groupName);
-            //TODO: start new group ping thread
-            new GroupPingThread(addedGroup, serviceManager).start();
-
-            //send confirmation message back to sender
-            this.serviceManager.dispatchMessage(new BaseMessage(
-                    CMD_OK + " " + CMD_GRP + " " + CMD_NEW,
-                    groupName,
-                    sender
-            ));
-        } else {
-            this.serviceManager.dispatchMessage(error);
-        }
-    }
-
-    private Message getGroupNewMessageError(String[] splitMessage, Client sender) {
-        if (sender.getUsername() == null) {
-            // Please login first
-            return new BaseMessage(CMD_ER03, ER03_BODY, sender);
-        }
-
-        String groupName = splitMessage[0];
-
-        if (!isValidGroupName(groupName)) {
-            // invalid group name
-            return new BaseMessage(CMD_ER05, ER05_BODY, sender);
-        }
-
-        if (this.serviceManager.hasGroup(groupName)) {
-            // group already exists
-            return new BaseMessage(CMD_ER06, ER06_BODY, sender);
-        }
-
-        return null;
-    }
-
-    private void handleGroupAllMessage(Client sender) {
-        if (sender.getUsername() == null) {
-            // Please login first
-            this.serviceManager.dispatchMessage(new BaseMessage(CMD_ER03, ER03_BODY, sender));
-        }
-
-        String listString = serviceManager.getGroups().stream().map(Group::getName).collect(Collectors.joining(","));
-
-        this.serviceManager.dispatchMessage(new BaseMessage(
-                CMD_OK + " " + CMD_GRP + " " + CMD_ALL,
-                listString,
-                sender));
-    }
-
-    private void handleAllMessage(Client sender) {
-        if (sender.getUsername() == null) {
-            // Please login first
-            this.serviceManager.dispatchMessage(new BaseMessage(CMD_ER03, ER03_BODY, sender));
+        var error = getGroupJoinMessageError(splitMessage, sender);
+        if (error.isPresent()) {
+            // An error message has occurred
+            dispatchMessage(error.get());
             return;
         }
 
-        String listString = serviceManager.getClients().stream().map(Client::getUsername).collect(Collectors.joining(","));
+        var groupName = splitMessage[0];
+
+        this.serviceManager.addClientToGroup(groupName, sender);
+
+        // send notification to other members of the group
+        var memberList = this.serviceManager.getGroupMembers(groupName);
+
+        for (Client member : memberList) {
+            if (!member.equals(sender)) {
+                Message notification = new BaseMessage(
+                        CMD_GRP + " " + CMD_JOIN,
+                        groupName + " " + sender.getUsername(),
+                        member);
+
+                dispatchMessage(notification);
+            }
+        }
 
         // send confirmation message back to sender
-        this.serviceManager.dispatchMessage(new BaseMessage(
+        dispatchMessage(new BaseMessage(
+                CMD_OK + " " + CMD_GRP + " " + CMD_JOIN,
+                groupName,
+                sender)
+        );
+    }
+
+    private void handleGroupNewMessage(String message, Client sender) {
+        var messageTokens = parseMessage(message);
+        var groupName = messageTokens[0];
+
+        var error = getGroupNewMessageError(groupName, sender);
+        if (error.isPresent()) {
+            // An error message has occurred
+            dispatchMessage(error.get());
+            return;
+        }
+
+        this.serviceManager.addGroup(groupName);
+
+        // Send confirmation message back to sender
+        dispatchMessage(new BaseMessage(
+                CMD_OK + " " + CMD_GRP + " " + CMD_NEW,
+                groupName,
+                sender
+        ));
+    }
+
+    private void handleGroupAllMessage(Client sender) {
+        var error = senderIsNotLoggedIn(sender);
+
+        if (error.isPresent()) {
+            // An error message has occurred
+            dispatchMessage(error.get());
+            return;
+        }
+
+        var response = constructMessage(
+                CMD_OK + " " + CMD_GRP + " " + CMD_ALL,
+                this.serviceManager.getGroups(),
+                sender
+        );
+        dispatchMessage(response);
+    }
+
+    private void handleAllMessage(Client sender) {
+        var error = senderIsNotLoggedIn(sender);
+
+        if (error.isPresent()) {
+            // An error message has occurred
+            dispatchMessage(error.get());
+            return;
+        }
+
+        var response = constructMessage(
                 CMD_OK + " " + CMD_ALL,
-                listString,
-                sender));
+                this.serviceManager.getClients(),
+                sender
+        );
+        dispatchMessage(response);
     }
 
     private void handleDirectMessage(String message, Client sender) {
         var splitMessage = parseMessage(message);
 
-        Message error = getDirectMessageError(splitMessage, sender);
-
-        if (error == null) {
-            String recipientUsername = splitMessage[0];
-            String body = splitMessage[1];
-
-            Client recipient = this.serviceManager.getClient(recipientUsername);
-
-            var messageToRecipient = new BaseMessage(
-                    CMD_MSG + " " + sender.getUsername(),
-                    body,
-                    recipient
-            );
-            this.serviceManager.dispatchMessage(messageToRecipient);
-
-            //send confirmation message back to sender
-            this.serviceManager.dispatchMessage(new BaseMessage(
-                    CMD_OK + " " + CMD_MSG + " " + recipient.getUsername(),
-                    body,
-                    sender
-            ));
-        } else {
-            this.serviceManager.dispatchMessage(error);
-        }
-    }
-
-    private Message getDirectMessageError(String[] splitMessage, Client sender) {
-        if (sender.getUsername() == null) {
-            // Please login first
-            return new BaseMessage(CMD_ER03,ER03_BODY, sender);
+        var error = getDirectMessageError(splitMessage, sender);
+        if (error.isPresent()) {
+            // An error message has occurred
+            dispatchMessage(error.get());
+            return;
         }
 
-        if (splitMessage.length < 2) {
-            // Missing parameters
-            return new BaseMessage(CMD_ER08, ER08_BODY, sender);
-        }
+        var recipientUsername = splitMessage[0];
+        var body = splitMessage[1];
+        var recipient = this.serviceManager.getClient(recipientUsername);
+        var messageToRecipient = constructMessage(CMD_MSG + " " + sender.getUsername(), body, recipient);
+        dispatchMessage(messageToRecipient);
 
-        String recipientUsername = splitMessage[0];
-
-        if (!this.serviceManager.hasClient(recipientUsername)) {
-            // User is not connected
-            return new BaseMessage(CMD_ER04, ER04_BODY, sender);
-        }
-
-        return null;
+        //send confirmation message back to sender
+        var messageToSender = constructMessage(CMD_OK + " " + CMD_MSG + " " + recipient.getUsername(), body, sender);
+        dispatchMessage(messageToSender);
     }
 
     private void handlePong(Client sender) {
@@ -348,31 +224,20 @@ public class ClientMessageHandler {
     }
 
     private void handleBroadcast(String messageToBroadcast, Client sender) {
-        if (sender.getUsername() == null) {
-            this.serviceManager.dispatchMessage(new BaseMessage(CMD_ER03, ER03_BODY, sender));
+        var error = senderIsNotLoggedIn(sender);
+
+        if (error.isPresent()) {
+            // An error message has occurred
+            dispatchMessage(error.get());
             return;
         }
 
         broadcastMessage(messageToBroadcast, sender);
-
-        this.serviceManager.dispatchMessage(new BaseMessage(
+        dispatchMessage(new BaseMessage(
                 CMD_OK + " " + CMD_BCST,
                 messageToBroadcast,
                 sender
         ));
-    }
-
-    private void broadcastMessage(String messageToBroadcast, Client sender) {
-        for (var client : this.serviceManager.getClients()) {
-            if (!client.equals(sender)) {
-                var broadcastMessage = new BaseMessage(
-                        CMD_BCST + " " + sender.getUsername(),
-                        messageToBroadcast,
-                        client
-                );
-                this.serviceManager.dispatchMessage(broadcastMessage);
-            }
-        }
     }
 
     private void handleDisconnectMessage(Client sender) {
@@ -392,36 +257,123 @@ public class ClientMessageHandler {
     private void handleConnectMessage(String username, Client sender) {
         var error = getConnectError(username, sender);
 
-        if (error == null) {
-            sender.setUsername(username);
-            this.serviceManager.addClient(sender);
-
-            //send confirmation back to client
-            var message = new BaseMessage(
-                    CMD_OK + " " + CMD_CONN,
-                    username,
-                    sender
-            );
-            this.serviceManager.dispatchMessage(message);
-        } else {
-            this.serviceManager.dispatchMessage(error);
+        if (error.isPresent()) {
+            // An error message has occurred
+            dispatchMessage(error.get());
+            return;
         }
+
+        sender.setUsername(username);
+        this.serviceManager.addClient(sender);
+
+        // Send confirmation back to client (OK CONN username)
+        var message = constructMessage(CMD_OK + " " + CMD_CONN, username, sender);
+        dispatchMessage(message);
     }
 
-    private Message getConnectError(String username, Client sender) {
-        if (sender.getUsername() != null) {
-            return new BaseMessage(CMD_ER66, ER66_BODY, sender);
-        }
+    private Optional<Message> getGroupDisconnectMessageError(String[] splitMessage, Client sender) {
+        return senderIsNotLoggedIn(sender)
+                .or(() -> missingParameters(splitMessage, 1, sender))
+                .or(() -> notMemberOfGroup(splitMessage[0], sender));
+    }
 
-        if (!isValidUsername(username)) {
-            return new BaseMessage(CMD_ER02, ER02_BODY, sender);
-        }
+    private Optional<Message> getGroupMessageMessageError(String[] splitMessage, Client sender) {
+        return senderIsNotLoggedIn(sender)
+                .or(() -> missingParameters(splitMessage, 2, sender))
+                .or(() -> groupDoesNotExist(splitMessage[0], sender))
+                .or(() -> notMemberOfGroup(splitMessage[0], sender));
+    }
 
-        if (isLoggedIn(username)) {
-            return new BaseMessage(CMD_ER01, ER01_BODY, sender);
-        }
+    private Optional<Message> getGroupJoinMessageError(String[] splitMessage, Client sender) {
+        return senderIsNotLoggedIn(sender)
+                .or(() -> missingParameters(splitMessage, 0, sender)) // TODO: check if this error works
+                .or(() -> invalidGroupName(splitMessage[0], sender))
+                .or(() -> groupDoesNotExist(splitMessage[0], sender))
+                .or(() -> clientAlreadyJoinedGroup(splitMessage[0], sender));
+    }
 
-        return null;
+    private Optional<Message> getGroupNewMessageError(String groupName, Client sender) {
+        return senderIsNotLoggedIn(sender)
+                .or(() -> invalidGroupName(groupName, sender))
+                .or(() -> groupAlreadyExists(groupName, sender));
+    }
+
+    private Optional<Message> getDirectMessageError(String[] splitMessage, Client sender) {
+        return senderIsNotLoggedIn(sender)
+                .or(() -> missingParameters(splitMessage, 2, sender))
+                .or(() -> noSuchUser(splitMessage[0], sender));
+    }
+
+    private Optional<Message> getConnectError(String username, Client sender) {
+        return alreadyLoggedIn(sender)
+                .or(() -> usernameIsNotValid(username, sender))
+                .or(() -> userIsAlreadyLoggedIn(username, sender));
+    }
+
+    private Optional<Message> senderIsNotLoggedIn(Client sender) {
+        return sender.getUsername() == null
+                ? Optional.of(new BaseMessage(CMD_ER03, ER03_BODY, sender)) // Please log in first
+                : Optional.empty();
+    }
+
+    private Optional<Message> alreadyLoggedIn(Client sender) {
+        return sender.getUsername() != null
+                ? Optional.of(new BaseMessage(CMD_ER66, ER66_BODY, sender)) // Please log in first
+                : Optional.empty();
+    }
+
+    private Optional<Message> usernameIsNotValid(String username, Client sender) {
+        return !isValidUsername(username)
+                ? Optional.of(new BaseMessage(CMD_ER02, ER02_BODY, sender))
+                : Optional.empty();
+    }
+
+    private Optional<Message> userIsAlreadyLoggedIn(String username, Client sender) {
+        return isLoggedIn(username)
+                ? Optional.of(new BaseMessage(CMD_ER01, ER01_BODY, sender))
+                : Optional.empty();
+    }
+
+    private Optional<Message> noSuchUser(String recipientUsername, Client sender) {
+        return !isLoggedIn(recipientUsername)
+                ? Optional.of(new BaseMessage(CMD_ER04, ER04_BODY, sender)) // User is not connected
+                : Optional.empty();
+    }
+
+    private Optional<Message> missingParameters(String[] tokens, int expectedParametersCount, Client sender) {
+        return tokens.length < expectedParametersCount
+                ? Optional.of(new BaseMessage(CMD_ER08, ER08_BODY, sender)) // Missing parameters
+                : Optional.empty();
+    }
+
+    private Optional<Message> invalidGroupName(String groupName, Client sender) {
+        return !isValidGroupName(groupName)
+                ? Optional.of(new BaseMessage(CMD_ER05, ER05_BODY, sender)) // Invalid group name
+                : Optional.empty();
+    }
+
+    private Optional<Message> groupAlreadyExists(String groupName, Client sender) {
+        return groupWithNameExists(groupName)
+                ? Optional.of(new BaseMessage(CMD_ER06, ER06_BODY, sender)) // Group already exists
+                : Optional.empty();
+    }
+
+    private Optional<Message> groupDoesNotExist(String groupName, Client sender) {
+        return !groupWithNameExists(groupName)
+                ? Optional.of(new BaseMessage(CMD_ER07, ER07_BODY, sender)) // Group doesn't exist
+                : Optional.empty();
+    }
+
+    private Optional<Message> clientAlreadyJoinedGroup(String groupName, Client sender) {
+        return groupHasClient(groupName, sender.getUsername())
+                ? Optional.of(new BaseMessage(CMD_ER09, ER09_BODY, sender)) // Already member of group
+                : Optional.empty();
+    }
+
+    private Optional<Message> notMemberOfGroup(String groupName, Client sender) {
+        return !groupHasClient(groupName, sender.getUsername())
+                ? Optional.of(new BaseMessage(CMD_ER10, ER10_BODY, sender)) // Group doesn't exist
+                : Optional.empty();
     }
 
     private boolean isValidGroupName(String groupName) {
@@ -433,6 +385,14 @@ public class ClientMessageHandler {
         return this.serviceManager.hasClient(username);
     }
 
+    private boolean groupWithNameExists(String groupName) {
+        return this.serviceManager.hasGroup(groupName);
+    }
+
+    private boolean groupHasClient(String groupName, String username) {
+        return this.serviceManager.groupHasClient(groupName, username);
+    }
+
     private boolean isValidUsername(String username) {
         var pattern = "^[a-zA-Z0-9_]{3,14}$";
         return username.matches(pattern);
@@ -440,5 +400,20 @@ public class ClientMessageHandler {
 
     private String[] parseMessage(String message) {
         return message.split(" ", 2);
+    }
+
+    private void dispatchMessage(Message message) {
+        this.serviceManager.dispatchMessage(message);
+    }
+
+    private void broadcastMessage(String messageToBroadcast, Client sender) {
+        this.serviceManager.broadcastMessage(new BaseMessage(
+                CMD_BCST + " " + sender.getUsername(),
+                messageToBroadcast
+        ));
+    }
+
+    private Message constructMessage(String header, String body, Client client) {
+        return new BaseMessage(header, body, client);
     }
 }

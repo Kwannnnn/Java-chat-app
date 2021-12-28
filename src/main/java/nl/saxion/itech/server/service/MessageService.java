@@ -1,11 +1,7 @@
 package nl.saxion.itech.server.service;
 
-import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.protocol.Message;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Vector;
 
 public class MessageService {
