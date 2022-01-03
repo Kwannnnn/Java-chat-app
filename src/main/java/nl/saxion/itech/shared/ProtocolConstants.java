@@ -49,6 +49,16 @@ public final class ProtocolConstants {
     public static final String ER66_BODY = "You are already logged in";
     public static final String DSCN_BODY = "Goodbye";
 
-    public static final int GROUP_TIMEOUT_DURATION = 120;
-    public static final int CLIENT_TIMEOUT_DURATION = 2770;
+    public static final int GROUP_TIMEOUT_DURATION = 20;
+    public static final int CLIENT_TIMEOUT_DURATION = 20;
+
+    private boolean isValidGroupName(String groupName) {
+        var pattern = "^[a-zA-Z0-9_]{3,14}$";
+        return groupName.matches(pattern);
+    }
+
+    public static boolean isValidUsername(String username) {
+        var pattern = "^[a-zA-Z0-9_]{3,14}$";
+        return username.matches(pattern);
+    }
 }

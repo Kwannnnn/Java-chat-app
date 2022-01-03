@@ -1,7 +1,9 @@
 package nl.saxion.itech.server.model;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Group {
@@ -12,7 +14,7 @@ public class Group {
     public Group(String name) {
         this.name = name;
         this.clients = new ConcurrentHashMap<>();
-        lastMessageTimeStamp = new ConcurrentHashMap<>();
+        this.lastMessageTimeStamp = new ConcurrentHashMap<>();
     }
 
     public String getName() {
@@ -29,8 +31,7 @@ public class Group {
 
     public void addClient(Client client) {
         this.clients.put(client.getUsername(), client);
-        Instant instant = Instant.now();
-        lastMessageTimeStamp.put(client.getUsername(), instant);
+        lastMessageTimeStamp.put(client.getUsername(), Instant.now());
     }
 
     public void removeClient(String username) {
@@ -38,7 +39,9 @@ public class Group {
         lastMessageTimeStamp.remove(username);
     }
 
-    public boolean hasClient(String username) {return this.clients.containsKey(username);}
+    public boolean hasClient(String username) {
+        return this.clients.containsKey(username);
+    }
 
     public void updateTimestampOfClient(String clientUsername) {
         Instant instant = Instant.now();
