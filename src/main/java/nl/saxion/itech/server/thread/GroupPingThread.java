@@ -22,7 +22,7 @@ public class GroupPingThread extends Thread {
         var logger = Logger.getInstance();
         try {
             while (!isInterrupted()) {
-                var timeoutLimit = CLIENT_TIMEOUT_DURATION * 1000; // in milliseconds
+                var timeoutLimit = GROUP_TIMEOUT_DURATION * 1000; // in milliseconds
                 Thread.sleep(timeoutLimit);
                 for (var entry : this.group.getLastMessageTimeStamp()) {
                     var difference = Duration.between(entry.getValue(), Instant.now());

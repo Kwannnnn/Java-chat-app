@@ -307,7 +307,7 @@ public class MessageService implements Service {
     }
 
     private Optional<Message> invalidGroupName(String groupName) {
-        return !isValidUsername(groupName)
+        return !isValidGroupName(groupName)
                 ? Optional.of(invalidGroupNameError()) // Invalid group name
                 : Optional.empty();
     }

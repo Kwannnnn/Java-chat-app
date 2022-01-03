@@ -49,7 +49,7 @@ class IntegrationSingleUserTests {
     void receiveInfoMessage() {
         String firstLine = receiveLineWithTimeout(in);
         // TODO: reflect in documentation updated protocol
-        assertTrue(firstLine.matches("INFO Welcome to server 1"));
+        assertTrue(firstLine.matches("INFO Welcome to the server"));
     }
 
     @Test
@@ -73,7 +73,7 @@ class IntegrationSingleUserTests {
         out.println("CONN");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        assertEquals("ER02 Username has an invalid format (only characters, numbers and underscores are allowed)", serverResponse);
+        assertEquals("ER08 Missing parameters", serverResponse);
     }
 
     @Test
