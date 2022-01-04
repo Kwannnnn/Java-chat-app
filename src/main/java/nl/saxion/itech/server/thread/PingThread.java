@@ -2,6 +2,7 @@ package nl.saxion.itech.server.thread;
 
 import nl.saxion.itech.server.data.DataObject;
 import nl.saxion.itech.server.model.Client;
+import nl.saxion.itech.server.model.ClientStatus;
 import nl.saxion.itech.server.util.Logger;
 
 import java.io.IOException;
@@ -37,27 +38,32 @@ public class PingThread extends Thread {
                     var difference = Duration.between(client.getLastPong(), Instant.now());
                     if (difference.toMillis() > timeoutLimit) {
                         logger.logMessage("~~ [" + client + "] Heartbeat expired - FAILED");
-                        client.getSocket().close();
+                        disconnectClient(client);
                     } else {
                         logger.logMessage("~~ [" + client + "] Heartbeat expired - SUCCESS");
                         pingClient(client);
                     }
                 }
             }
-        } catch (InterruptedException | IOException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     private synchronized void pingClient(Client client) {
-        assert !client.getSocket().isClosed() : "Client's socket is closed";
+//        assert !client.getSocket().isClosed() : "Client's socket is closed";
 
+        var out = new PrintWriter(client.getOutputStream());
+        out.println(CMD_PING);
+        out.flush();
+    }
+
+    private synchronized void disconnectClient(Client client) {
         try {
-            var out = new PrintWriter(client.getSocket().getOutputStream());
-            out.println(CMD_PING);
-            out.flush();
+            client.getOutputStream().close();
+            client.getInputStream().close();
         } catch (IOException e) {
-            // TODO: perhaps nothing to do here
+            // Client socket already closed
         }
     }
 }

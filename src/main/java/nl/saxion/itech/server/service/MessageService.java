@@ -1,17 +1,14 @@
 package nl.saxion.itech.server.service;
 
 import nl.saxion.itech.server.data.DataObject;
-import nl.saxion.itech.server.exception.NoSuchClientException;
+import nl.saxion.itech.server.exception.ClientDisconnectedException;
 import nl.saxion.itech.server.message.Message;
 import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.ClientStatus;
 import nl.saxion.itech.server.model.Group;
 import nl.saxion.itech.server.util.Logger;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -33,36 +30,42 @@ public class MessageService implements Service {
     }
 
     @Override
-    public void serve(Client client) {
+    public void serve(InputStream in, OutputStream out) {
+        var client = new Client(in, out);
         try {
             sendMessage(welcome(), client);
-            handleClientInput(client);
+            handleClient(client);
         } catch (IOException e) {
             // Proceed to finally clause
         } finally {
-            // Make sure remove the client from the data in the end
+            // Make sure remove the client from the data if he is connected
             // and close the socket if it hasn't been closed yet
-            closeConnection(client);
+            this.data.removeClient(client);
         }
     }
 
-    private void handleClientInput(Client client) throws IOException {
-        var in = new BufferedReader(new InputStreamReader(client.getSocket().getInputStream()));
+    private void handleClient(Client client) throws IOException {
+        var in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 
         String line;
         while ((line = in.readLine()) != null) {
             // Log the input
             log("[" + client + "] >> " + line);
 
-            var response = Optional.ofNullable(handleMessage(line, client));
-            if (response.isPresent()) {
-                var message = response.get();
-                sendMessage(message, client);
+            try {
+                var response = Optional.ofNullable(handleMessage(line, client));
+                if (response.isPresent()) {
+                    var message = response.get();
+                    sendMessage(message, client);
+                }
+            } catch (ClientDisconnectedException e) {
+                // Client has decided to disconnect, stop reading input
+                break;
             }
         }
     }
 
-    private Message handleMessage(String message, Client sender) throws IOException {
+    private Message handleMessage(String message, Client sender) throws ClientDisconnectedException {
         var tokenizer = new StringTokenizer(message);
 
         try {
@@ -90,8 +93,7 @@ public class MessageService implements Service {
     }
 
     private Message handleConnectedUser(String header, StringTokenizer payload, Client sender)
-            throws IOException {
-
+            throws ClientDisconnectedException {
         return switch (header) {
             case CMD_DSCN -> handleDisconnectMessage(sender);
             case CMD_BCST -> handleBroadcast(payload, sender);
@@ -99,9 +101,41 @@ public class MessageService implements Service {
             case CMD_MSG -> handleDirectMessage(payload, sender);
             case CMD_ALL -> handleAllMessage();
             case CMD_GRP -> handleGroupMessage(payload, sender);
-//                case CMD_FILE -> handleFileTransfer(tokenizer, sender);
+            case CMD_FILE -> handleFileTransfer(payload, sender);
             default -> unknownCommandError();
         };
+    }
+
+    private Message handleFileTransfer(StringTokenizer payload, Client sender) {
+        try {
+            var header = payload.nextToken().toUpperCase();
+
+            return switch (header) {
+                case CMD_SEND -> handleFileSendMessage(payload, sender);
+//                case CMD_ACCEPT -> handleAcceptFIleMessage();
+                default -> unknownCommandError();
+            };
+        } catch (NoSuchElementException e) {
+            return missingParametersError();
+        }
+    }
+
+    private Message handleFileSendMessage(StringTokenizer payload, Client sender) {
+        var filename = payload.nextToken();
+        var fileSize = Integer.parseInt(payload.nextToken());
+        var recipientUsername = payload.nextToken();
+        var checksum = payload.nextToken();
+        var client = this.data.getClient(recipientUsername);
+
+        if (client.isEmpty()) {
+            return recipientNotConnectedError();
+        }
+
+        var recipient = client.get();
+//        var file = new File(filename, fileSize, sender, recipient, checksum);
+        sendMessage(fileNew(filename, fileSize, sender.getUsername(), checksum), recipient);
+
+        return okFileNew(filename,fileSize, recipientUsername, checksum);
     }
 
     private Message handleConnectMessage(String username, Client sender) {
@@ -115,18 +149,18 @@ public class MessageService implements Service {
         sender.setUsername(username);
         sender.setStatus(ClientStatus.CLIENT_CONNECTED);
         this.data.addClient(sender);
+
         return okConn(username);
     }
 
-    private Message handleDisconnectMessage(Client client) throws IOException {
+    private Message handleDisconnectMessage(Client client) throws ClientDisconnectedException {
         sendMessage(okDscn(), client);
-        client.getSocket().close();
-
-        return null;
+        throw new ClientDisconnectedException();
     }
 
     private Message handlePong(Client sender) {
         sender.updateLastPong();
+
         return null;
     }
 
@@ -144,8 +178,6 @@ public class MessageService implements Service {
             return okMsg(recipientUsername, message);
         } catch (NoSuchElementException e) {
             return missingParametersError();
-        } catch (NoSuchClientException e) {
-            return recipientNotConnectedError();
         }
     }
 
@@ -379,14 +411,7 @@ public class MessageService implements Service {
      */
     private void sendMessageToAll(Message message, Collection<Client> clients) {
         for (var client : clients) {
-            try {
-                sendMessage(message, client);
-            } catch (NoSuchClientException e) {
-                // This exception can only be triggered whenever the user has been disconnected
-                // while another user is broadcasting a message
-                // Just log it, and continue
-                log("Message to " + client.getUsername() + " failed: User is not connected!");
-            }
+            sendMessage(message, client);
         }
     }
 
@@ -394,34 +419,12 @@ public class MessageService implements Service {
      * Sends a message to a specific client.
      * @param message the message to be sent
      * @param client the client to send the message to
-     * @throws NoSuchClientException in case I/O on the output stream occurs.
      */
-    private void sendMessage(Message message, Client client) throws NoSuchClientException {
-        try {
-            var out = new PrintWriter(client.getSocket().getOutputStream());
-            out.println(message);
-            out.flush();
-            log("[" + client + "] << " + message);
-        } catch (IOException e) {
-            // Rethrow a more specific exception
-            throw new NoSuchClientException(e.getMessage());
-        }
-    }
-
-    /**
-     * Disconnects a client, by removing him from the connected users in the
-     * data object, and trying to close the socket connection.
-     * @param client the client to disconnect
-     */
-    private void closeConnection(Client client) {
-        this.data.removeClient(client);
-        try {
-            if (!client.getSocket().isClosed()) {
-                client.getSocket().close();
-            }
-        } catch (IOException e) {
-            // Client socket has already been closed, do nothing further
-        }
+    private void sendMessage(Message message, Client client) {
+        var out = new PrintWriter(client.getOutputStream());
+        out.println(message);
+        out.flush();
+        log("[" + client + "] << " + message);
     }
 
     private String getRemainingTokens(StringTokenizer tokenizer) throws NoSuchElementException {

@@ -17,7 +17,7 @@ import java.io.OutputStream;
  * connections, and logs activity to a specified stream.
  */
 public class Server {
-    private static final boolean SHOULD_PING = false;
+    private static final boolean SHOULD_PING = true;
     // Internal state of the server
     private final DataObject data;
     private final ServiceManager serviceManager;

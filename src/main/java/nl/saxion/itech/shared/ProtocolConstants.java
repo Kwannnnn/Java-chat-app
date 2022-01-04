@@ -15,6 +15,9 @@ public final class ProtocolConstants {
     public static final String CMD_JOIN = "JOIN";
     public static final String CMD_GRP = "GRP";
     public static final String CMD_NEW = "NEW";
+    public static final String CMD_FILE = "FILE";
+    public static final String CMD_SEND = "SEND";
+    public static final String CMD_ACCEPT = "ACCEPT";
 
     public static final String CMD_ER00 = "ER00";
     public static final String CMD_ER01 = "ER01";
@@ -52,8 +55,13 @@ public final class ProtocolConstants {
     public static final int GROUP_TIMEOUT_DURATION = 120;
     public static final int CLIENT_TIMEOUT_DURATION = 3;
 
+    public static final int MIN_USERNAME_LENGTH = 3;
+    public static final int MAX_USERNAME_LENGTH = 14;
+
     public static boolean isValidGroupName(String groupName) {
-        var pattern = "^[a-zA-Z0-9_]{3,14}$";
+        var pattern = String.format(
+                "^[a-zA-Z0-9_]{%d,%d}$",
+                MIN_USERNAME_LENGTH, MAX_USERNAME_LENGTH);
         return groupName.matches(pattern);
     }
 

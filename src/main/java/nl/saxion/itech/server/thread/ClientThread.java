@@ -1,8 +1,8 @@
 package nl.saxion.itech.server.thread;
 
-import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.service.Service;
 
+import java.io.IOException;
 import java.net.Socket;
 
 /**
@@ -12,19 +12,35 @@ import java.net.Socket;
  * multi-threaded server implementation.
  */
 public class ClientThread extends Thread {
-    private final Client client; // The client object
+    private final Socket socket; // The client object
     private final Service service; // The service being provided to that client
 
     public ClientThread(Socket socket, Service service) {
-        this.client = new Client(socket);
+        this.socket = socket;
         this.service = service;
     }
 
     @Override
     public void run() {
-        this.service.serve(this.client);
-        // Makes sure to stop the thread whenever the service
-        // stops being provided
-        this.interrupt();
+        try {
+            var in = this.socket.getInputStream();
+            var out = this.socket.getOutputStream();
+            this.service.serve(in, out);
+        } catch (IOException e) {
+            // TODO: think if it is necessary to do something here
+        } finally {
+            // Makes sure to stop the thread whenever the service
+            // stops being provided
+            closeConnection();
+            this.interrupt();
+        }
+    }
+
+    private void closeConnection() {
+        try {
+            this.socket.close();
+        } catch (IOException e) {
+            // Connection has already been closed
+        }
     }
 }

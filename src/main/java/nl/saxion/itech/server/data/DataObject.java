@@ -1,6 +1,7 @@
 package nl.saxion.itech.server.data;
 
 import nl.saxion.itech.server.model.Client;
+import nl.saxion.itech.server.model.File;
 import nl.saxion.itech.server.model.Group;
 import nl.saxion.itech.server.thread.GroupPingThread;
 
@@ -12,11 +13,14 @@ public class DataObject {
     private final HashMap<String, Client> chatClients;
     private final HashMap<String, Group> groups;
     private final HashMap<String, GroupPingThread> groupPingThreads;
+    private final HashMap<Long, File> files;
 
     public DataObject() {
         this.chatClients = new HashMap<>();
         this.groups = new HashMap<>();
         this.groupPingThreads = new HashMap<>();
+        this.files = new HashMap<>();
+        addFile(new File("test.txt", 234, "asfasf"));
     }
 
     public synchronized void addClient(Client client) {
@@ -49,5 +53,13 @@ public class DataObject {
 
     public synchronized Optional<Group> getGroup(String groupName) {
         return Optional.ofNullable(this.groups.get(groupName));
+    }
+
+    public synchronized Optional<File> getFile(long id) {
+        return Optional.ofNullable(this.files.get(id));
+    }
+
+    public synchronized void addFile(File file) {
+        this.files.put(file.getId(), file);
     }
 }

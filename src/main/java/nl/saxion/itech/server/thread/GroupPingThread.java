@@ -29,17 +29,12 @@ public class GroupPingThread extends Thread {
                     var username = entry.getKey();
                     if (difference.toMillis() > timeoutLimit) {
                         var user = this.group.getClient(username);
-                        try {
-                            var out = new PrintWriter(user.getSocket().getOutputStream());
+                            var out = new PrintWriter(user.getOutputStream());
                             var message = CMD_GRP + " " + CMD_DSCN + " " + this.group.getName();
                             out.println(message);
                             out.flush();
                             logger.logMessage("~~ [" + username + "] Group Heartbeat expired - FAILED");
-                        } catch (IOException e) {
-
-                        } finally {
                             this.group.removeClient(entry.getKey());
-                        }
                     } else {
                         logger.logMessage("~~ [" + username + "] Group Heartbeat expired - SUCCESS");
                     }

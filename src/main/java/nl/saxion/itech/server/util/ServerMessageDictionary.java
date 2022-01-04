@@ -59,6 +59,22 @@ public final class ServerMessageDictionary {
                 groupName + " " + username);
     }
 
+    /**
+     * @param filename the name of the file being sent
+     * @param fileSize the size of the file being sent
+     * @param senderUsername the username of the user sending the file
+     * @param checksum the md5 checksum of the file being sent
+     * @return FILE NEW [file name] [file size] [sender username] [checksum]
+     */
+    public static TextMessage fileNew(String filename,
+                                      int fileSize,
+                                      String senderUsername,
+                                      String checksum) {
+        return new TextMessage(
+                CMD_FILE + " " + CMD_NEW,
+                filename + " " + fileSize + " " + senderUsername + " " + checksum);
+    }
+
     // OK Messages
 
     /**
@@ -159,6 +175,22 @@ public final class ServerMessageDictionary {
         return new TextMessage(
                 CMD_OK + " " + CMD_GRP + " " + CMD_DSCN,
                 groupName);
+    }
+
+    /**
+     * @param filename the name of the file being sent
+     * @param fileSize the size of the file being sent
+     * @param recipientUsername the username of the user sending the file
+     * @param checksum the md5 checksum of the file being sent
+     * @return OK FILE NEW [file name] [file size] [recipient username] [checksum]
+     */
+    public static TextMessage okFileNew(String filename,
+                                      int fileSize,
+                                      String recipientUsername,
+                                      String checksum) {
+        return new TextMessage(
+                CMD_OK + " " + CMD_FILE + " " + CMD_NEW,
+                filename + " " + fileSize + " " + recipientUsername + " " + checksum);
     }
 
     // Error messages

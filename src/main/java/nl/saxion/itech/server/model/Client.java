@@ -1,17 +1,21 @@
 package nl.saxion.itech.server.model;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.time.Instant;
 
 public class Client {
     private String username;
     private String password;
-    private final Socket socket;
     private Instant lastPong;
     private ClientStatus status;
+    private InputStream in;
+    private OutputStream out;
 
-    public Client(Socket socket) {
-        this.socket = socket;
+    public Client(InputStream in, OutputStream out) {
+        this.in = in;
+        this.out = out;
         this.status = ClientStatus.CLIENT_NEW;
     }
 
@@ -19,8 +23,12 @@ public class Client {
         return this.username;
     }
 
-    public Socket getSocket() {
-        return this.socket;
+    public InputStream getInputStream() {
+        return this.in;
+    }
+
+    public OutputStream getOutputStream() {
+        return this.out;
     }
 
     public void setUsername(String username) {
