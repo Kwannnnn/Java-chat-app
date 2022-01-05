@@ -2,14 +2,16 @@ package nl.saxion.itech.client.newDesign;
 
 public class BaseMessage implements Message {
     private final String header;
-    private final String body;
+    private String body;
 
     public BaseMessage(String header, String body) {
         this.header = header;
         this.body = body;
     }
 
-
+    public BaseMessage(String header) {
+        this.header = header;
+    }
 
     public String getHeader() {
         return this.header;
@@ -21,6 +23,11 @@ public class BaseMessage implements Message {
 
     @Override
     public String toString() {
-        return header + " " + body;
+        var result = this.header;
+        if (this.body != null) {
+            result += " " + this.body;
+        }
+
+        return result;
     }
 }

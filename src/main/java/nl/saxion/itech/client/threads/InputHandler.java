@@ -140,7 +140,7 @@ public class InputHandler extends Thread {
     }
 
     private void handleQuit() {
-        addMessageToQueue(new BaseMessage(CMD_DSCN, ""));
+        addMessageToQueue(new BaseMessage(CMD_DSCN));
     }
 
     private void addMessageToQueue(Message message) {

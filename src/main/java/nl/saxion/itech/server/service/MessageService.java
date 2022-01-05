@@ -14,6 +14,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static nl.saxion.itech.server.util.ServerMessageDictionary.*;
 import static nl.saxion.itech.shared.ProtocolConstants.*;
@@ -70,10 +71,9 @@ public class MessageService implements Service {
 
         try {
             var header = tokenizer.nextToken().toUpperCase();
-            return switch (sender.getStatus()) {
-                case CLIENT_CONNECTED -> handleConnectedUser(header, tokenizer, sender);
-                default -> handleUnknownUser(header, tokenizer, sender);
-            };
+            return sender.getStatus() == ClientStatus.CLIENT_CONNECTED ?
+                    handleConnectedUser(header, tokenizer, sender) :
+                    handleUnknownUser(header, tokenizer, sender);
         } catch (NoSuchElementException e) {
             return unknownCommandError();
         }
@@ -222,18 +222,19 @@ public class MessageService implements Service {
     private Message handleGroupDisconnectMessage(StringTokenizer tokenizer, Client sender) {
         try {
             var groupName = tokenizer.nextToken();
-
-            var group = this.data.getGroup(groupName);
-            if (group.isEmpty()) {
-                return groupDoesNotExistError();
-            }
-
             var senderUsername = sender.getUsername();
-            var error = userNotMemberOfGroup(groupName, senderUsername);
+
+            // error handling
+            var error = userNotMemberOfGroup(groupName, senderUsername)
+                    .or(() -> groupDoesNotExist(groupName));
             if (error.isPresent()) {
                 // An error message has occurred
                 return error.get();
             }
+
+            var group = this.data.getGroup(groupName);
+
+            assert group.isPresent() : "This group is not present, but it should be";
 
             group.get().removeClient(senderUsername);
             return okGrpDscn(groupName);
@@ -248,16 +249,17 @@ public class MessageService implements Service {
             var message = getRemainingTokens(tokenizer);
             var senderUsername = sender.getUsername();
 
-            var group = this.data.getGroup(groupName);
-            if (group.isEmpty()) {
-                return groupDoesNotExistError();
-            }
-
-            var error = userNotMemberOfGroup(groupName, senderUsername);
+            // error handling
+            var error = userNotMemberOfGroup(groupName, senderUsername)
+                    .or(() -> groupDoesNotExist(groupName));
             if (error.isPresent()) {
                 // An error message has occurred
                 return error.get();
             }
+
+            var group = this.data.getGroup(groupName);
+
+            assert group.isPresent() : "This group is not present, but it should be";
 
             sendMessageToAll(grpMsg( groupName,senderUsername, message),
                     group.get().getClients());
@@ -271,17 +273,19 @@ public class MessageService implements Service {
     private Message handleGroupJoinMessage(StringTokenizer tokenizer, Client sender) {
         try {
             var groupName = tokenizer.nextToken();
-            var group = this.data.getGroup(groupName);
-            if (group.isEmpty()) {
-                return groupDoesNotExistError();
-            }
 
-            var error = userAlreadyMemberOfGroup(groupName, sender.getUsername());
+            //error handling
+            var error = userAlreadyMemberOfGroup(groupName, sender.getUsername())
+                    .or(() -> groupDoesNotExist(groupName));
 
             if (error.isPresent()) {
                 // An error message has occurred
                 return error.get();
             }
+
+            var group = this.data.getGroup(groupName);
+
+            assert group.isPresent() : "This group is not present, but it should be";
 
             sendMessageToAll(
                     grpJoin(groupName, sender.getUsername()),
@@ -332,6 +336,12 @@ public class MessageService implements Service {
                 : Optional.empty();
     }
 
+    private Optional<Message> groupDoesNotExist(String groupName) {
+        return !groupWithNameExists(groupName)
+                ? Optional.of(groupDoesNotExistError()) // Group does not exist
+                : Optional.empty();
+    }
+
     private Optional<Message> groupAlreadyExists(String groupName) {
         return groupWithNameExists(groupName)
                 ? Optional.of(groupAlreadyExistsError()) // Group already exists
@@ -373,15 +383,15 @@ public class MessageService implements Service {
      * is already in use.
      */
     private boolean isLoggedIn(String username) {
-        return this.data.getClient(username).isPresent();
+        return this.data.hasClient(username);
     }
 
     /**
-     * A helper function that checks the data whether a username
+     * A helper function that checks the data whether a group name
      * is already in use.
      */
-    private boolean groupWithNameExists(String username) {
-        return this.data.getGroup(username).isPresent();
+    private boolean groupWithNameExists(String groupName) {
+        return this.data.hasGroup(groupName);
     }
 
     private boolean groupHasClient(String groupName, String username) {

@@ -6,6 +6,9 @@ import static nl.saxion.itech.shared.ProtocolConstants.*;
 
 import nl.saxion.itech.client.ProtocolInterpreter;
 
+import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
+
 public class ServerMessageHandler {
     private final ChatClient client;
 
@@ -14,82 +17,115 @@ public class ServerMessageHandler {
     }
 
     public void handle(String rawMessage) {
-        String[] splitMessage = parseMessage(rawMessage);
-        String header = splitMessage[0];
-        String body = splitMessage.length > 1 ? splitMessage[1] : " ";
+        var payload = new StringTokenizer(rawMessage);
 
-        switch (header) {
-            case CMD_INFO -> handleInfoMessage(body);
-            case CMD_BCST -> handleBroadcastMessage(body);
-            case CMD_OK -> handleOKMessage(body);
-            case CMD_PING -> handlePingMessage();
-            case CMD_MSG -> handleDirectMessage(body);
-            case CMD_GRP -> handleGroupMessage(body);
-            case CMD_ALL -> handleAllMessage(body);
-            case CMD_DSCN -> handleDisconnectMessage();
-            default -> handleErrorMessage(body);
+        try {
+            var header = payload.nextToken().toUpperCase();
+
+            switch (header) {
+                case CMD_INFO -> handleInfoMessage(payload);
+                case CMD_BCST -> handleBroadcastMessage(payload);
+                case CMD_OK -> handleOKMessage(payload);
+                case CMD_PING -> handlePingMessage();
+                case CMD_MSG -> handleDirectMessage(payload);
+                case CMD_GRP -> handleGroupMessage(payload);
+                case CMD_ALL -> handleAllMessage(payload);
+                case CMD_DSCN -> handleDisconnectMessage();
+                default -> handleErrorMessage(payload);
+            }
+        } catch (NoSuchElementException e) {
+            unknownResponseFromServer();
         }
     }
 
-    private void handleBroadcastMessage(String message) {
-        String[] splitMessage = parseMessage(message);
-        String sender = splitMessage[0];
-        String body = splitMessage.length > 1 ? splitMessage[1] : " ";
-        ProtocolInterpreter.showBroadcastMessage(sender, body);
+    private void unknownResponseFromServer() {
     }
 
-    private void handleInfoMessage(String message) {
-        ProtocolInterpreter.showWelcomeMessage(message);
-    }
-
-    private void handleGroupMessage(String message) {
-        String[] splitMessage = parseMessage(message);
-        String header = splitMessage[0];
-        String body = splitMessage.length > 1 ? splitMessage[1] : " ";
-
-        switch (header) {
-            case CMD_JOIN -> handleGroupJoinMessage(body);
-            case CMD_MSG -> handleGroupMessageMessage(body);
+    private void handleBroadcastMessage(StringTokenizer payload) {
+        try {
+            String sender = payload.nextToken();
+            String body = getRemainingTokens(payload);;
+            ProtocolInterpreter.showBroadcastMessage(sender, body);
+        } catch (NoSuchElementException e) {
+            unknownResponseFromServer();
         }
     }
 
-    private void handleGroupMessageMessage(String message) {
-        String[] splitMessage = parseMessage(message);
-        String groupName = splitMessage[0];
-        String body = splitMessage.length > 1 ? splitMessage[1] : " ";
-        ProtocolInterpreter.showGroupMessageMessage(groupName, body);
-    }
-
-    private void handleOKMessage(String message) {
-        String[] splitMessage = parseMessage(message);
-        String header = splitMessage[0];
-        String body = splitMessage.length > 1 ? splitMessage[1] : " ";
-
-        switch (header) {
-            case CMD_CONN -> handleOkConnectMessage(body);
-            case CMD_BCST -> handleOkBroadcastMessage(body);
-            case CMD_GRP -> handleOkGroupMessage(body);
-            case CMD_MSG -> handleOkDirectMessage(body);
+    private void handleInfoMessage(StringTokenizer payload) {
+        try {
+            String message = getRemainingTokens(payload);
+            ProtocolInterpreter.showWelcomeMessage(message);
+        } catch (NoSuchElementException e) {
+            unknownResponseFromServer();
         }
     }
 
-    private void handleGroupJoinMessage(String message) {
-        String[] splitMessage = parseMessage(message);
-        String groupName = splitMessage[0];
-        String newMember = splitMessage.length > 1 ? splitMessage[1] : " ";
-        ProtocolInterpreter.showGroupJoinMessage(groupName, newMember);
+    private void handleGroupMessage(StringTokenizer payload) {
+        try {
+            String header = payload.nextToken();
+
+            switch (header) {
+                case CMD_JOIN -> handleGroupJoinMessage(payload);
+                case CMD_MSG -> handleGroupMessageMessage(payload);
+            }
+        } catch (NoSuchElementException e) {
+            unknownResponseFromServer();
+        }
+    }
+
+    private void handleGroupMessageMessage(StringTokenizer payload) {
+        try {
+            String groupName = payload.nextToken();
+            String body = getRemainingTokens(payload);
+            ProtocolInterpreter.showGroupMessageMessage(groupName, body);
+        } catch (NoSuchElementException e) {
+            unknownResponseFromServer();
+        }
+    }
+
+    private void handleOKMessage(StringTokenizer payload) {
+        try {
+            String header = payload.nextToken();
+            String body = getRemainingTokens(payload);;
+
+            switch (header) {
+                case CMD_CONN -> handleOkConnectMessage(body);
+                case CMD_BCST -> handleOkBroadcastMessage(body);
+                case CMD_GRP -> handleOkGroupMessage(payload);
+                case CMD_MSG -> handleOkDirectMessage(payload);
+            }
+        } catch (NoSuchElementException e) {
+            unknownResponseFromServer();
+        }
+    }
+
+    private void handleGroupJoinMessage(StringTokenizer payload) {
+        try {
+            String groupName = payload.nextToken();
+            String newMember = payload.nextToken();
+            ProtocolInterpreter.showGroupJoinMessage(groupName, newMember);
+        } catch (NoSuchElementException e) {
+            unknownResponseFromServer();
+        }
     }
 
     private void handlePingMessage() {
-        this.client.addMessageToQueue(new BaseMessage(CMD_PONG,""));
+        this.client.addMessageToQueue(new BaseMessage(CMD_PONG));
     }
 
-    private void handleErrorMessage(String message) {
-        ProtocolInterpreter.showErrorMessage(message);
+    private void handleErrorMessage(StringTokenizer payload) {
+        try {
+            String message = getRemainingTokens(payload);;
+            ProtocolInterpreter.showErrorMessage(message);
+        } catch (NoSuchElementException e) {
+            unknownResponseFromServer();
+        }
     }
 
-    private void handleAllMessage(String message) {
-        ProtocolInterpreter.showSuccessfulAllMessage(message.split(","));
+    private void handleAllMessage(StringTokenizer payload) {
+        String clients = getRemainingTokens(payload);;
+
+        ProtocolInterpreter.showSuccessfulAllMessage(clients.split(","));
     }
 
     private void handleDisconnectMessage() {
@@ -99,43 +135,50 @@ public class ServerMessageHandler {
     }
 
 
-    private void handleOkDirectMessage(String message) {
-        String[] splitMessage = parseMessage(message);
-        String recipient = splitMessage[0];
-        String body = splitMessage.length > 1 ? splitMessage[1] : " ";
-        ProtocolInterpreter.showSuccessfulDirectMessage(recipient, body);
-    }
-
-    private void handleDirectMessage(String message) {
-        String[] splitMessage = parseMessage(message);
-        String sender = splitMessage[0];
-        String directMessage = splitMessage.length > 1 ? splitMessage[1] : " ";
-        ProtocolInterpreter.showIncomingDirectMessage(sender, directMessage);
-    }
-
-    private void handleOkGroupMessage(String message) {
-        String[] splitMessage = parseMessage(message);
-        String header = splitMessage[0];
-        String body = splitMessage.length > 1 ? splitMessage[1] : " ";
-
-        switch (header) {
-            case CMD_ALL -> handleOkGroupAllMessage(body);
-            case CMD_NEW -> handleOkGroupNewMessage(body);
-            case CMD_JOIN -> handleOkGroupJoinMessage(body);
-            case CMD_MSG -> handleOkGroupMessageMessage(body);
-            case CMD_DSCN -> handleOkGroupDisconnectMessage(body);
+    private void handleOkDirectMessage(StringTokenizer payload) {
+        try {
+            String recipient = payload.nextToken();
+            String body = getRemainingTokens(payload);;
+            ProtocolInterpreter.showSuccessfulDirectMessage(recipient, body);
+        } catch (NoSuchElementException e) {
+            unknownResponseFromServer();
         }
+    }
 
+    private void handleDirectMessage(StringTokenizer payload) {
+        try {
+            String sender = payload.nextToken();
+            String directMessage = getRemainingTokens(payload);;
+            ProtocolInterpreter.showIncomingDirectMessage(sender, directMessage);
+        } catch (NoSuchElementException e) {
+            unknownResponseFromServer();
+        }
+    }
+
+    private void handleOkGroupMessage(StringTokenizer payload) {
+        try {
+            String header = payload.nextToken();
+            String body = payload.nextToken();
+
+            switch (header) {
+                case CMD_ALL -> handleOkGroupAllMessage(body);
+                case CMD_NEW -> handleOkGroupNewMessage(body);
+                case CMD_JOIN -> handleOkGroupJoinMessage(body);
+                case CMD_MSG -> handleOkGroupMessageMessage(payload);
+                case CMD_DSCN -> handleOkGroupDisconnectMessage(body);
+            }
+        } catch (NoSuchElementException e) {
+            unknownResponseFromServer();
+        }
     }
 
     private void handleOkGroupDisconnectMessage(String message) {
         ProtocolInterpreter.showSuccessfulGroupDisconnectMessage(message);
     }
 
-    private void handleOkGroupMessageMessage(String message) {
-        String[] splitMessage = parseMessage(message);
-        String groupName = splitMessage[0];
-        String groupMessage = splitMessage.length > 1 ? splitMessage[1] : " ";
+    private void handleOkGroupMessageMessage(StringTokenizer payload) {
+        String groupName = payload.nextToken();
+        String groupMessage = getRemainingTokens(payload);
         ProtocolInterpreter.showSuccessfulGroupMessageMessage(groupName, groupMessage);
     }
 
@@ -151,8 +194,8 @@ public class ServerMessageHandler {
         ProtocolInterpreter.showSuccessfulGroupAllMessage(message.split(","));
     }
 
-    private void handleOkBroadcastMessage(String body) {
-        ProtocolInterpreter.showSuccessfulBroadcastMessage(body);
+    private void handleOkBroadcastMessage(String message) {
+        ProtocolInterpreter.showSuccessfulBroadcastMessage(message);
     }
 
     private void handleOkConnectMessage(String username) {
@@ -161,8 +204,8 @@ public class ServerMessageHandler {
         ProtocolInterpreter.promptMenuMessage();
     }
 
-    private String[] parseMessage(String message) {
-        return message.split(" ", 2);
+    private String getRemainingTokens(StringTokenizer tokenizer) throws NoSuchElementException {
+        var remainder = tokenizer.nextToken("");
+        return remainder.trim();
     }
-
 }

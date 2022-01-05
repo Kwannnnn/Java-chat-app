@@ -55,6 +55,14 @@ public class DataObject {
         return Optional.ofNullable(this.groups.get(groupName));
     }
 
+    public synchronized boolean hasGroup(String groupName) {
+        return groups.containsKey(groupName);
+    }
+
+    public synchronized boolean hasClient(String userName) {
+        return chatClients.containsKey(userName);
+    }
+
     public synchronized Optional<File> getFile(long id) {
         return Optional.ofNullable(this.files.get(id));
     }
