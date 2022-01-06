@@ -5,6 +5,7 @@ import nl.saxion.itech.server.exception.ClientDisconnectedException;
 import nl.saxion.itech.server.message.Message;
 import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.ClientStatus;
+import nl.saxion.itech.server.model.File;
 import nl.saxion.itech.server.model.Group;
 import nl.saxion.itech.server.util.Logger;
 
@@ -14,7 +15,6 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static nl.saxion.itech.server.util.ServerMessageDictionary.*;
 import static nl.saxion.itech.shared.ProtocolConstants.*;
@@ -112,6 +112,7 @@ public class MessageService implements Service {
 
             return switch (header) {
                 case CMD_SEND -> handleFileSendMessage(payload, sender);
+                case CMD_ACK -> handleFileAckMessage(payload, sender);
 //                case CMD_ACCEPT -> handleAcceptFIleMessage();
                 default -> unknownCommandError();
             };
@@ -124,7 +125,6 @@ public class MessageService implements Service {
         var filename = payload.nextToken();
         var fileSize = Integer.parseInt(payload.nextToken());
         var recipientUsername = payload.nextToken();
-        var checksum = payload.nextToken();
         var client = this.data.getClient(recipientUsername);
 
         if (client.isEmpty()) {
@@ -132,10 +132,31 @@ public class MessageService implements Service {
         }
 
         var recipient = client.get();
-//        var file = new File(filename, fileSize, sender, recipient, checksum);
-        sendMessage(fileNew(filename, fileSize, sender.getUsername(), checksum), recipient);
+        var file = new File(filename, sender, recipient, fileSize);
+        this.data.addFile(file);
+        sendMessage(fileReq(file.getId(), sender.getUsername(), filename, fileSize), recipient);
 
-        return okFileNew(filename,fileSize, recipientUsername, checksum);
+        return okFileSend(filename, recipientUsername);
+    }
+
+    private Message handleFileAckMessage(StringTokenizer payload, Client sender) {
+        var fileId = payload.nextToken();
+        var file = this.data.getFile(fileId);
+//        var choice = payload.nextToken();
+
+        if (file.isEmpty()) {
+            return unknownTransfer();
+        }
+
+        var error = userIsNotRecipient(file.get(), sender);
+
+        if (error.isPresent()) {
+            return error.get();
+        }
+
+        sendMessage(fileTr(fileId, 1338), file.get().getSender());
+        sendMessage(okFileAck(fileId), sender);
+        return fileTr(fileId, 1338);
     }
 
     private Message handleConnectMessage(String username, Client sender) {
@@ -324,6 +345,12 @@ public class MessageService implements Service {
         }
     }
 
+    private Optional<Message> userIsNotRecipient(File file, Client client) {
+        return !clientIsRecipientOfFile(client, file)
+                ? Optional.of(unknownTransfer()) // Unknown transfer
+                : Optional.empty();
+    }
+
     private Optional<Message> userNotMemberOfGroup(String groupName, String username) {
         return !groupHasClient(groupName, username)
                 ? Optional.of(notMemberOfGroupError()) // Not member of group
@@ -392,6 +419,10 @@ public class MessageService implements Service {
      */
     private boolean groupWithNameExists(String groupName) {
         return this.data.hasGroup(groupName);
+    }
+
+    private boolean clientIsRecipientOfFile(Client client, File file) {
+        return file.getRecipient().equals(client);
     }
 
     private boolean groupHasClient(String groupName, String username) {

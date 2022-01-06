@@ -10,6 +10,7 @@ public class FileTransferService implements Service {
 
     public FileTransferService(DataObject data) {
         this.data = data;
+
     }
 
     @Override
@@ -20,7 +21,7 @@ public class FileTransferService implements Service {
             var dataInputStream = new BufferedReader(new InputStreamReader(in));
 
             var mode = dataInputStream.readLine();
-            var fileID = Long.parseLong(dataInputStream.readLine());
+            var fileID = dataInputStream.readLine();
             var file = getFile(fileID);
 
             // Check if the client wants to receive the file or send the file
@@ -48,26 +49,26 @@ public class FileTransferService implements Service {
 
     private void handleTransfer(File file) throws IOException {
         // TODO: use DataInputStream instead
-        var in = new BufferedReader(new InputStreamReader(file.getSenderInputStream()));
-        var out = new PrintWriter(file.getRecipientOutputStream());
+        var in = new DataInputStream(file.getSenderInputStream());
+        var out = new DataOutputStream(file.getRecipientOutputStream());
 
         // To simulate sending bytes, for now sending lines of text.
         // TODO: perhaps the code should look like the commented code below
-        String line;
-        while ((line = in.readLine()) != null) {
-            out.println(line);
-            out.flush();
-        }
-
-//        var fileSize = file.getFileSize();
-//        int bytes = 0;
-//        byte[] chunk = new byte[16 * 1024];
-//        while (fileSize > 0 && (in.read(chunk, 0, Math.min(chunk.length, fileSize))) != -1) {
-//            in.transferTo(out);
+//        String line;
+//        while ((line = in.readLine()) != null) {
+//            out.println(line);
+//            out.flush();
 //        }
+
+        var fileSize = file.getFileSize();
+        int bytes = 0;
+        byte[] chunk = new byte[16 * 1024];
+        while (fileSize > 0 && (in.read(chunk, 0, Math.min(chunk.length, fileSize))) != -1) {
+            in.transferTo(out);
+        }
     }
 
-    private File getFile(long fileId) {
+    private File getFile(String fileId) {
         var optional = this.data.getFile(fileId);
         System.out.println(fileId);
 

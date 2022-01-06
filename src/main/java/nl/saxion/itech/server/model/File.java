@@ -2,22 +2,23 @@ package nl.saxion.itech.server.model;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.UUID;
 
 public class File {
-    private static final AtomicLong COUNT = new AtomicLong(0);
-    private final Long id;
-    private final String checksum;
+    private final String id;
     private final String filename;
     private final int fileSize;
+    private final Client sender;
+    private final Client recipient;
     private InputStream senderInputStream;
     private OutputStream recipientOutputStream;
 
-    public File(String filename, int fileSize, String checksum) {
-        this.id = 1L;
+    public File(String filename, Client sender, Client recipient, int fileSize) {
+        this.id = UUID.randomUUID().toString();
         this.filename = filename;
+        this.sender = sender;
+        this.recipient = recipient;
         this.fileSize = fileSize;
-        this.checksum = checksum;
     }
 
     public void setSenderInputStream(InputStream senderInputStream) {
@@ -40,7 +41,15 @@ public class File {
         return fileSize;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
+    }
+
+    public Client getSender() {
+        return sender;
+    }
+
+    public Client getRecipient() {
+        return recipient;
     }
 }

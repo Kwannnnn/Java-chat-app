@@ -2,7 +2,6 @@ package nl.saxion.itech.server.model;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.Socket;
 import java.time.Instant;
 
 public class Client {

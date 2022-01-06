@@ -4,6 +4,7 @@ import nl.saxion.itech.server.service.Service;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.ArrayList;
 
 /**
  * This Thread subclass uses a ServerSocket to listen for connections on a
@@ -30,7 +31,7 @@ public class ServiceListener extends Thread {
      */
     public void stopListening() {
         this.isRunning = false; // Set the stop flag
-        this.interrupt(); // Stop blocking in accept()
+        this.interrupt(); // Stop running this and all child threads
         try {
             this.serverSocket.close();
         } // Stop listening.

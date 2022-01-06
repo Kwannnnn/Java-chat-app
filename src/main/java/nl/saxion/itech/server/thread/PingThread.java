@@ -2,7 +2,6 @@ package nl.saxion.itech.server.thread;
 
 import nl.saxion.itech.server.data.DataObject;
 import nl.saxion.itech.server.model.Client;
-import nl.saxion.itech.server.model.ClientStatus;
 import nl.saxion.itech.server.util.Logger;
 
 import java.io.IOException;

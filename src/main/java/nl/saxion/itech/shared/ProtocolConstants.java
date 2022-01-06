@@ -51,7 +51,7 @@ public final class ProtocolConstants {
     public static final String ER10_BODY = "You are not part of this group";
     public static final String ER11_BODY = "Password does not match";
     public static final String ER12_BODY = "You have already been authenticated";
-    public static final String ER13_BODY = "User with this username does not exist";
+    public static final String ER13_BODY = "Unknown transfer";
     public static final String ER66_BODY = "You are already logged in";
     public static final String DSCN_BODY = "Goodbye";
 

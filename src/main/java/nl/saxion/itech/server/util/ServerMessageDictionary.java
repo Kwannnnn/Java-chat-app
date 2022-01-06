@@ -60,19 +60,31 @@ public final class ServerMessageDictionary {
     }
 
     /**
-     * @param filename the name of the file being sent
-     * @param fileSize the size of the file being sent
+     * @param fileId the file id of the sent file
      * @param senderUsername the username of the user sending the file
-     * @param checksum the md5 checksum of the file being sent
-     * @return FILE NEW [file name] [file size] [sender username] [checksum]
+     * @param fileName the name of the file being sent
+     * @param fileSize the size of the file being sent
+     * @return FILE REQ [sender username] [file name] [file size]
      */
-    public static TextMessage fileNew(String filename,
-                                      int fileSize,
+    public static TextMessage fileReq(String fileId,
                                       String senderUsername,
-                                      String checksum) {
+                                      String fileName,
+                                      int fileSize) {
         return new TextMessage(
-                CMD_FILE + " " + CMD_NEW,
-                filename + " " + fileSize + " " + senderUsername + " " + checksum);
+                CMD_FILE + " " + CMD_REQ,
+                fileId + " " + senderUsername + " " + fileName + " " + fileSize);
+    }
+
+    /**
+     * @param transferId the id of the file
+     * @param portNumber the port number where the file transfer will happen
+     * @return FILE TR [transfer id] [port number]
+     */
+    public static TextMessage fileTr(String transferId,
+                                      int portNumber) {
+        return new TextMessage(
+                CMD_FILE + " " + CMD_TR,
+                transferId + " " + portNumber);
     }
 
     // OK Messages
@@ -179,18 +191,24 @@ public final class ServerMessageDictionary {
 
     /**
      * @param filename the name of the file being sent
-     * @param fileSize the size of the file being sent
      * @param recipientUsername the username of the user sending the file
-     * @param checksum the md5 checksum of the file being sent
-     * @return OK FILE NEW [file name] [file size] [recipient username] [checksum]
+     * @return OK FILE SEND [file name] [recipient username]
      */
-    public static TextMessage okFileNew(String filename,
-                                      int fileSize,
-                                      String recipientUsername,
-                                      String checksum) {
+    public static TextMessage okFileSend(String filename,
+                                         String recipientUsername) {
         return new TextMessage(
-                CMD_OK + " " + CMD_FILE + " " + CMD_NEW,
-                filename + " " + fileSize + " " + recipientUsername + " " + checksum);
+                CMD_OK + " " + CMD_FILE + " " + CMD_SEND,
+                filename + " " +  recipientUsername);
+    }
+
+    /**
+     * @param transferId the name of the file being acknowledged
+     * @return OK FILE ACK [file id] [0/1]
+     */
+    public static TextMessage okFileAck(String transferId) {
+        return new TextMessage(
+                CMD_OK + " " + CMD_FILE + " " + CMD_ACK,
+                "ACCEPT " + transferId); // FIXME: 06/01/2022 with deny/accept
     }
 
     // Error messages
@@ -272,5 +290,12 @@ public final class ServerMessageDictionary {
      */
     public static TextMessage notMemberOfGroupError() {
         return new TextMessage(CMD_ER10, ER10_BODY);
+    }
+
+    /**
+     * @return ER13 Unknown transfer
+     */
+    public static TextMessage unknownTransfer() {
+        return new TextMessage(CMD_ER13, ER13_BODY);
     }
 }

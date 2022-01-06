@@ -13,14 +13,13 @@ public class DataObject {
     private final HashMap<String, Client> chatClients;
     private final HashMap<String, Group> groups;
     private final HashMap<String, GroupPingThread> groupPingThreads;
-    private final HashMap<Long, File> files;
+    private final HashMap<String, File> files;
 
     public DataObject() {
         this.chatClients = new HashMap<>();
         this.groups = new HashMap<>();
         this.groupPingThreads = new HashMap<>();
         this.files = new HashMap<>();
-        addFile(new File("test.txt", 234, "asfasf"));
     }
 
     public synchronized void addClient(Client client) {
@@ -63,7 +62,7 @@ public class DataObject {
         return chatClients.containsKey(userName);
     }
 
-    public synchronized Optional<File> getFile(long id) {
+    public synchronized Optional<File> getFile(String id) {
         return Optional.ofNullable(this.files.get(id));
     }
 
