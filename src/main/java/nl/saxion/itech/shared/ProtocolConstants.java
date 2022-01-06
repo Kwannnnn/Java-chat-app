@@ -8,6 +8,7 @@ public final class ProtocolConstants {
     public static final String CMD_BCST = "BCST";
     public static final String CMD_PING = "PING";
     public static final String CMD_PONG = "PONG";
+    public static final String CMD_TIMEOUT = "TIMEOUT";
     public static final String CMD_OK = "OK";
     public static final String CMD_DSCN = "DSCN";
     public static final String CMD_ALL = "ALL";
@@ -17,7 +18,9 @@ public final class ProtocolConstants {
     public static final String CMD_NEW = "NEW";
     public static final String CMD_FILE = "FILE";
     public static final String CMD_SEND = "SEND";
-    public static final String CMD_ACCEPT = "ACCEPT";
+    public static final String CMD_ACK = "ACK";
+    public static final String CMD_TR = "TR";
+    public static final String CMD_REQ = "REQ";
 
     public static final String CMD_ER00 = "ER00";
     public static final String CMD_ER01 = "ER01";
@@ -53,7 +56,7 @@ public final class ProtocolConstants {
     public static final String DSCN_BODY = "Goodbye";
 
     public static final int GROUP_TIMEOUT_DURATION = 120;
-    public static final int CLIENT_TIMEOUT_DURATION = 3;
+    public static final int CLIENT_TIMEOUT_DURATION = 10;
 
     public static final int MIN_USERNAME_LENGTH = 3;
     public static final int MAX_USERNAME_LENGTH = 14;

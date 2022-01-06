@@ -51,7 +51,7 @@ public class MessageService implements Service {
         String line;
         while ((line = in.readLine()) != null) {
             // Log the input
-            log("[" + client + "] >> " + line);
+            log(">> [" + client + "] " + line);
 
             try {
                 var response = Optional.ofNullable(handleMessage(line, client));
@@ -434,7 +434,7 @@ public class MessageService implements Service {
         var out = new PrintWriter(client.getOutputStream());
         out.println(message);
         out.flush();
-        log("[" + client + "] << " + message);
+        log("<< [" + client + "] " + message);
     }
 
     private String getRemainingTokens(StringTokenizer tokenizer) throws NoSuchElementException {

@@ -23,20 +23,21 @@ public class PingThread extends Thread {
     @Override
     public void run() {
         var logger = Logger.getInstance();
+        var timeoutLimit = CLIENT_TIMEOUT_DURATION * 1000; // in milliseconds
+
         try {
             while (!isInterrupted()) {
-                var timeoutLimit = CLIENT_TIMEOUT_DURATION * 1000; // in milliseconds
                 Thread.sleep(timeoutLimit);
                 for (var client : this.data.getAllClients()) {
                     if (client.getLastPong() == null) {
                         client.updateLastPong();
-                        pingClient(client);
                         logger.logMessage("~~ [" + client + "] Heartbeat initiated");
+                        pingClient(client);
                         continue;
                     }
 
                     var difference = Duration.between(client.getLastPong(), Instant.now());
-                    if (difference.toMillis() > timeoutLimit) {
+                    if (difference.toMillis() > timeoutLimit + 100) {
                         logger.logMessage("~~ [" + client + "] Heartbeat expired - FAILED");
                         disconnectClient(client);
                     } else {

@@ -42,51 +42,35 @@ public class ServerMessageHandler {
     }
 
     private void handleBroadcastMessage(StringTokenizer payload) {
-        try {
-            String sender = payload.nextToken();
-            String body = getRemainingTokens(payload);;
-            ProtocolInterpreter.showBroadcastMessage(sender, body);
-        } catch (NoSuchElementException e) {
-            unknownResponseFromServer();
-        }
+        String sender = payload.nextToken();
+        String body = getRemainingTokens(payload);
+        ProtocolInterpreter.showBroadcastMessage(sender, body);
+
     }
 
     private void handleInfoMessage(StringTokenizer payload) {
-        try {
-            String message = getRemainingTokens(payload);
-            ProtocolInterpreter.showWelcomeMessage(message);
-        } catch (NoSuchElementException e) {
-            unknownResponseFromServer();
-        }
+        String message = getRemainingTokens(payload);
+        ProtocolInterpreter.showWelcomeMessage(message);
     }
 
     private void handleGroupMessage(StringTokenizer payload) {
-        try {
-            String header = payload.nextToken();
+        String header = payload.nextToken();
 
-            switch (header) {
-                case CMD_JOIN -> handleGroupJoinMessage(payload);
-                case CMD_MSG -> handleGroupMessageMessage(payload);
-            }
-        } catch (NoSuchElementException e) {
-            unknownResponseFromServer();
+        switch (header) {
+            case CMD_JOIN -> handleGroupJoinMessage(payload);
+            case CMD_MSG -> handleGroupMessageMessage(payload);
         }
     }
 
     private void handleGroupMessageMessage(StringTokenizer payload) {
-        try {
-            String groupName = payload.nextToken();
-            String body = getRemainingTokens(payload);
-            ProtocolInterpreter.showGroupMessageMessage(groupName, body);
-        } catch (NoSuchElementException e) {
-            unknownResponseFromServer();
-        }
+        String groupName = payload.nextToken();
+        String body = getRemainingTokens(payload);
+        ProtocolInterpreter.showGroupMessageMessage(groupName, body);
     }
 
     private void handleOKMessage(StringTokenizer payload) {
-        try {
             String header = payload.nextToken();
-            String body = getRemainingTokens(payload);;
+            String body = getRemainingTokens(payload);
 
             switch (header) {
                 case CMD_CONN -> handleOkConnectMessage(body);
@@ -94,9 +78,7 @@ public class ServerMessageHandler {
                 case CMD_GRP -> handleOkGroupMessage(payload);
                 case CMD_MSG -> handleOkDirectMessage(payload);
             }
-        } catch (NoSuchElementException e) {
-            unknownResponseFromServer();
-        }
+
     }
 
     private void handleGroupJoinMessage(StringTokenizer payload) {
@@ -115,7 +97,8 @@ public class ServerMessageHandler {
 
     private void handleErrorMessage(StringTokenizer payload) {
         try {
-            String message = getRemainingTokens(payload);;
+            String message = getRemainingTokens(payload);
+            ;
             ProtocolInterpreter.showErrorMessage(message);
         } catch (NoSuchElementException e) {
             unknownResponseFromServer();
@@ -123,7 +106,8 @@ public class ServerMessageHandler {
     }
 
     private void handleAllMessage(StringTokenizer payload) {
-        String clients = getRemainingTokens(payload);;
+        String clients = getRemainingTokens(payload);
+        ;
 
         ProtocolInterpreter.showSuccessfulAllMessage(clients.split(","));
     }
@@ -138,7 +122,8 @@ public class ServerMessageHandler {
     private void handleOkDirectMessage(StringTokenizer payload) {
         try {
             String recipient = payload.nextToken();
-            String body = getRemainingTokens(payload);;
+            String body = getRemainingTokens(payload);
+            ;
             ProtocolInterpreter.showSuccessfulDirectMessage(recipient, body);
         } catch (NoSuchElementException e) {
             unknownResponseFromServer();
@@ -148,7 +133,8 @@ public class ServerMessageHandler {
     private void handleDirectMessage(StringTokenizer payload) {
         try {
             String sender = payload.nextToken();
-            String directMessage = getRemainingTokens(payload);;
+            String directMessage = getRemainingTokens(payload);
+            ;
             ProtocolInterpreter.showIncomingDirectMessage(sender, directMessage);
         } catch (NoSuchElementException e) {
             unknownResponseFromServer();
