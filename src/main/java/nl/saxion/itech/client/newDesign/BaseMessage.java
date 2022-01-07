@@ -13,14 +13,6 @@ public class BaseMessage implements Message {
         this.header = header;
     }
 
-    public String getHeader() {
-        return this.header;
-    }
-
-    public String getBody() {
-        return this.body;
-    }
-
     @Override
     public String toString() {
         var result = this.header;

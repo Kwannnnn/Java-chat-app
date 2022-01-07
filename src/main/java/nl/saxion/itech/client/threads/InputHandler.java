@@ -1,17 +1,11 @@
 package nl.saxion.itech.client.threads;
-
 import nl.saxion.itech.client.ChatClient;
 import nl.saxion.itech.client.ProtocolInterpreter;
-
 import static nl.saxion.itech.shared.ProtocolConstants.*;
-
 import nl.saxion.itech.client.newDesign.BaseMessage;
 import nl.saxion.itech.client.newDesign.Message;
-
 import static nl.saxion.itech.shared.ANSIColorCodes.*;
-
 import java.util.Scanner;
-
 
 public class InputHandler extends Thread {
 
@@ -82,8 +76,39 @@ public class InputHandler extends Thread {
             case "GJ" -> handleGroupJoinMessage();
             case "GM" -> handleGroupMessageMessage();
             case "DM" -> handleDirectMessage();
+            case "FS" -> handleFileSendMessage();
+            case "FA" -> handleFileAcceptMessage();
+            case "FD" -> handleFileDenyMessage();
             case "Q" -> handleQuit();
             default -> System.out.println("Unknown command");
+        }
+    }
+
+    private void handleFileDenyMessage() {
+        System.out.print(">> Please enter the transfer id you want to deny: ");
+        String transferID = scanner.nextLine();
+        addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_ACK , CMD_DENY + " " + transferID));
+    }
+
+    private void handleFileAcceptMessage() {
+        System.out.print(">> Please enter the transfer id you want to accept: ");
+        String transferID = scanner.nextLine();
+        addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_ACK , CMD_ACCEPT + " " + transferID));
+    }
+
+    private void handleFileSendMessage() {
+        System.out.print(">> Please enter the recipient's username: ");
+        String username = scanner.nextLine();
+        System.out.print(">> Please enter the file name: ");
+        String fileName = scanner.nextLine();
+        var resource = ChatClient.class.getResource(fileName);
+
+        if (resource == null) {
+            System.out.println("File not found");
+        } else {
+            var file = resource.getFile();
+            addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_SEND, fileName + " " + file.getBytes().length
+                    + " " + username));
         }
     }
 
@@ -128,6 +153,9 @@ public class InputHandler extends Thread {
                          GA: \t Show all groups
                          GJ: \t Join a group
                          GM: \t Send message to a group
+                         FS: \t Send a file to another user
+                         FA: \t Accept a file
+                         FD: \t Deny a file
                          Q: \t Close connection with the server
                          ?: \t Show this menu
                         """ + ANSI_RESET);

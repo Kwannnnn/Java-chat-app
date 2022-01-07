@@ -52,4 +52,8 @@ public class File {
     public Client getRecipient() {
         return recipient;
     }
+
+    public String getFilename() {
+        return filename;
+    }
 }

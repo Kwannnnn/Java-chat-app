@@ -16,7 +16,7 @@ public class ServiceManager {
     public void addService(Service service, int port)
             throws IOException {
         // Check if there is already a service running on that port
-        if (services.get(port) != null)
+        if (services.containsKey(port))
             throw new IllegalArgumentException("Port " + port
                     + " already in use.");
         // Create a listener to handle connections on that port

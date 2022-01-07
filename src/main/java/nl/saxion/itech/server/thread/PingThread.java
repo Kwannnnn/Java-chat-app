@@ -9,8 +9,7 @@ import java.io.PrintWriter;
 import java.time.Duration;
 import java.time.Instant;
 
-import static nl.saxion.itech.shared.ProtocolConstants.CLIENT_TIMEOUT_DURATION;
-import static nl.saxion.itech.shared.ProtocolConstants.CMD_PING;
+import static nl.saxion.itech.shared.ProtocolConstants.*;
 
 public class PingThread extends Thread {
     private final DataObject data;
@@ -22,11 +21,10 @@ public class PingThread extends Thread {
     @Override
     public void run() {
         var logger = Logger.getInstance();
-        var timeoutLimit = CLIENT_TIMEOUT_DURATION * 1000; // in milliseconds
 
         try {
             while (!isInterrupted()) {
-                Thread.sleep(timeoutLimit);
+                Thread.sleep(PING_TIME_MS);
                 for (var client : this.data.getAllClients()) {
                     if (client.getLastPong() == null) {
                         client.updateLastPong();
@@ -36,7 +34,7 @@ public class PingThread extends Thread {
                     }
 
                     var difference = Duration.between(client.getLastPong(), Instant.now());
-                    if (difference.toMillis() > timeoutLimit + 100) {
+                    if (difference.toMillis() > PING_TIME_MS + PING_TIME_MS_DELTA_ALLOWED) {
                         logger.logMessage("~~ [" + client + "] Heartbeat expired - FAILED");
                         disconnectClient(client);
                     } else {

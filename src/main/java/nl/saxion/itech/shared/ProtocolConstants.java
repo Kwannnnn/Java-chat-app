@@ -21,6 +21,8 @@ public final class ProtocolConstants {
     public static final String CMD_ACK = "ACK";
     public static final String CMD_TR = "TR";
     public static final String CMD_REQ = "REQ";
+    public static final String CMD_ACCEPT = "ACCEPT";
+    public static final String CMD_DENY = "DENY";
 
     public static final String CMD_ER00 = "ER00";
     public static final String CMD_ER01 = "ER01";
@@ -55,8 +57,9 @@ public final class ProtocolConstants {
     public static final String ER66_BODY = "You are already logged in";
     public static final String DSCN_BODY = "Goodbye";
 
-    public static final int GROUP_TIMEOUT_DURATION = 120;
-    public static final int CLIENT_TIMEOUT_DURATION = 10;
+    public static final int GROUP_PING_TIME_MS = 120_000;
+    public static final int PING_TIME_MS = 10_000;
+    public static final int PING_TIME_MS_DELTA_ALLOWED = 100;
 
     public static final int MIN_USERNAME_LENGTH = 3;
     public static final int MAX_USERNAME_LENGTH = 14;

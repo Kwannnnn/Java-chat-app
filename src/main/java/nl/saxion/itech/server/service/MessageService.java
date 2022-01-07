@@ -67,33 +67,36 @@ public class MessageService implements Service {
     }
 
     private Message handleMessage(String message, Client sender) throws ClientDisconnectedException {
-        var tokenizer = new StringTokenizer(message);
+        var payload = new StringTokenizer(message);
 
         try {
-            var header = tokenizer.nextToken().toUpperCase();
             return sender.getStatus() == ClientStatus.CLIENT_CONNECTED ?
-                    handleConnectedUser(header, tokenizer, sender) :
-                    handleUnknownUser(header, tokenizer, sender);
+                    handleConnectedUser(payload, sender) :
+                    handleUnknownUser(payload, sender);
         } catch (NoSuchElementException e) {
             return unknownCommandError();
         }
     }
 
-    private Message handleUnknownUser(String header, StringTokenizer tokenizer, Client sender) {
+    private Message handleUnknownUser(StringTokenizer payload, Client sender) {
+        var header = payload.nextToken().toUpperCase();
+
         if (!header.equals(CMD_CONN)) {
             return pleaseLoginFirstError();
         }
 
         try {
-            var username = tokenizer.nextToken();
+            var username = payload.nextToken();
             return handleConnectMessage(username, sender);
         } catch (NoSuchElementException e) {
             return missingParametersError();
         }
     }
 
-    private Message handleConnectedUser(String header, StringTokenizer payload, Client sender)
+    private Message handleConnectedUser(StringTokenizer payload, Client sender)
             throws ClientDisconnectedException {
+        var header = payload.nextToken().toUpperCase();
+
         return switch (header) {
             case CMD_DSCN -> handleDisconnectMessage(sender);
             case CMD_BCST -> handleBroadcast(payload, sender);
@@ -142,20 +145,36 @@ public class MessageService implements Service {
     private Message handleFileAckMessage(StringTokenizer payload, Client sender) {
         var fileId = payload.nextToken();
         var file = this.data.getFile(fileId);
-//        var choice = payload.nextToken();
+        var choice = payload.nextToken();
 
-        if (file.isEmpty()) {
+        //error handling
+        boolean correctChoice = choice.equalsIgnoreCase(CMD_ACCEPT) || choice.equalsIgnoreCase(CMD_DENY);
+        if (file.isEmpty() || !correctChoice) {
             return unknownTransfer();
         }
 
         var error = userIsNotRecipient(file.get(), sender);
 
-        if (error.isPresent()) {
-            return error.get();
-        }
+        return error.orElseGet(() -> switch (choice) {
+            case CMD_ACCEPT -> handleFileAckAcceptMessage(file.get(), sender);
+            case CMD_DENY -> handleFileAckDenyMessage(file.get(), sender);
+        });
+    }
 
-        sendMessage(fileTr(fileId, 1338), file.get().getSender());
-        sendMessage(okFileAck(fileId), sender);
+    private Message handleFileAckDenyMessage(File file, Client messageSender) {
+        String fileId = file.getId();
+        sendMessage(okFileAckDeny(fileId), messageSender);
+
+        return fileAckDeny(file.getFilename(), file.getSender().getUsername());
+    }
+
+    private Message handleFileAckAcceptMessage(File file, Client messageSender) {
+        String fileId = file.getId();
+        sendMessage(okFileAckAccept(fileId), messageSender);
+        sendMessage(fileAckAccept(file.getFilename(), file.getSender().getUsername()), file.getSender());
+
+        // send file transfer message to both users
+        sendMessage(fileTr(fileId, 1338), file.getSender());
         return fileTr(fileId, 1338);
     }
 
@@ -282,7 +301,7 @@ public class MessageService implements Service {
 
             assert group.isPresent() : "This group is not present, but it should be";
 
-            sendMessageToAll(grpMsg( groupName,senderUsername, message),
+            sendMessageToAll(grpMsg(groupName, senderUsername, message),
                     group.get().getClients());
             group.get().updateTimestampOfClient(senderUsername);
             return okGrpMsg(groupName, message);
@@ -383,6 +402,7 @@ public class MessageService implements Service {
 
     /**
      * A guard to check whether a username complies to the protocol format.
+     *
      * @param username the username to check
      * @return an Optional with error message, in case the username is not
      * valid, or an empty Optional in case the username is valid.
@@ -395,6 +415,7 @@ public class MessageService implements Service {
 
     /**
      * A guard to check a user with a certain username is already logged in.
+     *
      * @param username the user to check
      * @return an Optional with error message, in case user is already logged
      * in, or an empty Optional in case the user is not logged in.
@@ -433,8 +454,9 @@ public class MessageService implements Service {
     /**
      * A helper function that broadcasts a certain message to every
      * connected client in the chat, except to the sender of the message.
+     *
      * @param message the message to broadcast
-     * @param sender the sender of the message
+     * @param sender  the sender of the message
      */
     private void broadcastMessage(Message message, Client sender) {
         var clientsToBroadcastTo = this.data.getAllClients()
@@ -447,6 +469,7 @@ public class MessageService implements Service {
 
     /**
      * Sends a message to all clients part of a collection.
+     *
      * @param message the message to be sent
      * @param clients the clients to send the message to
      */
@@ -458,8 +481,9 @@ public class MessageService implements Service {
 
     /**
      * Sends a message to a specific client.
+     *
      * @param message the message to be sent
-     * @param client the client to send the message to
+     * @param client  the client to send the message to
      */
     private void sendMessage(Message message, Client client) {
         var out = new PrintWriter(client.getOutputStream());
@@ -475,6 +499,7 @@ public class MessageService implements Service {
 
     /**
      * Logs some text on the server log output stream.
+     *
      * @param text the text to be logged
      */
     private void log(String text) {

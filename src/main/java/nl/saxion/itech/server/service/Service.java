@@ -9,7 +9,7 @@ import java.io.OutputStream;
  *
  * Each connection through the same port share the same Service object.
  * Which means that any state regarding an individual connection must be
- * stored in a local variable withing the serve() method. Any shared state
+ * stored in a local variable within the serve() method. Any shared state
  * can be stored as an instance variable of the Service class.
  */
 public interface Service {

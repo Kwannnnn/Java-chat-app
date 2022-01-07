@@ -20,15 +20,14 @@ public class GroupPingThread extends Thread {
     @Override
     public void run() {
         var logger = Logger.getInstance();
-        var timeoutLimit = GROUP_TIMEOUT_DURATION * 1000; // in milliseconds
 
         try {
             while (!isInterrupted()) {
-                Thread.sleep(timeoutLimit);
+                Thread.sleep(GROUP_PING_TIME_MS);
                 for (var entry : this.group.getLastMessageTimeStamp()) {
                     var difference = Duration.between(entry.getValue(), Instant.now());
                     var username = entry.getKey();
-                    if (difference.toMillis() > timeoutLimit + 100) {
+                    if (difference.toMillis() > GROUP_PING_TIME_MS + PING_TIME_MS_DELTA_ALLOWED) {
                         var user = this.group.getClient(username);
                             var out = new PrintWriter(user.getOutputStream());
                             var message = CMD_GRP + " " + CMD_DSCN + " " + this.group.getName();

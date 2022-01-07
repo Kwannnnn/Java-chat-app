@@ -127,4 +127,29 @@ public final class ProtocolInterpreter {
         return ANSI_BOLD + string + ANSI_RESET;
     }
 
+    public static void showFileRequestMessage(String transferID, String sender, String fileName, String fileSize) {
+        System.out.print(italic("New file transfer request from [" + bold(sender) + "]:\n")
+                + "Transfer ID: " + bold(transferID) + "\n"
+                + "File name: " + bold(fileName) + "\n"
+                + "File size: " + bold(fileSize) + "\n");
+    }
+
+    public static void showFileTransferMessage(String transferID, String portNumber) {
+        System.out.println(italic("A connection has been setup on port " + bold(portNumber) + " for transfer with" +
+                " id: ") + bold(transferID));
+    }
+
+    public static void showSuccessfulFileSendMessage(String fileName, String fileSize, String recipient) {
+        System.out.println("Your request to send the file " + bold(fileName) + " to " + bold(recipient) + " has been sent");
+        System.out.println("File size: " + bold(fileSize));
+    }
+
+    public static void showSuccessfulAcknowledgeAcceptMessage(String transferID) {
+        System.out.println("You successfully accepted the file transfer with id " + bold(transferID) + ". Download will" +
+                " start shortly.");
+    }
+
+    public static void showSuccessfulAcknowledgeDenyMessage(String transferID) {
+        System.out.println("You successfully denied the file transfer with id " + bold(transferID));
+    }
 }

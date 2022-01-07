@@ -1,9 +1,16 @@
 package nl.saxion.itech.server.util;
 
+import nl.saxion.itech.server.message.Message;
 import nl.saxion.itech.server.message.TextMessage;
+import nl.saxion.itech.server.model.Client;
 
 import static nl.saxion.itech.shared.ProtocolConstants.*;
 
+/**
+ * This class contains helper methods that make it quicker and more convenient to create protocol messages.
+ * All methods are static and return ready-to-be-sent TextMessage instances that can be converted into protocol command
+ * strings.
+ */
 public final class ServerMessageDictionary {
     /**
      * @return INFO [welcomeMessage]
@@ -189,6 +196,18 @@ public final class ServerMessageDictionary {
                 groupName);
     }
 
+    public static TextMessage fileAckDeny(String filename, String recipientUsername) {
+        return new TextMessage(
+                CMD_FILE + " " + CMD_ACK + " " + CMD_DENY,
+                filename + " " +  recipientUsername);
+    }
+
+    public static TextMessage fileAckAccept(String filename, String recipientUsername) {
+        return new TextMessage(
+                CMD_FILE + " " + CMD_ACK + " " + CMD_ACCEPT,
+                filename + " " +  recipientUsername);
+    }
+
     /**
      * @param filename the name of the file being sent
      * @param recipientUsername the username of the user sending the file
@@ -202,13 +221,23 @@ public final class ServerMessageDictionary {
     }
 
     /**
-     * @param transferId the name of the file being acknowledged
-     * @return OK FILE ACK [file id] [0/1]
+     * @param transferId the id of the file being accepted
+     * @return OK FILE ACK ACCEPT [file id]
      */
-    public static TextMessage okFileAck(String transferId) {
+    public static TextMessage okFileAckAccept(String transferId) {
         return new TextMessage(
                 CMD_OK + " " + CMD_FILE + " " + CMD_ACK,
-                "ACCEPT " + transferId); // FIXME: 06/01/2022 with deny/accept
+                CMD_ACCEPT + " " + transferId);
+    }
+
+    /**
+     * @param transferId the id of the file being denied
+     * @return OK FILE ACK DENY [file id]
+     */
+    public static TextMessage okFileAckDeny(String transferId) {
+        return new TextMessage(
+                CMD_OK + " " + CMD_FILE + " " + CMD_ACK,
+                CMD_DENY + " " + transferId);
     }
 
     // Error messages
