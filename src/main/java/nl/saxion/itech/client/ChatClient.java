@@ -93,7 +93,6 @@ public class ChatClient {
     }
 
     public void addFileToSend(File file) {
-        System.out.println("Triggerd addFileToReceive");
         filesToSend.put(file.getId(), file);
     }
 

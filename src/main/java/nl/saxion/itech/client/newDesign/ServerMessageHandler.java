@@ -67,11 +67,7 @@ public class ServerMessageHandler {
         String transferID = payload.nextToken();
         String portNumber = payload.nextToken();
 
-        System.out.println(mode);
         ProtocolInterpreter.showFileTransferMessage(transferID, portNumber);
-
-        System.out.println(this.client.getFilesToSend());
-        System.out.println(this.client.getFilesToReceive());
 
         try {
             var socket = new Socket("127.0.0.1", Integer.parseInt(portNumber));

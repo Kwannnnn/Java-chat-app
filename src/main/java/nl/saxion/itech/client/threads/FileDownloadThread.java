@@ -18,6 +18,12 @@ public class FileDownloadThread extends Thread {
 
     @Override
     public void run() {
+        var fileOptional = this.client.getFileToReceive(this.fileID);
+        if (fileOptional.isEmpty()) {
+            return;
+        }
+        var file = fileOptional.get();
+
         try {
             InputStream inputStream = this.socket.getInputStream();
             OutputStream outputStream = socket.getOutputStream();
@@ -27,13 +33,17 @@ public class FileDownloadThread extends Thread {
             out.println("DOWNLOAD " + fileID);
             out.flush();
 
+            var size = file.getFileSize();
+            int readBytes = 0;
             byte[] chunk = new byte[16 * 1024];
-            while (!socket.isClosed()) {
-                in.read(chunk, 0, chunk.length);
+            while (size > 0 && (readBytes = in.read(chunk, 0, Math.min(chunk.length, size))) != -1) {
                 System.out.println(new String(chunk));
+                size -= readBytes;
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }  finally {
+            this.client.removeFileToReceive(file);
         }
         super.run();
     }
