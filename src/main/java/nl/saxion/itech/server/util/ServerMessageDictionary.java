@@ -67,7 +67,7 @@ public final class ServerMessageDictionary {
     }
 
     /**
-     * @param fileId the file id of the sent file
+     * @param fileId the file id of the file being sent
      * @param senderUsername the username of the user sending the file
      * @param fileName the name of the file being sent
      * @param fileSize the size of the file being sent
@@ -85,13 +85,25 @@ public final class ServerMessageDictionary {
     /**
      * @param transferId the id of the file
      * @param portNumber the port number where the file transfer will happen
-     * @return FILE TR [transfer id] [port number]
+     * @return FILE TR UPLOAD [transfer id] [port number]
      */
-    public static TextMessage fileTr(String transferId,
+    public static TextMessage fileTrUpload(String transferId,
                                       int portNumber) {
         return new TextMessage(
                 CMD_FILE + " " + CMD_TR,
-                transferId + " " + portNumber);
+                CMD_UPLOAD + " " + transferId + " " + portNumber);
+    }
+
+    /**
+     * @param transferId the id of the file
+     * @param portNumber the port number where the file transfer will happen
+     * @return FILE TR DOWNLOAD [transfer id] [port number]
+     */
+    public static TextMessage fileTrDownload(String transferId,
+                                      int portNumber) {
+        return new TextMessage(
+                CMD_FILE + " " + CMD_TR,
+                CMD_DOWNLOAD + " " + transferId + " " + portNumber);
     }
 
     // OK Messages
@@ -196,48 +208,49 @@ public final class ServerMessageDictionary {
                 groupName);
     }
 
-    public static TextMessage fileAckDeny(String filename, String recipientUsername) {
+    public static TextMessage fileAckDeny(String fileId) {
         return new TextMessage(
-                CMD_FILE + " " + CMD_ACK + " " + CMD_DENY,
-                filename + " " +  recipientUsername);
+                CMD_FILE + " " + CMD_ACK,
+                CMD_DENY + " " + fileId);
     }
 
-    public static TextMessage fileAckAccept(String filename, String recipientUsername) {
+    public static TextMessage fileAckAccept(String fileId) {
         return new TextMessage(
-                CMD_FILE + " " + CMD_ACK + " " + CMD_ACCEPT,
-                filename + " " +  recipientUsername);
+                CMD_FILE + " " + CMD_ACK,
+                CMD_ACCEPT + " " + fileId);
     }
 
     /**
+     * @param fileId the id of the file being sent
      * @param filename the name of the file being sent
      * @param recipientUsername the username of the user sending the file
      * @return OK FILE SEND [file name] [recipient username]
      */
-    public static TextMessage okFileSend(String filename,
-                                         String recipientUsername) {
+    public static TextMessage okFileReq(String fileId, String filename,
+                                        String recipientUsername) {
         return new TextMessage(
                 CMD_OK + " " + CMD_FILE + " " + CMD_SEND,
-                filename + " " +  recipientUsername);
+                fileId + " " + filename + " " +  recipientUsername);
     }
 
     /**
-     * @param transferId the id of the file being accepted
+     * @param fileId the id of the file being accepted
      * @return OK FILE ACK ACCEPT [file id]
      */
-    public static TextMessage okFileAckAccept(String transferId) {
+    public static TextMessage okFileAckAccept(String fileId) {
         return new TextMessage(
                 CMD_OK + " " + CMD_FILE + " " + CMD_ACK,
-                CMD_ACCEPT + " " + transferId);
+                CMD_ACCEPT + " " + fileId);
     }
 
     /**
-     * @param transferId the id of the file being denied
+     * @param fileId the id of the file being denied
      * @return OK FILE ACK DENY [file id]
      */
-    public static TextMessage okFileAckDeny(String transferId) {
+    public static TextMessage okFileAckDeny(String fileId) {
         return new TextMessage(
                 CMD_OK + " " + CMD_FILE + " " + CMD_ACK,
-                CMD_DENY + " " + transferId);
+                CMD_DENY + " " + fileId);
     }
 
     // Error messages

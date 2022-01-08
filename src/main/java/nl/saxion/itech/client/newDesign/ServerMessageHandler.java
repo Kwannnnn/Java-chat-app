@@ -1,7 +1,11 @@
 package nl.saxion.itech.client.newDesign;
+
 import nl.saxion.itech.client.ChatClient;
+
 import static nl.saxion.itech.shared.ProtocolConstants.*;
+
 import nl.saxion.itech.client.ProtocolInterpreter;
+
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
@@ -40,15 +44,39 @@ public class ServerMessageHandler {
 
         switch (header) {
             case CMD_REQ -> handleFileRequestMessage(payload);
+            case CMD_ACK -> handleFileAckMessage(payload);
             case CMD_TR -> handleFileTransferMessage(payload);
+            default -> unknownResponseFromServer();
+        }
+    }
+
+    private void handleFileAckMessage(StringTokenizer payload) {
+        var header = payload.nextToken().toUpperCase();
+        String transferID = payload.nextToken();
+
+        switch (header) {
+            case CMD_ACCEPT -> ProtocolInterpreter.showFileAckDenyMessage(transferID);
+            case CMD_DENY -> ProtocolInterpreter.showFileAckAcceptMessage(transferID);
+            default -> unknownResponseFromServer();
         }
     }
 
     private void handleFileTransferMessage(StringTokenizer payload) {
+        String header = payload.nextToken().toUpperCase();
         String transferID = payload.nextToken();
         String portNumber = payload.nextToken();
 
-        ProtocolInterpreter.showFileTransferMessage(transferID, portNumber);
+        switch (header) {
+            case CMD_UPLOAD -> {
+                // TODO: do upload
+//                ProtocolInterpreter.showFileTransferUploadMessage(transferID);
+            }
+            case CMD_DOWNLOAD -> {
+                // TODO: do download
+//                ProtocolInterpreter.showFileDownloadMessage(transferID);
+            }
+            default -> unknownResponseFromServer();
+        }
     }
 
     private void handleFileRequestMessage(StringTokenizer payload) {
@@ -75,11 +103,12 @@ public class ServerMessageHandler {
     }
 
     private void handleGroupMessage(StringTokenizer payload) {
-        String header = payload.nextToken();
+        String header = payload.nextToken().toUpperCase();
 
         switch (header) {
             case CMD_JOIN -> handleGroupJoinMessage(payload);
             case CMD_MSG -> handleGroupMessageMessage(payload);
+            default -> unknownResponseFromServer();
         }
     }
 
@@ -90,7 +119,7 @@ public class ServerMessageHandler {
     }
 
     private void handleOKMessage(StringTokenizer payload) {
-        String header = payload.nextToken();
+        String header = payload.nextToken().toUpperCase();
         String body = getRemainingTokens(payload);
 
         switch (header) {
@@ -99,24 +128,27 @@ public class ServerMessageHandler {
             case CMD_GRP -> handleOkGroupMessage(payload);
             case CMD_MSG -> handleOkDirectMessage(payload);
             case CMD_FILE -> handleOkFileMessage(payload);
+            default -> unknownResponseFromServer();
         }
     }
 
     private void handleOkFileMessage(StringTokenizer payload) {
-        String header = payload.nextToken();
+        String header = payload.nextToken().toUpperCase();
 
         switch (header) {
             case CMD_SEND -> handleOkFileSendMessage(payload);
             case CMD_ACK -> handleOkFileAcknowledgeMessage(payload);
+            default -> unknownResponseFromServer();
         }
     }
 
     private void handleOkFileAcknowledgeMessage(StringTokenizer payload) {
-        String header = payload.nextToken();
+        String header = payload.nextToken().toUpperCase();
 
         switch (header) {
             case CMD_ACCEPT -> handleOkFileAcknowledgeAcceptMessage(payload);
             case CMD_DENY -> handleOkFileAcknowledgeDenyMessage(payload);
+            default -> unknownResponseFromServer();
         }
     }
 
@@ -177,7 +209,7 @@ public class ServerMessageHandler {
     }
 
     private void handleOkGroupMessage(StringTokenizer payload) {
-        String header = payload.nextToken();
+        String header = payload.nextToken().toUpperCase();
         String body = payload.nextToken();
 
         switch (header) {
@@ -186,6 +218,7 @@ public class ServerMessageHandler {
             case CMD_JOIN -> handleOkGroupJoinMessage(body);
             case CMD_MSG -> handleOkGroupMessageMessage(payload);
             case CMD_DSCN -> handleOkGroupDisconnectMessage(body);
+            default -> unknownResponseFromServer();
         }
     }
 

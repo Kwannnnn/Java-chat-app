@@ -114,7 +114,7 @@ public class MessageService implements Service {
             var header = payload.nextToken().toUpperCase();
 
             return switch (header) {
-                case CMD_SEND -> handleFileSendMessage(payload, sender);
+                case CMD_REQ -> handleFileReqMessage(payload, sender);
                 case CMD_ACK -> handleFileAckMessage(payload, sender);
 //                case CMD_ACCEPT -> handleAcceptFIleMessage();
                 default -> unknownCommandError();
@@ -124,7 +124,7 @@ public class MessageService implements Service {
         }
     }
 
-    private Message handleFileSendMessage(StringTokenizer payload, Client sender) {
+    private Message handleFileReqMessage(StringTokenizer payload, Client sender) {
         var filename = payload.nextToken();
         var fileSize = Integer.parseInt(payload.nextToken());
         var recipientUsername = payload.nextToken();
@@ -139,7 +139,7 @@ public class MessageService implements Service {
         this.data.addFile(file);
         sendMessage(fileReq(file.getId(), sender.getUsername(), filename, fileSize), recipient);
 
-        return okFileSend(filename, recipientUsername);
+        return okFileReq(file.getId(), filename, recipientUsername);
     }
 
     private Message handleFileAckMessage(StringTokenizer payload, Client sender) {
@@ -165,17 +165,17 @@ public class MessageService implements Service {
         String fileId = file.getId();
         sendMessage(okFileAckDeny(fileId), messageSender);
 
-        return fileAckDeny(file.getFilename(), file.getSender().getUsername());
+        return fileAckDeny(fileId);
     }
 
     private Message handleFileAckAcceptMessage(File file, Client messageSender) {
         String fileId = file.getId();
         sendMessage(okFileAckAccept(fileId), messageSender);
-        sendMessage(fileAckAccept(file.getFilename(), file.getSender().getUsername()), file.getSender());
+        sendMessage(fileAckAccept(fileId), file.getSender());
 
         // send file transfer message to both users
-        sendMessage(fileTr(fileId, 1338), file.getSender());
-        return fileTr(fileId, 1338);
+        sendMessage(fileTrUpload(fileId, 1338), file.getSender());
+        return fileTrDownload(fileId, 1338);
     }
 
     private Message handleConnectMessage(String username, Client sender) {

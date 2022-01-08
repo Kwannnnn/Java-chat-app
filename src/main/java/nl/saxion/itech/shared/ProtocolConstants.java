@@ -1,8 +1,6 @@
 package nl.saxion.itech.shared;
 
 public final class ProtocolConstants {
-    public static final String INFO_BODY = "Welcome to the server";
-
     public static final String CMD_INFO = "INFO";
     public static final String CMD_CONN = "CONN";
     public static final String CMD_BCST = "BCST";
@@ -23,6 +21,8 @@ public final class ProtocolConstants {
     public static final String CMD_REQ = "REQ";
     public static final String CMD_ACCEPT = "ACCEPT";
     public static final String CMD_DENY = "DENY";
+    public static final String CMD_UPLOAD = "UPLOAD";
+    public static final String CMD_DOWNLOAD = "DOWNLOAD";
 
     public static final String CMD_ER00 = "ER00";
     public static final String CMD_ER01 = "ER01";
@@ -40,6 +40,7 @@ public final class ProtocolConstants {
     public static final String CMD_ER13 = "ER13";
     public static final String CMD_ER66 = "ER66";
 
+    public static final String INFO_BODY = "Welcome to the server";
     public static final String ER00_BODY = "Unknown command";
     public static final String ER01_BODY = "User already logged in";
     public static final String ER02_BODY = "Username has an invalid format (only characters, numbers and underscores are allowed)";

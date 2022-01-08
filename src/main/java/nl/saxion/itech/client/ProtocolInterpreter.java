@@ -152,4 +152,14 @@ public final class ProtocolInterpreter {
     public static void showSuccessfulAcknowledgeDenyMessage(String transferID) {
         System.out.println("You successfully denied the file transfer with id " + bold(transferID));
     }
+
+    public static void showFileAckAcceptMessage(String transferID) {
+        System.out.println("Your transfer request has been accepted");
+        System.out.println("Transfer id: " + bold(transferID));
+    }
+
+    public static void showFileAckDenyMessage(String transferID) {
+        System.out.println("Your transfer request has been denied");
+        System.out.println("Transfer id: " + bold(transferID));
+    }
 }
