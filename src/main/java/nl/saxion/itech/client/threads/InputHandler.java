@@ -5,6 +5,8 @@ import static nl.saxion.itech.shared.ProtocolConstants.*;
 import nl.saxion.itech.client.newDesign.BaseMessage;
 import nl.saxion.itech.client.newDesign.Message;
 import static nl.saxion.itech.shared.ANSIColorCodes.*;
+
+import java.io.File;
 import java.util.Scanner;
 
 public class InputHandler extends Thread {
@@ -106,8 +108,8 @@ public class InputHandler extends Thread {
         if (resource == null) {
             System.out.println("File not found");
         } else {
-            var file = resource.getFile();
-            addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_REQ, fileName + " " + file.getBytes().length
+            var file = new File(resource.getFile());
+            addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_REQ, fileName + " " + file.length()
                     + " " + username));
         }
     }

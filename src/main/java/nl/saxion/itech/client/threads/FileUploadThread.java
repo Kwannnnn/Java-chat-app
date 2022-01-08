@@ -4,6 +4,7 @@ import nl.saxion.itech.client.ChatClient;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 public class FileUploadThread extends Thread {
     private final ChatClient client;
@@ -26,7 +27,8 @@ public class FileUploadThread extends Thread {
         var file = fileOptional.get();
 
         try {
-            var fileStream = ChatClient.class.getResourceAsStream(file.getName());
+            var fileStream = new FileInputStream(ChatClient.class.getResource(file.getName()).getFile());
+
             OutputStream outputStream = socket.getOutputStream();
 
             var out = new PrintWriter(outputStream, true);
@@ -40,8 +42,8 @@ public class FileUploadThread extends Thread {
             byte[] chunk = new byte[16 * 1024];
             while ((size > 0
                     && (readBytes = fileStream.read(chunk, 0, Math.min(chunk.length, size))) != -1)) {
-                System.out.println(new String(chunk));
-                fileOut.write(chunk);
+                System.out.println(readBytes);
+                fileOut.write(chunk, 0, readBytes);
                 fileOut.flush();
                 size -= readBytes;
             }

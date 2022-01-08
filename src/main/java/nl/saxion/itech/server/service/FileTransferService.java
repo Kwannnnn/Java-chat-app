@@ -76,12 +76,13 @@ public class FileTransferService implements Service {
 //        }
 
         var fileSize = file.getFileSize();
+        int total = 0;
         int readBytes = 0;
         byte[] chunk = new byte[16 * 1024];
-        while (fileSize > 0 && (readBytes = in.read(chunk, 0, Math.min(chunk.length, fileSize))) != -1) {
-            out.write(chunk);
+        while (total < fileSize && (readBytes = in.read(chunk, 0, Math.min(chunk.length, fileSize))) > 0) {
+            out.write(chunk, 0, readBytes);
             out.flush();
-            fileSize -= readBytes;
+            total += readBytes;
         }
 
         // TODO: send checksum

@@ -29,6 +29,7 @@ public class FileDownloadThread extends Thread {
             OutputStream outputStream = socket.getOutputStream();
             var in = new DataInputStream(inputStream);
             var out = new PrintWriter(outputStream, true);
+            var fileOutputStream = new BufferedOutputStream(new FileOutputStream(file.getName()));
 
             out.println("DOWNLOAD " + fileID);
             out.flush();
@@ -37,9 +38,12 @@ public class FileDownloadThread extends Thread {
             int readBytes = 0;
             byte[] chunk = new byte[16 * 1024];
             while (size > 0 && (readBytes = in.read(chunk, 0, Math.min(chunk.length, size))) != -1) {
-                System.out.println(new String(chunk));
+                fileOutputStream.write(chunk, 0, readBytes);
+                fileOutputStream.flush();
                 size -= readBytes;
             }
+
+            fileOutputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }  finally {
