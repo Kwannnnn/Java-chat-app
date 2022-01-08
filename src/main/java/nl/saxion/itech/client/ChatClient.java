@@ -1,5 +1,6 @@
 package nl.saxion.itech.client;
 
+import nl.saxion.itech.client.newDesign.File;
 import nl.saxion.itech.client.newDesign.Message;
 import nl.saxion.itech.client.newDesign.ServerMessageHandler;
 import nl.saxion.itech.client.threads.InputHandler;
@@ -8,8 +9,12 @@ import nl.saxion.itech.client.threads.MessageSender;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class ChatClient {
@@ -20,6 +25,8 @@ public class ChatClient {
     private String currentUser;
     private ServerMessageHandler messageHandler;
     private BlockingQueue<Message> messagesQueue = new LinkedBlockingQueue<>();
+    private final ConcurrentHashMap<String, File> filesToReceive = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, File> filesToSend = new ConcurrentHashMap<>();
 
     public ChatClient() {
         try {
@@ -70,5 +77,39 @@ public class ChatClient {
 
     public void closeConnection() {
         this.CLIThread.interrupt();
+    }
+
+    public void addFileToReceive(File file) {
+        System.out.println("Triggerd addFileToReceive");
+        filesToReceive.put(file.getId(), file);
+    }
+
+    public void removeFileToReceive(File file) {
+        filesToReceive.remove(file.getId(), file);
+    }
+
+    public Optional<File> getFileToReceive(String fileID) {
+        return Optional.ofNullable(this.filesToReceive.get(fileID));
+    }
+
+    public void addFileToSend(File file) {
+        System.out.println("Triggerd addFileToReceive");
+        filesToSend.put(file.getId(), file);
+    }
+
+    public synchronized void removeFileToSend(File file) {
+        filesToSend.remove(file.getId(), file);
+    }
+
+    public Optional<File> getFileToSend(String fileID) {
+        return Optional.ofNullable(this.filesToSend.get(fileID));
+    }
+
+    public Collection<File> getFilesToReceive() {
+        return filesToReceive.values();
+    }
+
+    public Collection<File> getFilesToSend() {
+        return filesToSend.values();
     }
 }

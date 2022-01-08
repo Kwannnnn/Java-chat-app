@@ -139,13 +139,13 @@ public class MessageService implements Service {
         this.data.addFile(file);
         sendMessage(fileReq(file.getId(), sender.getUsername(), filename, fileSize), recipient);
 
-        return okFileReq(file.getId(), filename, recipientUsername);
+        return okFileReq(file.getId(), filename, fileSize, recipientUsername);
     }
 
     private Message handleFileAckMessage(StringTokenizer payload, Client sender) {
+        var choice = payload.nextToken();
         var fileId = payload.nextToken();
         var file = this.data.getFile(fileId);
-        var choice = payload.nextToken();
 
         //error handling
         boolean correctChoice = choice.equalsIgnoreCase(CMD_ACCEPT) || choice.equalsIgnoreCase(CMD_DENY);
@@ -158,6 +158,7 @@ public class MessageService implements Service {
         return error.orElseGet(() -> switch (choice) {
             case CMD_ACCEPT -> handleFileAckAcceptMessage(file.get(), sender);
             case CMD_DENY -> handleFileAckDenyMessage(file.get(), sender);
+            default -> throw new RuntimeException();
         });
     }
 

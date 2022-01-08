@@ -15,7 +15,6 @@ public final class ProtocolConstants {
     public static final String CMD_GRP = "GRP";
     public static final String CMD_NEW = "NEW";
     public static final String CMD_FILE = "FILE";
-    public static final String CMD_SEND = "SEND";
     public static final String CMD_ACK = "ACK";
     public static final String CMD_TR = "TR";
     public static final String CMD_REQ = "REQ";

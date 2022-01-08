@@ -107,7 +107,7 @@ public class InputHandler extends Thread {
             System.out.println("File not found");
         } else {
             var file = resource.getFile();
-            addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_SEND, fileName + " " + file.getBytes().length
+            addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_REQ, fileName + " " + file.getBytes().length
                     + " " + username));
         }
     }

@@ -227,10 +227,11 @@ public final class ServerMessageDictionary {
      * @return OK FILE SEND [file name] [recipient username]
      */
     public static TextMessage okFileReq(String fileId, String filename,
+                                        int fileSize,
                                         String recipientUsername) {
         return new TextMessage(
-                CMD_OK + " " + CMD_FILE + " " + CMD_SEND,
-                fileId + " " + filename + " " +  recipientUsername);
+                CMD_OK + " " + CMD_FILE + " " + CMD_REQ,
+                fileId + " " + filename + " " + fileSize + " " +  recipientUsername);
     }
 
     /**

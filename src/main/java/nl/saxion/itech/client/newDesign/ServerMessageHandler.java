@@ -1,11 +1,12 @@
 package nl.saxion.itech.client.newDesign;
-
 import nl.saxion.itech.client.ChatClient;
-
 import static nl.saxion.itech.shared.ProtocolConstants.*;
-
 import nl.saxion.itech.client.ProtocolInterpreter;
+import nl.saxion.itech.client.threads.FileDownloadThread;
+import nl.saxion.itech.client.threads.FileUploadThread;
 
+import java.io.IOException;
+import java.net.Socket;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
@@ -55,27 +56,31 @@ public class ServerMessageHandler {
         String transferID = payload.nextToken();
 
         switch (header) {
-            case CMD_ACCEPT -> ProtocolInterpreter.showFileAckDenyMessage(transferID);
-            case CMD_DENY -> ProtocolInterpreter.showFileAckAcceptMessage(transferID);
+            case CMD_ACCEPT -> ProtocolInterpreter.showFileAckAcceptMessage(transferID);
+            case CMD_DENY -> ProtocolInterpreter.showFileAckDenyMessage(transferID);
             default -> unknownResponseFromServer();
         }
     }
 
     private void handleFileTransferMessage(StringTokenizer payload) {
-        String header = payload.nextToken().toUpperCase();
+        String mode = payload.nextToken();
         String transferID = payload.nextToken();
         String portNumber = payload.nextToken();
 
-        switch (header) {
-            case CMD_UPLOAD -> {
-                // TODO: do upload
-//                ProtocolInterpreter.showFileTransferUploadMessage(transferID);
+        System.out.println(mode);
+        ProtocolInterpreter.showFileTransferMessage(transferID, portNumber);
+
+        System.out.println(this.client.getFilesToSend());
+        System.out.println(this.client.getFilesToReceive());
+
+        try {
+            var socket = new Socket("127.0.0.1", Integer.parseInt(portNumber));
+            switch (mode) {
+                case "DOWNLOAD" -> new FileDownloadThread(client, transferID, socket).start();
+                case "UPLOAD" -> new FileUploadThread(client, transferID, socket).start();
             }
-            case CMD_DOWNLOAD -> {
-                // TODO: do download
-//                ProtocolInterpreter.showFileDownloadMessage(transferID);
-            }
-            default -> unknownResponseFromServer();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -83,9 +88,11 @@ public class ServerMessageHandler {
         String transferID = payload.nextToken();
         String sender = payload.nextToken();
         String fileName = payload.nextToken();
-        String fileSize = payload.nextToken();
+        var fileSizeString = payload.nextToken();
+        var fileSize = Integer.parseInt(fileSizeString);
 
-        ProtocolInterpreter.showFileRequestMessage(transferID, sender, fileName, fileSize);
+        this.client.addFileToReceive(new File(transferID, fileName, fileSize));
+        ProtocolInterpreter.showFileRequestMessage(transferID, sender, fileName, fileSizeString);
     }
 
     private void unknownResponseFromServer() {
@@ -120,11 +127,10 @@ public class ServerMessageHandler {
 
     private void handleOKMessage(StringTokenizer payload) {
         String header = payload.nextToken().toUpperCase();
-        String body = getRemainingTokens(payload);
 
         switch (header) {
-            case CMD_CONN -> handleOkConnectMessage(body);
-            case CMD_BCST -> handleOkBroadcastMessage(body);
+            case CMD_CONN -> handleOkConnectMessage(getRemainingTokens(payload));
+            case CMD_BCST -> handleOkBroadcastMessage(getRemainingTokens(payload));
             case CMD_GRP -> handleOkGroupMessage(payload);
             case CMD_MSG -> handleOkDirectMessage(payload);
             case CMD_FILE -> handleOkFileMessage(payload);
@@ -136,7 +142,7 @@ public class ServerMessageHandler {
         String header = payload.nextToken().toUpperCase();
 
         switch (header) {
-            case CMD_SEND -> handleOkFileSendMessage(payload);
+            case CMD_REQ -> handleOkFileSendMessage(payload);
             case CMD_ACK -> handleOkFileAcknowledgeMessage(payload);
             default -> unknownResponseFromServer();
         }
@@ -163,11 +169,14 @@ public class ServerMessageHandler {
     }
 
     private void handleOkFileSendMessage(StringTokenizer payload) {
+        var fileId = payload.nextToken();
         String fileName = payload.nextToken();
-        String fileSize = payload.nextToken();
+        var fileSizeString = payload.nextToken();
+        var fileSize = Integer.parseInt(fileSizeString);
         String recipient = payload.nextToken();
 
-        ProtocolInterpreter.showSuccessfulFileSendMessage(fileName, fileSize, recipient);
+        this.client.addFileToSend(new File(fileId, fileName, fileSize));
+        ProtocolInterpreter.showSuccessfulFileSendMessage(fileName, fileSizeString, recipient);
     }
 
     private void handleGroupJoinMessage(StringTokenizer payload) {

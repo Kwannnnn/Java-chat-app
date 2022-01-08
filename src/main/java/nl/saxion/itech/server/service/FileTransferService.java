@@ -4,6 +4,8 @@ import nl.saxion.itech.server.data.DataObject;
 import nl.saxion.itech.server.model.File;
 
 import java.io.*;
+import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
 
 public class FileTransferService implements Service {
     private final DataObject data;
@@ -20,28 +22,41 @@ public class FileTransferService implements Service {
             // now it just simulates a "handshake" between the sender and receiver
             var dataInputStream = new BufferedReader(new InputStreamReader(in));
 
-            var mode = dataInputStream.readLine();
-            var fileID = dataInputStream.readLine();
-            var file = getFile(fileID);
+            var controlMessage = dataInputStream.readLine();
+            var payload = new StringTokenizer(controlMessage);
+
+            var mode = payload.nextToken();
+            var transferID = payload.nextToken();
+            var file = getFile(transferID); // Can throw Runtime Exception TODO: create more specific checked exception
+
+            System.out.println(controlMessage);
 
             // Check if the client wants to receive the file or send the file
             switch (mode) {
-                case "0" -> updateFileUploader(file, in);
-                case "1" -> updateFileDownloader(file, out);
-                default -> throw new RuntimeException(); // TODO: handle error
+                case "UPLOAD" -> updateFileUploader(file, in);
+                case "DOWNLOAD" -> updateFileDownloader(file, out);
+                default -> throw new Exception(); // TODO: handle error
             }
 
             // Wait until both parties have connected
             while(file.getSenderInputStream() == null
-            || file.getRecipientOutputStream() == null) {
+                    || file.getRecipientOutputStream() == null) {
                 synchronized (this) {
                     wait();
                 }
             }
 
             handleTransfer(file);
+            // TODO: send checksum
+            
+        } catch (NoSuchElementException e) {
+            // Missing parameters
+        } catch (RuntimeException e) {
+            // No such file
         } catch (IOException | InterruptedException e) {
             // Proceed to finally clause
+        } catch (Exception e) {
+            // Unknown command
         } finally {
 
         }
@@ -61,11 +76,18 @@ public class FileTransferService implements Service {
 //        }
 
         var fileSize = file.getFileSize();
-        int bytes = 0;
+        int readBytes = 0;
         byte[] chunk = new byte[16 * 1024];
-        while (fileSize > 0 && (in.read(chunk, 0, Math.min(chunk.length, fileSize))) != -1) {
-            in.transferTo(out);
+        while (fileSize > 0 && (readBytes = in.read(chunk, 0, Math.min(chunk.length, fileSize))) != -1) {
+            out.write(chunk);
+            out.flush();
+            fileSize -= readBytes;
         }
+
+        // TODO: send checksum
+
+        in.close();
+        out.close();
     }
 
     private File getFile(String fileId) {
