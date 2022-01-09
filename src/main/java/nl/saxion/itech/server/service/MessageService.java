@@ -35,7 +35,7 @@ public class MessageService implements Service {
         var client = new Client(in, out);
         try {
             sendMessage(welcome(), client);
-            handleClient(client);
+            handleIncomingMessages(client);
         } catch (IOException e) {
             // Proceed to finally clause
         } finally {
@@ -45,7 +45,7 @@ public class MessageService implements Service {
         }
     }
 
-    private void handleClient(Client client) throws IOException {
+    private void handleIncomingMessages(Client client) throws IOException {
         var in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 
         String line;
@@ -54,7 +54,7 @@ public class MessageService implements Service {
             log(">> [" + client + "] " + line);
 
             try {
-                var response = Optional.ofNullable(handleMessage(line, client));
+                var response = Optional.ofNullable(handleClient(line, client));
                 if (response.isPresent()) {
                     var message = response.get();
                     sendMessage(message, client);
@@ -66,19 +66,19 @@ public class MessageService implements Service {
         }
     }
 
-    private Message handleMessage(String message, Client sender) throws ClientDisconnectedException {
+    private Message handleClient(String message, Client sender) throws ClientDisconnectedException {
         var payload = new StringTokenizer(message);
 
         try {
             return sender.getStatus() == ClientStatus.CLIENT_CONNECTED ?
-                    handleConnectedUser(payload, sender) :
-                    handleUnknownUser(payload, sender);
+                    handleConnectedClient(payload, sender) :
+                    handleUnknownClient(payload, sender);
         } catch (NoSuchElementException e) {
             return unknownCommandError();
         }
     }
 
-    private Message handleUnknownUser(StringTokenizer payload, Client sender) {
+    private Message handleUnknownClient(StringTokenizer payload, Client sender) {
         var header = payload.nextToken().toUpperCase();
 
         if (!header.equals(CMD_CONN)) {
@@ -93,7 +93,7 @@ public class MessageService implements Service {
         }
     }
 
-    private Message handleConnectedUser(StringTokenizer payload, Client sender)
+    private Message handleConnectedClient(StringTokenizer payload, Client sender)
             throws ClientDisconnectedException {
         var header = payload.nextToken().toUpperCase();
 
@@ -104,19 +104,19 @@ public class MessageService implements Service {
             case CMD_MSG -> handleDirectMessage(payload, sender);
             case CMD_ALL -> handleAllMessage();
             case CMD_GRP -> handleGroupMessage(payload, sender);
-            case CMD_FILE -> handleFileTransfer(payload, sender);
+            case CMD_FILE -> handleFileMessage(payload, sender);
             default -> unknownCommandError();
         };
     }
 
-    private Message handleFileTransfer(StringTokenizer payload, Client sender) {
+    //region file messages
+    private Message handleFileMessage(StringTokenizer payload, Client sender) {
         try {
             var header = payload.nextToken().toUpperCase();
 
             return switch (header) {
                 case CMD_REQ -> handleFileReqMessage(payload, sender);
                 case CMD_ACK -> handleFileAckMessage(payload, sender);
-//                case CMD_ACCEPT -> handleAcceptFIleMessage();
                 default -> unknownCommandError();
             };
         } catch (NoSuchElementException e) {
@@ -142,6 +142,8 @@ public class MessageService implements Service {
         return okFileReq(file.getId(), filename, fileSize, recipientUsername);
     }
 
+    //region file acknowledge messages
+    //================================================================================
     private Message handleFileAckMessage(StringTokenizer payload, Client sender) {
         var choice = payload.nextToken();
         var fileId = payload.nextToken();
@@ -178,7 +180,14 @@ public class MessageService implements Service {
         sendMessage(fileTrUpload(fileId, 1338), file.getSender());
         return fileTrDownload(fileId, 1338);
     }
+    //================================================================================
+    //endregion
 
+    //================================================================================
+    //endregion
+
+    //region other messages
+    //================================================================================
     private Message handleConnectMessage(String username, Client sender) {
         var error = usernameIsNotValid(username)
                 .or(() -> userIsAlreadyLoggedIn(username));
@@ -242,7 +251,11 @@ public class MessageService implements Service {
             return missingParametersError();
         }
     }
+    //================================================================================
+    //endregion
 
+    //region group messages
+    //================================================================================
     private Message handleGroupMessage(StringTokenizer tokenizer, Client sender) {
         try {
             var header = tokenizer.nextToken().toUpperCase();
@@ -364,7 +377,11 @@ public class MessageService implements Service {
             return missingParametersError();
         }
     }
+    //================================================================================
+    //endregion
 
+    //region helper methods
+    //================================================================================
     private Optional<Message> userIsNotRecipient(File file, Client client) {
         return !clientIsRecipientOfFile(client, file)
                 ? Optional.of(unknownTransfer()) // Unknown transfer
@@ -506,4 +523,6 @@ public class MessageService implements Service {
     private void log(String text) {
         Logger.getInstance().logMessage(text);
     }
+    //================================================================================
+    //endregion
 }

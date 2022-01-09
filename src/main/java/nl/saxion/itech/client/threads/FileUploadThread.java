@@ -1,6 +1,7 @@
 package nl.saxion.itech.client.threads;
 
 import nl.saxion.itech.client.ChatClient;
+import nl.saxion.itech.client.ProtocolInterpreter;
 
 import java.io.*;
 import java.net.Socket;
@@ -21,7 +22,8 @@ public class FileUploadThread extends Thread {
     public void run() {
         var fileOptional = this.client.getFileToSend(this.fileID);
         if (fileOptional.isEmpty()) {
-            System.out.println("Reached");
+            ProtocolInterpreter.showFileNotFound(this.fileID);
+            ProtocolInterpreter.showFileTransferProcessClosed();
             return;
         }
         var file = fileOptional.get();
@@ -47,11 +49,13 @@ public class FileUploadThread extends Thread {
                 fileOut.flush();
                 size -= readBytes;
             }
+
+            // TODO: handle checksum confirmation from receiver
         } catch (IOException e) {
+            //say something
             e.printStackTrace();
         } finally {
             this.client.removeFileToSend(file);
         }
-        super.run();
     }
 }

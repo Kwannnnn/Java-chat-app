@@ -40,6 +40,57 @@ public class ServerMessageHandler {
         }
     }
 
+
+    private void unknownResponseFromServer() {
+    }
+
+    // error message
+    private void handleErrorMessage(StringTokenizer payload) {
+        String message = getRemainingTokens(payload);
+        ProtocolInterpreter.showErrorMessage(message);
+    }
+
+    // ping message
+    private void handlePingMessage() {
+        this.client.addMessageToQueue(new BaseMessage(CMD_PONG));
+    }
+
+    // all message
+    private void handleAllMessage(StringTokenizer payload) {
+        String clients = getRemainingTokens(payload);
+        ProtocolInterpreter.showSuccessfulAllMessage(clients.split(","));
+    }
+
+    // disconnect message
+    private void handleDisconnectMessage() {
+        this.client.closeConnection();
+        // TODO: close all other sockets used by this client
+        //TODO: decide what to do
+        ProtocolInterpreter.showSuccessfulDisconnectMessage();
+    }
+
+    // direct message
+    private void handleDirectMessage(StringTokenizer payload) {
+        String sender = payload.nextToken();
+        String directMessage = getRemainingTokens(payload);
+        ProtocolInterpreter.showIncomingDirectMessage(sender, directMessage);
+    }
+
+    // broadcast message
+    private void handleBroadcastMessage(StringTokenizer payload) {
+        String sender = payload.nextToken();
+        String body = getRemainingTokens(payload);
+        ProtocolInterpreter.showBroadcastMessage(sender, body);
+    }
+
+    // info message
+    private void handleInfoMessage(StringTokenizer payload) {
+        String message = getRemainingTokens(payload);
+        ProtocolInterpreter.showWelcomeMessage(message);
+    }
+
+    //region file messages
+    //================================================================================
     private void handleFileMessage(StringTokenizer payload) {
         var header = payload.nextToken().toUpperCase();
 
@@ -47,17 +98,6 @@ public class ServerMessageHandler {
             case CMD_REQ -> handleFileRequestMessage(payload);
             case CMD_ACK -> handleFileAckMessage(payload);
             case CMD_TR -> handleFileTransferMessage(payload);
-            default -> unknownResponseFromServer();
-        }
-    }
-
-    private void handleFileAckMessage(StringTokenizer payload) {
-        var header = payload.nextToken().toUpperCase();
-        String transferID = payload.nextToken();
-
-        switch (header) {
-            case CMD_ACCEPT -> ProtocolInterpreter.showFileAckAcceptMessage(transferID);
-            case CMD_DENY -> ProtocolInterpreter.showFileAckDenyMessage(transferID);
             default -> unknownResponseFromServer();
         }
     }
@@ -80,6 +120,17 @@ public class ServerMessageHandler {
         }
     }
 
+    private void handleFileAckMessage(StringTokenizer payload) {
+        var header = payload.nextToken().toUpperCase();
+        String transferID = payload.nextToken();
+
+        switch (header) {
+            case CMD_ACCEPT -> ProtocolInterpreter.showFileAckAcceptMessage(transferID);
+            case CMD_DENY -> ProtocolInterpreter.showFileAckDenyMessage(transferID);
+            default -> unknownResponseFromServer();
+        }
+    }
+
     private void handleFileRequestMessage(StringTokenizer payload) {
         String transferID = payload.nextToken();
         String sender = payload.nextToken();
@@ -90,21 +141,11 @@ public class ServerMessageHandler {
         this.client.addFileToReceive(new File(transferID, fileName, fileSize));
         ProtocolInterpreter.showFileRequestMessage(transferID, sender, fileName, fileSizeString);
     }
+    //================================================================================
+    //endregion
 
-    private void unknownResponseFromServer() {
-    }
-
-    private void handleBroadcastMessage(StringTokenizer payload) {
-        String sender = payload.nextToken();
-        String body = getRemainingTokens(payload);
-        ProtocolInterpreter.showBroadcastMessage(sender, body);
-    }
-
-    private void handleInfoMessage(StringTokenizer payload) {
-        String message = getRemainingTokens(payload);
-        ProtocolInterpreter.showWelcomeMessage(message);
-    }
-
+    // region group messages
+    //================================================================================
     private void handleGroupMessage(StringTokenizer payload) {
         String header = payload.nextToken().toUpperCase();
 
@@ -115,12 +156,21 @@ public class ServerMessageHandler {
         }
     }
 
+    private void handleGroupJoinMessage(StringTokenizer payload) {
+        String groupName = payload.nextToken();
+        String newMember = payload.nextToken();
+        ProtocolInterpreter.showGroupJoinMessage(groupName, newMember);
+    }
+
     private void handleGroupMessageMessage(StringTokenizer payload) {
         String groupName = payload.nextToken();
         String body = getRemainingTokens(payload);
         ProtocolInterpreter.showGroupMessageMessage(groupName, body);
     }
+    //endregion
 
+    //region ok messages
+    //================================================================================
     private void handleOKMessage(StringTokenizer payload) {
         String header = payload.nextToken().toUpperCase();
 
@@ -134,14 +184,43 @@ public class ServerMessageHandler {
         }
     }
 
+    private void handleOkBroadcastMessage(String message) {
+        ProtocolInterpreter.showSuccessfulBroadcastMessage(message);
+    }
+
+    private void handleOkConnectMessage(String username) {
+        this.client.setCurrentUser(username);
+        ProtocolInterpreter.showSuccessfulLoginMessage();
+        ProtocolInterpreter.promptMenuMessage();
+    }
+
+    private void handleOkDirectMessage(StringTokenizer payload) {
+        String recipient = payload.nextToken();
+        String body = getRemainingTokens(payload);
+        ProtocolInterpreter.showSuccessfulDirectMessage(recipient, body);
+    }
+
+    //region Ok file messages
+    //================================================================================
     private void handleOkFileMessage(StringTokenizer payload) {
         String header = payload.nextToken().toUpperCase();
 
         switch (header) {
-            case CMD_REQ -> handleOkFileSendMessage(payload);
+            case CMD_REQ -> handleOkFileReqMessage(payload);
             case CMD_ACK -> handleOkFileAcknowledgeMessage(payload);
             default -> unknownResponseFromServer();
         }
+    }
+
+    private void handleOkFileReqMessage(StringTokenizer payload) {
+        var fileId = payload.nextToken();
+        String fileName = payload.nextToken();
+        var fileSizeString = payload.nextToken();
+        var fileSize = Integer.parseInt(fileSizeString);
+        String recipient = payload.nextToken();
+
+        this.client.addFileToSend(new File(fileId, fileName, fileSize));
+        ProtocolInterpreter.showSuccessfulFileSendMessage(fileName, fileSizeString, recipient);
     }
 
     private void handleOkFileAcknowledgeMessage(StringTokenizer payload) {
@@ -163,56 +242,11 @@ public class ServerMessageHandler {
         String transferID = payload.nextToken();
         ProtocolInterpreter.showSuccessfulAcknowledgeAcceptMessage(transferID);
     }
+    //================================================================================
+    //endregion
 
-    private void handleOkFileSendMessage(StringTokenizer payload) {
-        var fileId = payload.nextToken();
-        String fileName = payload.nextToken();
-        var fileSizeString = payload.nextToken();
-        var fileSize = Integer.parseInt(fileSizeString);
-        String recipient = payload.nextToken();
-
-        this.client.addFileToSend(new File(fileId, fileName, fileSize));
-        ProtocolInterpreter.showSuccessfulFileSendMessage(fileName, fileSizeString, recipient);
-    }
-
-    private void handleGroupJoinMessage(StringTokenizer payload) {
-        String groupName = payload.nextToken();
-        String newMember = payload.nextToken();
-        ProtocolInterpreter.showGroupJoinMessage(groupName, newMember);
-    }
-
-    private void handlePingMessage() {
-        this.client.addMessageToQueue(new BaseMessage(CMD_PONG));
-    }
-
-    private void handleErrorMessage(StringTokenizer payload) {
-        String message = getRemainingTokens(payload);
-        ProtocolInterpreter.showErrorMessage(message);
-    }
-
-    private void handleAllMessage(StringTokenizer payload) {
-        String clients = getRemainingTokens(payload);
-        ProtocolInterpreter.showSuccessfulAllMessage(clients.split(","));
-    }
-
-    private void handleDisconnectMessage() {
-        ProtocolInterpreter.showSuccessfulDisconnectMessage();
-        this.client.closeConnection();
-        //TODO: decide what to do
-    }
-
-    private void handleOkDirectMessage(StringTokenizer payload) {
-        String recipient = payload.nextToken();
-        String body = getRemainingTokens(payload);
-        ProtocolInterpreter.showSuccessfulDirectMessage(recipient, body);
-    }
-
-    private void handleDirectMessage(StringTokenizer payload) {
-        String sender = payload.nextToken();
-        String directMessage = getRemainingTokens(payload);
-        ProtocolInterpreter.showIncomingDirectMessage(sender, directMessage);
-    }
-
+    //region Ok group messages
+    //================================================================================
     private void handleOkGroupMessage(StringTokenizer payload) {
         String header = payload.nextToken().toUpperCase();
         String body = payload.nextToken();
@@ -248,17 +282,13 @@ public class ServerMessageHandler {
     private void handleOkGroupAllMessage(String message) {
         ProtocolInterpreter.showSuccessfulGroupAllMessage(message.split(","));
     }
+    //================================================================================
+    //endregion
 
-    private void handleOkBroadcastMessage(String message) {
-        ProtocolInterpreter.showSuccessfulBroadcastMessage(message);
-    }
+    //================================================================================
+    //endregion
 
-    private void handleOkConnectMessage(String username) {
-        this.client.setCurrentUser(username);
-        ProtocolInterpreter.showSuccessfulLoginMessage();
-        ProtocolInterpreter.promptMenuMessage();
-    }
-
+    //helper
     private String getRemainingTokens(StringTokenizer tokenizer) throws NoSuchElementException {
         var remainder = tokenizer.nextToken("");
         return remainder.trim();

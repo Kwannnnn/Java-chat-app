@@ -144,22 +144,36 @@ public final class ProtocolInterpreter {
         System.out.println("File size: " + bold(fileSize));
     }
 
-    public static void showSuccessfulAcknowledgeAcceptMessage(String transferID) {
-        System.out.println("You successfully accepted the file transfer with id " + bold(transferID) + ". Download will" +
+    public static void showSuccessfulAcknowledgeAcceptMessage(String fileId) {
+        System.out.println("You successfully accepted the file with id " + bold(fileId) + ". Download will" +
                 " start shortly.");
     }
 
-    public static void showSuccessfulAcknowledgeDenyMessage(String transferID) {
-        System.out.println("You successfully denied the file transfer with id " + bold(transferID));
+    public static void showSuccessfulAcknowledgeDenyMessage(String fileId) {
+        System.out.println("You successfully denied the file with id " + bold(fileId));
     }
 
-    public static void showFileAckAcceptMessage(String transferID) {
+    public static void showFileAckAcceptMessage(String fileId) {
         System.out.println("Your transfer request has been accepted");
-        System.out.println("Transfer id: " + bold(transferID));
+        System.out.println("File id: " + bold(fileId));
     }
 
-    public static void showFileAckDenyMessage(String transferID) {
+    public static void showFileAckDenyMessage(String fileId) {
         System.out.println("Your transfer request has been denied");
-        System.out.println("Transfer id: " + bold(transferID));
+        System.out.println("File id: " + bold(fileId));
+    }
+
+    public static void showFileNotFound(String fileId) {
+        System.out.println("File cannot be found");
+        System.out.println("File id: " + bold(fileId));
+    }
+
+    public static void showFileTransferProcessClosed() {
+        System.out.println(italic("The file transfer process has been shut down."));
+    }
+
+    public static void showFileDownloadSuccess(String fileID) {
+        System.out.println(italic("File successfully downloaded."));
+        System.out.println(italic("File id: " + fileID));
     }
 }
