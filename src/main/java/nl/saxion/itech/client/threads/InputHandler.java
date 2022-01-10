@@ -3,10 +3,14 @@ import nl.saxion.itech.client.ChatClient;
 import nl.saxion.itech.client.ProtocolInterpreter;
 import static nl.saxion.itech.shared.ProtocolConstants.*;
 import nl.saxion.itech.client.newDesign.BaseMessage;
+import nl.saxion.itech.client.newDesign.FileChecksum;
 import nl.saxion.itech.client.newDesign.Message;
 import static nl.saxion.itech.shared.ANSIColorCodes.*;
 
 import java.io.File;
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
 
 public class InputHandler extends Thread {
@@ -86,6 +90,23 @@ public class InputHandler extends Thread {
         }
     }
 
+    private void showMenu() {
+        System.out.print(ANSI_MAGENTA +
+                """
+                         B: \t Broadcast a message to every client on the server
+                        DM: \t Send a direct message
+                         GN: \t Create a group
+                         GA: \t Show all groups
+                         GJ: \t Join a group
+                         GM: \t Send message to a group
+                         FS: \t Send a fileObject to another user
+                         FA: \t Accept a fileObject
+                         FD: \t Deny a fileObject
+                         Q: \t Close connection with the server
+                         ?: \t Show this menu
+                        """ + ANSI_RESET);
+    }
+
     private void handleFileDenyMessage() {
         System.out.print(">> Please enter the transfer id you want to deny: ");
         String transferID = scanner.nextLine();
@@ -108,9 +129,16 @@ public class InputHandler extends Thread {
         if (resource == null) {
             System.out.println("File not found");
         } else {
-            var file = new File(resource.getFile());
-            addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_REQ, fileName + " " + file.length()
-                    + " " + username));
+            try {
+                MessageDigest md5Digest = MessageDigest.getInstance("MD5");
+                File fileToSend = new File(resource.getFile());
+                String fileChecksum = FileChecksum.getFileChecksum(md5Digest, fileToSend);
+
+                addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_REQ,
+                        fileName + " " + fileToSend.length() + " " + fileChecksum + " " + username));
+            } catch (NoSuchAlgorithmException | IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -144,23 +172,6 @@ public class InputHandler extends Thread {
         System.out.print(">> Please enter your group name: ");
         String groupName = scanner.nextLine();
         addMessageToQueue(new BaseMessage(CMD_GRP + " " + CMD_NEW, groupName));
-    }
-
-    private void showMenu() {
-        System.out.print(ANSI_MAGENTA +
-                """
-                         B: \t Broadcast a message to every client on the server
-                        DM: \t Send a direct message
-                         GN: \t Create a group
-                         GA: \t Show all groups
-                         GJ: \t Join a group
-                         GM: \t Send message to a group
-                         FS: \t Send a file to another user
-                         FA: \t Accept a file
-                         FD: \t Deny a file
-                         Q: \t Close connection with the server
-                         ?: \t Show this menu
-                        """ + ANSI_RESET);
     }
 
     private void handleBroadcastMessage() {

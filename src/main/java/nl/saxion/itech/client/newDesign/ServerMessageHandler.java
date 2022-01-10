@@ -103,42 +103,63 @@ public class ServerMessageHandler {
     }
 
     private void handleFileTransferMessage(StringTokenizer payload) {
-        String mode = payload.nextToken();
-        String transferID = payload.nextToken();
-        String portNumber = payload.nextToken();
-
-        ProtocolInterpreter.showFileTransferMessage(transferID, portNumber);
+        String header = payload.nextToken();
+        String fileID = payload.nextToken();
 
         try {
-            var socket = new Socket("127.0.0.1", Integer.parseInt(portNumber));
-            switch (mode) {
-                case "DOWNLOAD" -> new FileDownloadThread(client, transferID, socket).start();
-                case "UPLOAD" -> new FileUploadThread(client, transferID, socket).start();
+            switch (header) {
+                case CMD_DOWNLOAD -> handleFileTransferDownloadMessage(payload, fileID);
+                case CMD_UPLOAD -> handleFileTransferUploadMessage(payload, fileID);
+                case CMD_SUCCESS -> ProtocolInterpreter.showFileTransferSuccessMessage(fileID);
+                case CMD_FAIL -> ProtocolInterpreter.showFileTransferFailMessage(fileID);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private void handleFileTransferUploadMessage(StringTokenizer payload, String fileID) throws IOException {
+        String portNumber = payload.nextToken();
+        // TODO: maybe host should not be hard coded
+        var socket = new Socket("127.0.0.1", Integer.parseInt(portNumber));
+
+        ProtocolInterpreter.showFileTransferMessage(fileID, portNumber);
+        new FileUploadThread(client, fileID, socket).start();
+    }
+
+    private void handleFileTransferDownloadMessage(StringTokenizer payload, String fileID) throws IOException {
+        String portNumber = payload.nextToken();
+        // TODO: maybe host should not be hard coded
+        var socket = new Socket("127.0.0.1", Integer.parseInt(portNumber));
+
+        ProtocolInterpreter.showFileTransferMessage(fileID, portNumber);
+        new FileDownloadThread(client, fileID, socket).start();
+    }
+
     private void handleFileAckMessage(StringTokenizer payload) {
         var header = payload.nextToken().toUpperCase();
-        String transferID = payload.nextToken();
+        String fileID = payload.nextToken();
 
         switch (header) {
-            case CMD_ACCEPT -> ProtocolInterpreter.showFileAckAcceptMessage(transferID);
-            case CMD_DENY -> ProtocolInterpreter.showFileAckDenyMessage(transferID);
+            case CMD_ACCEPT -> ProtocolInterpreter.showFileAckAcceptMessage(fileID);
+            case CMD_DENY -> {
+                this.client.removeFileToSend(fileID);
+                ProtocolInterpreter.showFileAckDenyMessage(fileID);
+            }
             default -> unknownResponseFromServer();
         }
     }
 
     private void handleFileRequestMessage(StringTokenizer payload) {
         String transferID = payload.nextToken();
-        String sender = payload.nextToken();
         String fileName = payload.nextToken();
-        var fileSizeString = payload.nextToken();
+        String fileSizeString = payload.nextToken();
+        String checksum = payload.nextToken();
+        String sender = payload.nextToken();
+
         var fileSize = Integer.parseInt(fileSizeString);
 
-        this.client.addFileToReceive(new File(transferID, fileName, fileSize));
+        this.client.addFileToReceive(new FileObject(transferID, fileName, fileSize, checksum));
         ProtocolInterpreter.showFileRequestMessage(transferID, sender, fileName, fileSizeString);
     }
     //================================================================================
@@ -213,13 +234,14 @@ public class ServerMessageHandler {
     }
 
     private void handleOkFileReqMessage(StringTokenizer payload) {
-        var fileId = payload.nextToken();
+        String fileId = payload.nextToken();
         String fileName = payload.nextToken();
-        var fileSizeString = payload.nextToken();
-        var fileSize = Integer.parseInt(fileSizeString);
+        String fileSizeString = payload.nextToken();
+        int fileSize = Integer.parseInt(fileSizeString);
+        String checksum = payload.nextToken();
         String recipient = payload.nextToken();
 
-        this.client.addFileToSend(new File(fileId, fileName, fileSize));
+        this.client.addFileToSend(new FileObject(fileId, fileName, fileSize, checksum));
         ProtocolInterpreter.showSuccessfulFileSendMessage(fileName, fileSizeString, recipient);
     }
 

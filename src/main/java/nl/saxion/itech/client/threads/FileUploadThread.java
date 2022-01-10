@@ -48,12 +48,12 @@ public class FileUploadThread extends Thread {
                 size -= readBytes;
             }
 
-            // TODO: handle checksum confirmation from receiver
+            ProtocolInterpreter.showFinishedFileUpload(fileID);
         } catch (IOException e) {
             //say something
             e.printStackTrace();
         } finally {
-            this.client.removeFileToSend(file);
+            this.client.removeFileToSend(file.getId());
         }
     }
 }

@@ -22,6 +22,8 @@ public final class ProtocolConstants {
     public static final String CMD_DENY = "DENY";
     public static final String CMD_UPLOAD = "UPLOAD";
     public static final String CMD_DOWNLOAD = "DOWNLOAD";
+    public static final String CMD_SUCCESS = "SUCCESS";
+    public static final String CMD_FAIL = "FAIL";
 
     public static final String CMD_ER00 = "ER00";
     public static final String CMD_ER01 = "ER01";
@@ -37,6 +39,7 @@ public final class ProtocolConstants {
     public static final String CMD_ER11 = "ER11";
     public static final String CMD_ER12 = "ER12";
     public static final String CMD_ER13 = "ER13";
+    public static final String CMD_ER14 = "ER13";
     public static final String CMD_ER66 = "ER66";
 
     public static final String INFO_BODY = "Welcome to the server";
@@ -54,6 +57,7 @@ public final class ProtocolConstants {
     public static final String ER11_BODY = "Password does not match";
     public static final String ER12_BODY = "You have already been authenticated";
     public static final String ER13_BODY = "Unknown transfer";
+    public static final String ER14_BODY = "This file is not yet or in the process of being sent.";
     public static final String ER66_BODY = "You are already logged in";
     public static final String DSCN_BODY = "Goodbye";
 

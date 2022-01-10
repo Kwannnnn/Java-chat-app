@@ -71,15 +71,17 @@ public final class ServerMessageDictionary {
      * @param senderUsername the username of the user sending the file
      * @param fileName the name of the file being sent
      * @param fileSize the size of the file being sent
+     * @param checksum the MD5 checksum of the file being sent
      * @return FILE REQ [sender username] [file name] [file size]
      */
     public static TextMessage fileReq(String fileId,
                                       String senderUsername,
                                       String fileName,
-                                      int fileSize) {
+                                      int fileSize,
+                                      String checksum) {
         return new TextMessage(
                 CMD_FILE + " " + CMD_REQ,
-                fileId + " " + senderUsername + " " + fileName + " " + fileSize);
+                fileId + " " + fileName + " " + fileSize + " " + checksum + " " + senderUsername);
     }
 
     /**
@@ -220,18 +222,32 @@ public final class ServerMessageDictionary {
                 CMD_ACCEPT + " " + fileId);
     }
 
+    public static TextMessage fileTrSuccess(String fileId) {
+        return new TextMessage(
+                CMD_FILE + " " + CMD_TR,
+                CMD_SUCCESS + " " + fileId);
+    }
+
+    public static TextMessage fileTrFail(String fileId) {
+        return new TextMessage(
+                CMD_FILE + " " + CMD_TR,
+                CMD_FAIL + " " + fileId);
+    }
+
     /**
      * @param fileId the id of the file being sent
      * @param filename the name of the file being sent
      * @param recipientUsername the username of the user sending the file
+     * @param checksum the MD5 checksum of the file being sent
      * @return OK FILE SEND [file name] [recipient username]
      */
     public static TextMessage okFileReq(String fileId, String filename,
                                         int fileSize,
-                                        String recipientUsername) {
+                                        String recipientUsername,
+                                        String checksum) {
         return new TextMessage(
                 CMD_OK + " " + CMD_FILE + " " + CMD_REQ,
-                fileId + " " + filename + " " + fileSize + " " +  recipientUsername);
+                fileId + " " + filename + " " + fileSize + " " + checksum + " " + recipientUsername);
     }
 
     /**
@@ -340,5 +356,12 @@ public final class ServerMessageDictionary {
      */
     public static TextMessage unknownTransfer() {
         return new TextMessage(CMD_ER13, ER13_BODY);
+    }
+
+    /**
+     * @return ER14 File not sent
+     */
+    public static TextMessage fileNotSentError() {
+        return new TextMessage(CMD_ER14, ER14_BODY);
     }
 }

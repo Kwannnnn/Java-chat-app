@@ -176,4 +176,24 @@ public final class ProtocolInterpreter {
         System.out.println(italic("File successfully downloaded."));
         System.out.println(italic("File id: " + fileID));
     }
+
+    public static void showFileDownloadFailure(String fileID) {
+        System.out.println(italic("Something went wrong when downloading the file."));
+        System.out.println(italic("File id: " + fileID));
+    }
+
+    public static void showFinishedFileUpload(String fileID) {
+        System.out.println(italic("Finished uploading file. Waiting for response from receiver."));
+        System.out.println(italic("File id: " + fileID));
+    }
+
+    public static void showFileTransferSuccessMessage(String fileID) {
+        System.out.println(italic("File transfer was successfully executed."));
+        System.out.println(italic("File id: " + fileID));
+    }
+
+    public static void showFileTransferFailMessage(String fileID) {
+        System.out.println(italic("File transfer was not successful."));
+        System.out.println(italic("File id: " + fileID));
+    }
 }
