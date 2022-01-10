@@ -10,7 +10,6 @@ import nl.saxion.itech.client.threads.MessageSender;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
@@ -80,7 +79,6 @@ public class ChatClient {
     }
 
     public void addFileToReceive(File file) {
-        System.out.println("Triggerd addFileToReceive");
         filesToReceive.put(file.getId(), file);
     }
 

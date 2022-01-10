@@ -93,7 +93,6 @@ public class FileTransferService implements Service {
 
     private File getFile(String fileId) {
         var optional = this.data.getFile(fileId);
-        System.out.println(fileId);
 
         if (optional.isEmpty()) {
             // TODO: handle error message
