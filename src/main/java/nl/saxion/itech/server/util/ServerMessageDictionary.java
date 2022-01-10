@@ -257,7 +257,7 @@ public final class ServerMessageDictionary {
     // Error messages
 
     /**
-     * @return ER01 User already logged in
+     * @return ER00 Unknown command
      */
     public static TextMessage unknownCommandError() {
         return new TextMessage(CMD_ER00, ER00_BODY);

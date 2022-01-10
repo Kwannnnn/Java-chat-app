@@ -13,8 +13,8 @@ import java.util.ArrayList;
  */
 public class ServiceListener extends Thread {
     private final ServerSocket serverSocket; // The socket to listen for connections
-    private volatile boolean isRunning = true;
     private final Service service; // The service to provide on that port
+    private volatile boolean isRunning = true;
 
     /**
      * The ServiceListener constructor creates a ServerSocket to listen for

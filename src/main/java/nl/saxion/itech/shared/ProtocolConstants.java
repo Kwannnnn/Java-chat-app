@@ -58,7 +58,8 @@ public final class ProtocolConstants {
     public static final String DSCN_BODY = "Goodbye";
 
     public static final int GROUP_PING_TIME_MS = 120_000;
-    public static final int PING_TIME_MS = 10_000;
+    public static final int PING_INITIAL_DELAY_MS = 10_000;
+    public static final int PING_TIME_MS = 3_000;
     public static final int PING_TIME_MS_DELTA_ALLOWED = 100;
 
     public static final int MIN_USERNAME_LENGTH = 3;

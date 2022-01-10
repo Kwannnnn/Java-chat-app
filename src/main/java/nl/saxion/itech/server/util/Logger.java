@@ -55,4 +55,8 @@ public class Logger {
         this.out.printf("[Error] %s\n", error);
         this.out.flush();
     }
+
+    public boolean isInitiated() {
+        return out != null;
+    }
 }

@@ -11,6 +11,7 @@ public class Client {
     private ClientStatus status;
     private InputStream in;
     private OutputStream out;
+    private boolean receivedPong;
 
     public Client(InputStream in, OutputStream out) {
         this.in = in;
@@ -48,6 +49,14 @@ public class Client {
 
     public void updateLastPong() {
         this.lastPong = Instant.now();
+    }
+
+    public void setReceivedPong(boolean receivedPong) {
+        this.receivedPong = receivedPong;
+    }
+
+    public boolean isReceivedPong() {
+        return receivedPong;
     }
 
     @Override

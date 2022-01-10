@@ -7,16 +7,15 @@ import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.ClientStatus;
 import nl.saxion.itech.server.model.File;
 import nl.saxion.itech.server.model.Group;
+import nl.saxion.itech.server.thread.ClientPingTask;
 import nl.saxion.itech.server.util.Logger;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static nl.saxion.itech.server.util.ServerMessageDictionary.*;
+import static nl.saxion.itech.server.util.ServerMessageDictionary.missingParametersError;
 import static nl.saxion.itech.shared.ProtocolConstants.*;
 
 /**
@@ -25,6 +24,7 @@ import static nl.saxion.itech.shared.ProtocolConstants.*;
  */
 public class MessageService implements Service {
     private final DataObject data;
+    private Logger logger;
 
     public MessageService(DataObject data) {
         this.data = data;
@@ -32,6 +32,8 @@ public class MessageService implements Service {
 
     @Override
     public void serve(InputStream in, OutputStream out) {
+        this.logger = Logger.getInstance();
+
         var client = new Client(in, out);
         try {
             sendMessage(welcome(), client);
@@ -43,6 +45,10 @@ public class MessageService implements Service {
             // and close the socket if it hasn't been closed yet
             this.data.removeClient(client);
         }
+    }
+
+    private void startClientPingThread(Client client) {
+        new Timer().scheduleAtFixedRate(new ClientPingTask(client), 0, PING_INITIAL_DELAY_MS);
     }
 
     private void handleClient(Client client) throws IOException {
@@ -74,7 +80,9 @@ public class MessageService implements Service {
                     handleConnectedUser(payload, sender) :
                     handleUnknownUser(payload, sender);
         } catch (NoSuchElementException e) {
-            return unknownCommandError();
+            return sender.getStatus() == ClientStatus.CLIENT_CONNECTED
+                    ? missingParametersError()
+                    : unknownCommandError();
         }
     }
 
@@ -110,18 +118,13 @@ public class MessageService implements Service {
     }
 
     private Message handleFileTransfer(StringTokenizer payload, Client sender) {
-        try {
-            var header = payload.nextToken().toUpperCase();
+        var header = payload.nextToken().toUpperCase();
 
-            return switch (header) {
-                case CMD_REQ -> handleFileReqMessage(payload, sender);
-                case CMD_ACK -> handleFileAckMessage(payload, sender);
-//                case CMD_ACCEPT -> handleAcceptFIleMessage();
-                default -> unknownCommandError();
-            };
-        } catch (NoSuchElementException e) {
-            return missingParametersError();
-        }
+        return switch (header) {
+            case CMD_REQ -> handleFileReqMessage(payload, sender);
+            case CMD_ACK -> handleFileAckMessage(payload, sender);
+            default -> unknownCommandError();
+        };
     }
 
     private Message handleFileReqMessage(StringTokenizer payload, Client sender) {
@@ -190,6 +193,7 @@ public class MessageService implements Service {
         sender.setUsername(username);
         sender.setStatus(ClientStatus.CLIENT_CONNECTED);
         this.data.addClient(sender);
+        startClientPingThread(sender);
 
         return okConn(username);
     }
@@ -200,26 +204,23 @@ public class MessageService implements Service {
     }
 
     private Message handlePong(Client sender) {
+        sender.setReceivedPong(true);
         sender.updateLastPong();
 
         return null;
     }
 
     private Message handleDirectMessage(StringTokenizer tokenizer, Client sender) {
-        try {
-            var recipientUsername = tokenizer.nextToken();
-            var message = getRemainingTokens(tokenizer);
-            var recipient = this.data.getClient(recipientUsername);
+        var recipientUsername = tokenizer.nextToken();
+        var message = getRemainingTokens(tokenizer);
+        var recipient = this.data.getClient(recipientUsername);
 
-            if (recipient.isEmpty()) {
-                return recipientNotConnectedError();
-            }
-
-            sendMessage(msg(sender.getUsername(), message), recipient.get());
-            return okMsg(recipientUsername, message);
-        } catch (NoSuchElementException e) {
-            return missingParametersError();
+        if (recipient.isEmpty()) {
+            return recipientNotConnectedError();
         }
+
+        sendMessage(msg(sender.getUsername(), message), recipient.get());
+        return okMsg(recipientUsername, message);
     }
 
     private Message handleAllMessage() {
@@ -232,110 +233,89 @@ public class MessageService implements Service {
     }
 
     private Message handleBroadcast(StringTokenizer tokenizer, Client sender) {
-        try {
-            assert tokenizer.hasMoreTokens() : "The tokenize has no more tokens, but it should have";
-            var messageToBroadcast = getRemainingTokens(tokenizer);
+        var messageToBroadcast = getRemainingTokens(tokenizer);
 
-            broadcastMessage(bcst(sender.getUsername(), messageToBroadcast), sender);
-            return okBcst(messageToBroadcast);
-        } catch (NoSuchElementException e) {
-            return missingParametersError();
-        }
+        broadcastMessage(bcst(sender.getUsername(), messageToBroadcast), sender);
+        return okBcst(messageToBroadcast);
     }
 
     private Message handleGroupMessage(StringTokenizer tokenizer, Client sender) {
-        try {
-            var header = tokenizer.nextToken().toUpperCase();
+        var header = tokenizer.nextToken().toUpperCase();
 
-            return switch (header) {
-                case CMD_NEW -> handleGroupNewMessage(tokenizer);
-                case CMD_ALL -> handleGroupAllMessage();
-                case CMD_JOIN -> handleGroupJoinMessage(tokenizer, sender);
-                case CMD_MSG -> handleGroupMessageMessage(tokenizer, sender);
-                case CMD_DSCN -> handleGroupDisconnectMessage(tokenizer, sender);
-                default -> unknownCommandError();
-            };
-        } catch (NoSuchElementException e) {
-            return missingParametersError();
-        }
+        return switch (header) {
+            case CMD_NEW -> handleGroupNewMessage(tokenizer);
+            case CMD_ALL -> handleGroupAllMessage();
+            case CMD_JOIN -> handleGroupJoinMessage(tokenizer, sender);
+            case CMD_MSG -> handleGroupMessageMessage(tokenizer, sender);
+            case CMD_DSCN -> handleGroupDisconnectMessage(tokenizer, sender);
+            default -> unknownCommandError();
+        };
     }
 
     private Message handleGroupDisconnectMessage(StringTokenizer tokenizer, Client sender) {
-        try {
-            var groupName = tokenizer.nextToken();
-            var senderUsername = sender.getUsername();
+        var groupName = tokenizer.nextToken();
+        var senderUsername = sender.getUsername();
 
-            // error handling
-            var error = userNotMemberOfGroup(groupName, senderUsername)
-                    .or(() -> groupDoesNotExist(groupName));
-            if (error.isPresent()) {
-                // An error message has occurred
-                return error.get();
-            }
-
-            var group = this.data.getGroup(groupName);
-
-            assert group.isPresent() : "This group is not present, but it should be";
-
-            group.get().removeClient(senderUsername);
-            return okGrpDscn(groupName);
-        } catch (NoSuchElementException e) {
-            return missingParametersError();
+        // error handling
+        var error = userNotMemberOfGroup(groupName, senderUsername)
+                .or(() -> groupDoesNotExist(groupName));
+        if (error.isPresent()) {
+            // An error message has occurred
+            return error.get();
         }
+
+        var group = this.data.getGroup(groupName);
+
+        assert group.isPresent() : "This group is not present, but it should be";
+
+        group.get().removeClient(senderUsername);
+        return okGrpDscn(groupName);
     }
 
     private Message handleGroupMessageMessage(StringTokenizer tokenizer, Client sender) {
-        try {
-            var groupName = tokenizer.nextToken();
-            var message = getRemainingTokens(tokenizer);
-            var senderUsername = sender.getUsername();
+        var groupName = tokenizer.nextToken();
+        var message = getRemainingTokens(tokenizer);
+        var senderUsername = sender.getUsername();
 
-            // error handling
-            var error = userNotMemberOfGroup(groupName, senderUsername)
-                    .or(() -> groupDoesNotExist(groupName));
-            if (error.isPresent()) {
-                // An error message has occurred
-                return error.get();
-            }
-
-            var group = this.data.getGroup(groupName);
-
-            assert group.isPresent() : "This group is not present, but it should be";
-
-            sendMessageToAll(grpMsg(groupName, senderUsername, message),
-                    group.get().getClients());
-            group.get().updateTimestampOfClient(senderUsername);
-            return okGrpMsg(groupName, message);
-        } catch (NoSuchElementException e) {
-            return missingParametersError();
+        // error handling
+        var error = userNotMemberOfGroup(groupName, senderUsername)
+                .or(() -> groupDoesNotExist(groupName));
+        if (error.isPresent()) {
+            // An error message has occurred
+            return error.get();
         }
+
+        var group = this.data.getGroup(groupName);
+
+        assert group.isPresent() : "This group is not present, but it should be";
+
+        sendMessageToAll(grpMsg(groupName, senderUsername, message),
+                group.get().getClients());
+        group.get().updateTimestampOfClient(senderUsername);
+        return okGrpMsg(groupName, message);
     }
 
     private Message handleGroupJoinMessage(StringTokenizer tokenizer, Client sender) {
-        try {
-            var groupName = tokenizer.nextToken();
+        var groupName = tokenizer.nextToken();
 
-            //error handling
-            var error = userAlreadyMemberOfGroup(groupName, sender.getUsername())
-                    .or(() -> groupDoesNotExist(groupName));
+        //error handling
+        var error = userAlreadyMemberOfGroup(groupName, sender.getUsername())
+                .or(() -> groupDoesNotExist(groupName));
 
-            if (error.isPresent()) {
-                // An error message has occurred
-                return error.get();
-            }
-
-            var group = this.data.getGroup(groupName);
-
-            assert group.isPresent() : "This group is not present, but it should be";
-
-            sendMessageToAll(
-                    grpJoin(groupName, sender.getUsername()),
-                    group.get().getClients());
-            group.get().addClient(sender);
-            return okGrpJoin(groupName);
-        } catch (NoSuchElementException e) {
-            return missingParametersError();
+        if (error.isPresent()) {
+            // An error message has occurred
+            return error.get();
         }
+
+        var group = this.data.getGroup(groupName);
+
+        assert group.isPresent() : "This group is not present, but it should be";
+
+        sendMessageToAll(
+                grpJoin(groupName, sender.getUsername()),
+                group.get().getClients());
+        group.get().addClient(sender);
+        return okGrpJoin(groupName);
     }
 
     private Message handleGroupAllMessage() {
@@ -348,21 +328,17 @@ public class MessageService implements Service {
     }
 
     private Message handleGroupNewMessage(StringTokenizer tokenizer) {
-        try {
-            var groupName = tokenizer.nextToken();
-            var error = invalidGroupName(groupName)
-                    .or(() -> groupAlreadyExists(groupName));
+        var groupName = tokenizer.nextToken();
+        var error = invalidGroupName(groupName)
+                .or(() -> groupAlreadyExists(groupName));
 
-            if (error.isPresent()) {
-                // An error message has occurred
-                return error.get();
-            }
-
-            this.data.addGroup(new Group(groupName));
-            return okGrpNew(groupName);
-        } catch (NoSuchElementException e) {
-            return missingParametersError();
+        if (error.isPresent()) {
+            // An error message has occurred
+            return error.get();
         }
+
+        this.data.addGroup(new Group(groupName));
+        return okGrpNew(groupName);
     }
 
     private Optional<Message> userIsNotRecipient(File file, Client client) {
@@ -504,6 +480,10 @@ public class MessageService implements Service {
      * @param text the text to be logged
      */
     private void log(String text) {
-        Logger.getInstance().logMessage(text);
+        if (!logger.isInitiated()) {
+            return;
+        }
+
+        logger.logMessage(text);
     }
 }

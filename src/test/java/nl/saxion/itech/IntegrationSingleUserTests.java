@@ -67,7 +67,7 @@ class IntegrationSingleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U100 - Bad Weather - loginEmptyNameWithER02")
+    @DisplayName("RQ-U100 - Bad Weather - loginEmptyNameWithER08")
     void loginEmptyNameWithER02() {
         receiveLineWithTimeout(in); //info message
         out.println("CONN");
