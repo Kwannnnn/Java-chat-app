@@ -40,31 +40,22 @@ public class FileDownloadThread extends Thread {
             out.println(CMD_DOWNLOAD + " " + fileID);
             out.flush();
 
-            var size = fileObject.getFileSize();
-            int readBytes = 0;
-            byte[] chunk = new byte[16 * 1024];
-            while (size > 0 && (readBytes = dis.read(chunk, 0, Math.min(chunk.length, size))) != -1) {
-                fileOutput.write(chunk, 0, readBytes);
-                fileOutput.flush();
-                size -= readBytes;
-            }
+            dis.transferTo(fileOutput);
+            fileOutput.close();
 
             // compare checksum
-            MessageDigest md5Digest = MessageDigest.getInstance("MD5");
             File downloadedFile = new File(fileObject.getName());
-            String downloadedFileChecksum = FileChecksum.getFileChecksum(md5Digest, downloadedFile);
+            String downloadedFileChecksum = FileChecksum.getFileChecksumMD5(downloadedFile);
 
             if (downloadedFileChecksum.equals(fileObject.getChecksum())) {
                 sendFileTrSuccessMessage(fileID);
                 ProtocolInterpreter.showFileDownloadSuccess(fileID);
             } else {
                 sendFileTrFailMessage(fileID);
-                downloadedFile.delete();
                 ProtocolInterpreter.showFileDownloadFailure(fileID);
             }
 
             socket.close();
-            fileOutput.close();
         } catch (IOException | NoSuchAlgorithmException e) {
             e.printStackTrace();
         } finally {

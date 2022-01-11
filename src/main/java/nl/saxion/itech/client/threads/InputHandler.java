@@ -130,9 +130,8 @@ public class InputHandler extends Thread {
             System.out.println("File not found");
         } else {
             try {
-                MessageDigest md5Digest = MessageDigest.getInstance("MD5");
                 File fileToSend = new File(resource.getFile());
-                String fileChecksum = FileChecksum.getFileChecksum(md5Digest, fileToSend);
+                String fileChecksum = FileChecksum.getFileChecksumMD5(fileToSend);
 
                 addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_REQ,
                         fileName + " " + fileToSend.length() + " " + fileChecksum + " " + username));

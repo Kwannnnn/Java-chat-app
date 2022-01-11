@@ -38,15 +38,8 @@ public class FileUploadThread extends Thread {
             out.println("UPLOAD " + fileID);
             out.flush();
 
-            var size = file.getFileSize();
-            int readBytes = 0;
-            byte[] chunk = new byte[16 * 1024];
-            while ((size > 0
-                    && (readBytes = fileStream.read(chunk, 0, Math.min(chunk.length, size))) != -1)) {
-                fileOut.write(chunk, 0, readBytes);
-                fileOut.flush();
-                size -= readBytes;
-            }
+            fileStream.transferTo(fileOut);
+            fileOut.close();
 
             ProtocolInterpreter.showFinishedFileUpload(fileID);
         } catch (IOException e) {

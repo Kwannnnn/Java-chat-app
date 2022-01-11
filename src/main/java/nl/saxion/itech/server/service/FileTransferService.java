@@ -76,9 +76,6 @@ public class FileTransferService implements Service {
 //        }
 
         // TODO: send checksum
-
-        in.close();
-        out.close();
     }
 
     private FileObject getFile(String fileId) {
