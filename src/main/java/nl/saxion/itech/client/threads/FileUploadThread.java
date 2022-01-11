@@ -28,18 +28,18 @@ public class FileUploadThread extends Thread {
         var file = fileOptional.get();
 
         try {
-            var fileStream = new FileInputStream(ChatClient.class.getResource(file.getName()).getFile());
+            var fileInputStream = new FileInputStream(ChatClient.class.getResource(file.getName()).getFile());
 
             OutputStream outputStream = socket.getOutputStream();
 
-            var out = new PrintWriter(outputStream, true);
-            var fileOut = new DataOutputStream(outputStream);
+            var socketPrintWriter = new PrintWriter(outputStream, true);
+            var socketDataOutputStream = new DataOutputStream(outputStream);
 
-            out.println("UPLOAD " + fileID);
-            out.flush();
+            socketPrintWriter.println("UPLOAD " + fileID);
+            socketPrintWriter.flush();
 
-            fileStream.transferTo(fileOut);
-            fileOut.close();
+            fileInputStream.transferTo(socketDataOutputStream);
+            socketDataOutputStream.close();
 
             ProtocolInterpreter.showFinishedFileUpload(fileID);
         } catch (IOException e) {
