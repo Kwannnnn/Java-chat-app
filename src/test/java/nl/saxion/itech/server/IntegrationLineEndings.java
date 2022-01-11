@@ -1,11 +1,9 @@
-package nl.saxion.itech;
+package nl.saxion.itech.server;
 
 import org.junit.jupiter.api.*;
 
 import java.io.*;
 import java.net.Socket;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Properties;
 
 import static java.time.Duration.ofMillis;
@@ -51,10 +49,6 @@ class IntegrationLineEndings {
         assertEquals("OK CONN myname", serverResponse);
         serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK BCST a", serverResponse);
-        // logout to make sure tests succeed without restarting the server
-        // Since a state of connected users is kept in memory
-        out.println("QUIT");
-        out.flush();
     }
 
     @Test
@@ -68,10 +62,6 @@ class IntegrationLineEndings {
         assertEquals("OK CONN myname", serverResponse);
         serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK BCST a", serverResponse);
-        // logout to make sure tests succeed without restarting the server
-        // Since a state of connected users is kept in memory
-        out.println("QUIT");
-        out.flush();
     }
 
     private String receiveLineWithTimeout(BufferedReader reader){

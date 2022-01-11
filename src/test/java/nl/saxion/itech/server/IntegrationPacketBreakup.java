@@ -1,4 +1,4 @@
-package nl.saxion.itech;
+package nl.saxion.itech.server;
 
 import org.junit.jupiter.api.*;
 

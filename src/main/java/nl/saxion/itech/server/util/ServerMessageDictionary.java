@@ -1,8 +1,6 @@
 package nl.saxion.itech.server.util;
 
-import nl.saxion.itech.server.message.Message;
 import nl.saxion.itech.server.message.TextMessage;
-import nl.saxion.itech.server.model.Client;
 
 import static nl.saxion.itech.shared.ProtocolConstants.*;
 

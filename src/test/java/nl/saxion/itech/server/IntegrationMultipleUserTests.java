@@ -1,0 +1,267 @@
+package nl.saxion.itech.server;
+
+import org.junit.jupiter.api.*;
+
+import java.io.*;
+import java.net.Socket;
+import java.util.Properties;
+
+import static nl.saxion.itech.shared.ProtocolConstants.*;
+import static java.time.Duration.ofMillis;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+class IntegrationMultipleUserTests {
+    private static final Properties PROPS = new Properties();
+    private static final int MAX_DELTA_ALLOWED_MS = 100;
+    private static final String TEST_CONFIG_FILENAME = "testconfig.properties";
+    private static final String USERNAME_1 = "user1";
+    private static final String USERNAME_2 = "user2";
+    private static final String MESSAGE_1 = "message1";
+    private static final String MESSAGE_2 = "message2";
+
+    private Socket socketUser1, socketUser2;
+    private BufferedReader inUser1, inUser2;
+    private PrintWriter outUser1, outUser2;
+
+    @BeforeAll
+    static void setupAll() throws IOException {
+        InputStream in = IntegrationMultipleUserTests.class.getResourceAsStream(TEST_CONFIG_FILENAME);
+        PROPS.load(in);
+
+        assert in != null : "Could not find the configuration file " + TEST_CONFIG_FILENAME + " in the resources folder";
+        in.close();
+    }
+
+    @BeforeEach
+    void setup() throws IOException {
+        var host = PROPS.getProperty("host");
+        var port = Integer.parseInt(PROPS.getProperty("port"));
+
+        this.socketUser1 = new Socket(host, port);
+        this.inUser1 = new BufferedReader(new InputStreamReader(this.socketUser1.getInputStream()));
+        this.outUser1 = new PrintWriter(this.socketUser1.getOutputStream(), true);
+
+        this.socketUser2 = new Socket(host, port);
+        this.inUser2 = new BufferedReader(new InputStreamReader(this.socketUser2.getInputStream()));
+        this.outUser2 = new PrintWriter(this.socketUser2.getOutputStream(), true);
+    }
+
+    @AfterEach
+    void cleanup() throws IOException {
+        this.socketUser1.close();
+        this.socketUser2.close();
+    }
+
+    @Test
+    @DisplayName("RQ-U101 - BCST Message")
+    void BCST() {
+        receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
+        receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
+
+        // Connect user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // Connect user2
+        sendMessageUser2(CMD_CONN + " " + USERNAME_2); // CONN user2
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2
+        assumeTrue(resUser2.startsWith(CMD_OK));
+
+        // Send BCST from user1
+        var message1 = CMD_BCST + " " + MESSAGE_1;
+        sendMessageUser1(message1); // BCST message one
+        String serverResponseUser1 = receiveLineWithTimeout(inUser1); // OK BCST message1
+        assertEquals(CMD_OK + " " + message1, serverResponseUser1);
+
+        String messageToUser2 = receiveLineWithTimeout(inUser2); // BCST user1 message1
+        assertEquals(CMD_BCST + " " + USERNAME_1 + " " + MESSAGE_1, messageToUser2);
+
+        // Send BCST from user2
+        var message2 = CMD_BCST + " " + MESSAGE_2;
+        sendMessageUser2(message2); // BCST message one
+        String serverResponseUser2 = receiveLineWithTimeout(inUser2); // OK BCST message2
+        assertEquals(CMD_OK + " " + message2, serverResponseUser2);
+
+        String messageToUser1 = receiveLineWithTimeout(inUser1); // BCST user2 message2
+        assertEquals(CMD_BCST + " " + USERNAME_2 + " " + MESSAGE_2, messageToUser1);
+    }
+
+    @Test
+    @DisplayName("RQ-U101 - Bad Weather - BCST - bcstWithoutBeingConnectedRespondsE03")
+    void BCST_Bad_Weather_ER03() {
+        receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
+
+        // BCST message1, while sender is not connected
+        sendMessageUser1(CMD_BCST + " " + MESSAGE_1);
+        String serverResponse = receiveLineWithTimeout(this.inUser1); // ER03 Please login first
+        assertEquals(CMD_ER03 + " " + ER03_BODY, serverResponse);
+    }
+
+    @Test
+    @DisplayName("RQ-U101 - Bad Weather - BCST - bcstWithMissingArgumentsRespondsE08")
+    void BCST_Bad_Weather_ER08() {
+        receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
+        receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
+
+        // Connect user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // BCST - missing message
+        sendMessageUser1(CMD_BCST);
+        String serverResponse = receiveLineWithTimeout(this.inUser1); // ER08 Missing parameters
+        assertEquals(CMD_ER08 + " " + ER08_BODY, serverResponse);
+    }
+
+
+    @Test
+    @DisplayName("RQ-U200 - ALL Message")
+    void ALL() {
+        receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
+        receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
+
+        // Connect user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // Connect user2
+        sendMessageUser2(CMD_CONN + " " + USERNAME_2); // CONN user1
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user1
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // user1: ALL
+        sendMessageUser1(CMD_ALL);
+        String allServerResponse = receiveLineWithTimeout(this.inUser1); // OK ALL user1,user2
+        assertEquals(CMD_OK + " " + CMD_ALL + " " + USERNAME_1 + "," + USERNAME_2, allServerResponse);
+    }
+
+    @Test
+    @DisplayName("RQ-U200 - Bad Weather - ALL - allWithoutBeingConnectedRespondsE03")
+    void ALL_Bad_Weather_ER03() {
+        receiveLineWithTimeout(this.inUser1); // Receive info message
+
+        // ALL, while user is not connected
+        sendMessageUser1(CMD_ALL);
+        String allServerResponse = receiveLineWithTimeout(this.inUser1); // ER03 Please login first
+        assertEquals(CMD_ER03 + " " + ER03_BODY, allServerResponse);
+    }
+
+    @Test
+    @DisplayName("RQ-U201 - MSG Message")
+    void MSG() {
+        receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
+        receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
+
+        // Connect user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // Connect user2
+        sendMessageUser2(CMD_CONN + " " + USERNAME_2); // CONN user2
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2
+        assumeTrue(resUser2.startsWith(CMD_OK));
+
+        // Send MSG from user1 to user2
+        var message1 = CMD_MSG + " " + USERNAME_2 + " " + MESSAGE_1;
+        sendMessageUser1(message1); // MSG user2 message1
+        String serverResponseUser1 = receiveLineWithTimeout(inUser1); // OK MSG user2 message1
+        assertEquals(CMD_OK + " " + message1, serverResponseUser1);
+
+        String messageToUser2 = receiveLineWithTimeout(inUser2); // MSG user1 message1
+        assertEquals(CMD_MSG + " " + USERNAME_1 + " " + MESSAGE_1, messageToUser2);
+    }
+
+    @Test
+    @DisplayName("RQ-U201 - Bad Weather - MSG - msgWithoutBeingConnectedRespondsE03")
+    void MSG_Bad_Weather_ER03() {
+        receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
+
+        // MSG user2 message1, while sender is not connected
+        sendMessageUser1(CMD_MSG + " " + USERNAME_2 + " " + MESSAGE_1);
+        String serverResponse = receiveLineWithTimeout(this.inUser1); // ER03 Please login first
+        assertEquals(CMD_ER03 + " " + ER03_BODY, serverResponse);
+    }
+
+    @Test
+    @DisplayName("RQ-U201 - Bad Weather - MSG - msgUnknownUserRespondsE04")
+    void MSG_Bad_Weather_ER04() {
+        receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
+
+        // Connect user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // MSG user2 message1, while user2 is not connected
+        sendMessageUser1(CMD_MSG + " " + USERNAME_2 + " " + MESSAGE_1);
+        String serverResponse = receiveLineWithTimeout(this.inUser1); // ER04 The user you are trying to reach is not connected.
+        assertEquals(CMD_ER04 + " " + ER04_BODY, serverResponse);
+    }
+
+    @Test
+    @DisplayName("RQ-U201 - Bad Weather - MSG - msgWithMissingArgumentsRespondsE08")
+    void MSG_Bad_Weather_ER08() {
+        receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
+        receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
+
+        // Connect user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // Connect user2
+        sendMessageUser2(CMD_CONN + " " + USERNAME_2); // CONN user2
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2
+        assumeTrue(resUser2.startsWith(CMD_OK));
+
+
+        var expectedResult_ER08 = CMD_ER08 + " " + ER08_BODY; // ER08 Missing parameters
+
+        // MSG - missing recipient and message
+        sendMessageUser1(CMD_MSG);
+        String serverResponse = receiveLineWithTimeout(this.inUser1); // ER08 Missing parameters
+        assertEquals(expectedResult_ER08, serverResponse);
+
+        // MSG user2 - missing message
+        sendMessageUser1(CMD_MSG + " " + USERNAME_2);
+        serverResponse = receiveLineWithTimeout(this.inUser1); // ER08 Missing parameters
+        assertEquals(expectedResult_ER08, serverResponse);
+    }
+
+    @Test
+    @DisplayName("RQ-S100 - Bad Weather - CONN - userAlreadyLoggedIn")
+    void userAlreadyLoggedIn(){
+        receiveLineWithTimeout(inUser1); //info message
+        receiveLineWithTimeout(inUser2); //info message
+
+        // Connect user 1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // Connect using same username
+        sendMessageUser2(CMD_CONN + " " + USERNAME_1); // CONN user1
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // ER01 User already logged in
+        assertEquals(CMD_ER01 + " " + ER01_BODY, resUser2);
+    }
+
+    private void sendMessageUser1(String message) {
+        this.outUser1.println(message);
+        this.outUser1.flush();
+    }
+
+    private void sendMessageUser2(String message) {
+        this.outUser2.println(message);
+        this.outUser2.flush();
+    }
+
+    private String receiveLineWithTimeout(BufferedReader reader){
+        return assertTimeoutPreemptively(ofMillis(MAX_DELTA_ALLOWED_MS), () -> reader.readLine());
+    }
+
+}
