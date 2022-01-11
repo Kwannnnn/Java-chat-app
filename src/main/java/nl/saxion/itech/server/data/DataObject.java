@@ -1,7 +1,7 @@
 package nl.saxion.itech.server.data;
 
 import nl.saxion.itech.server.model.Client;
-import nl.saxion.itech.server.model.File;
+import nl.saxion.itech.server.model.FileObject;
 import nl.saxion.itech.server.model.Group;
 import nl.saxion.itech.server.thread.GroupPingThread;
 
@@ -13,7 +13,7 @@ public class DataObject {
     private final HashMap<String, Client> chatClients;
     private final HashMap<String, Group> groups;
     private final HashMap<String, GroupPingThread> groupPingThreads;
-    private final HashMap<String, File> files;
+    private final HashMap<String, FileObject> files;
 
     public DataObject() {
         this.chatClients = new HashMap<>();
@@ -62,11 +62,13 @@ public class DataObject {
         return chatClients.containsKey(userName);
     }
 
-    public synchronized Optional<File> getFile(String id) {
+    public synchronized Optional<FileObject> getFile(String id) {
         return Optional.ofNullable(this.files.get(id));
     }
 
-    public synchronized void addFile(File file) {
-        this.files.put(file.getId(), file);
+    public synchronized void addFile(FileObject fileObject) {
+        this.files.put(fileObject.getId(), fileObject);
     }
+
+    public synchronized void removeFile(String fileID) { this.files.remove(fileID);}
 }

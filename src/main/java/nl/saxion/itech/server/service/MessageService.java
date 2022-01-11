@@ -5,7 +5,7 @@ import nl.saxion.itech.server.exception.ClientDisconnectedException;
 import nl.saxion.itech.server.message.Message;
 import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.ClientStatus;
-import nl.saxion.itech.server.model.File;
+import nl.saxion.itech.server.model.FileObject;
 import nl.saxion.itech.server.model.Group;
 import nl.saxion.itech.server.thread.ClientPingTask;
 import nl.saxion.itech.server.util.Logger;
@@ -124,13 +124,46 @@ public class MessageService implements Service {
         return switch (header) {
             case CMD_REQ -> handleFileReqMessage(payload, sender);
             case CMD_ACK -> handleFileAckMessage(payload, sender);
+            case CMD_TR -> handleFileTransferMessage(payload);
             default -> unknownCommandError();
         };
+    }
+
+    private Message handleFileTransferMessage(StringTokenizer payload) {
+        var header = payload.nextToken().toUpperCase();
+
+        boolean headerAccepted = header.equals(CMD_SUCCESS) || header.equals(CMD_FAIL);
+        if (headerAccepted) {
+            String fileID = payload.nextToken();
+            var fileOptional = this.data.getFile(fileID);
+
+            //error handling
+            if (fileOptional.isEmpty()) {
+                return unknownCommandError();
+            }
+
+            var fileObject = fileOptional.get();
+            // TODO: think of a condition for this lol. For now this message is accepted everytime
+//            if ( ) {
+//                return fileNotSentError();
+//            }
+
+            //send message back to the file uploader, completing the transfer
+            var messageToSend = header.equals(CMD_SUCCESS) ? fileTrSuccess(fileID) : fileTrFail(fileID);
+            var fileSender = fileObject.getSender();
+            sendMessage(messageToSend, fileSender);
+
+            this.data.removeFile(fileID);
+            return null;
+        } else {
+            return unknownCommandError();
+        }
     }
 
     private Message handleFileReqMessage(StringTokenizer payload, Client sender) {
         var filename = payload.nextToken();
         var fileSize = Integer.parseInt(payload.nextToken());
+        var checksum = payload.nextToken();
         var recipientUsername = payload.nextToken();
         var client = this.data.getClient(recipientUsername);
 
@@ -139,11 +172,11 @@ public class MessageService implements Service {
         }
 
         var recipient = client.get();
-        var file = new File(filename, sender, recipient, fileSize);
+        var file = new FileObject(filename, sender, recipient, fileSize, checksum);
         this.data.addFile(file);
-        sendMessage(fileReq(file.getId(), sender.getUsername(), filename, fileSize), recipient);
+        sendMessage(fileReq(file.getId(), sender.getUsername(), filename, fileSize, checksum), recipient);
 
-        return okFileReq(file.getId(), filename, fileSize, recipientUsername);
+        return okFileReq(file.getId(), filename, fileSize, recipientUsername, checksum);
     }
 
     //region file acknowledge messages
@@ -168,20 +201,20 @@ public class MessageService implements Service {
         });
     }
 
-    private Message handleFileAckDenyMessage(File file, Client messageSender) {
-        String fileId = file.getId();
+    private Message handleFileAckDenyMessage(FileObject fileObject, Client messageSender) {
+        String fileId = fileObject.getId();
         sendMessage(okFileAckDeny(fileId), messageSender);
 
         return fileAckDeny(fileId);
     }
 
-    private Message handleFileAckAcceptMessage(File file, Client messageSender) {
-        String fileId = file.getId();
+    private Message handleFileAckAcceptMessage(FileObject fileObject, Client messageSender) {
+        String fileId = fileObject.getId();
         sendMessage(okFileAckAccept(fileId), messageSender);
-        sendMessage(fileAckAccept(fileId), file.getSender());
+        sendMessage(fileAckAccept(fileId), fileObject.getSender());
 
         // send file transfer message to both users
-        sendMessage(fileTrUpload(fileId, 1338), file.getSender());
+        sendMessage(fileTrUpload(fileId, 1338), fileObject.getSender());
         return fileTrDownload(fileId, 1338);
     }
     //================================================================================
@@ -359,8 +392,8 @@ public class MessageService implements Service {
 
     //region helper methods
     //================================================================================
-    private Optional<Message> userIsNotRecipient(File file, Client client) {
-        return !clientIsRecipientOfFile(client, file)
+    private Optional<Message> userIsNotRecipient(FileObject fileObject, Client client) {
+        return !clientIsRecipientOfFile(client, fileObject)
                 ? Optional.of(unknownTransfer()) // Unknown transfer
                 : Optional.empty();
     }
@@ -437,8 +470,8 @@ public class MessageService implements Service {
         return this.data.hasGroup(groupName);
     }
 
-    private boolean clientIsRecipientOfFile(Client client, File file) {
-        return file.getRecipient().equals(client);
+    private boolean clientIsRecipientOfFile(Client client, FileObject fileObject) {
+        return fileObject.getRecipient().equals(client);
     }
 
     private boolean groupHasClient(String groupName, String username) {

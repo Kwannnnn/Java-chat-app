@@ -1,6 +1,6 @@
 package nl.saxion.itech.client;
 
-import nl.saxion.itech.client.newDesign.File;
+import nl.saxion.itech.client.newDesign.FileObject;
 import nl.saxion.itech.client.newDesign.Message;
 import nl.saxion.itech.client.newDesign.ServerMessageHandler;
 import nl.saxion.itech.client.threads.InputHandler;
@@ -24,8 +24,8 @@ public class ChatClient {
     private String currentUser;
     private ServerMessageHandler messageHandler;
     private BlockingQueue<Message> messagesQueue = new LinkedBlockingQueue<>();
-    private final ConcurrentHashMap<String, File> filesToReceive = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, File> filesToSend = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, FileObject> filesToReceive = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, FileObject> filesToSend = new ConcurrentHashMap<>();
 
     public ChatClient() {
         try {
@@ -78,35 +78,35 @@ public class ChatClient {
         this.CLIThread.interrupt();
     }
 
-    public void addFileToReceive(File file) {
-        filesToReceive.put(file.getId(), file);
+    public void addFileToReceive(FileObject fileObject) {
+        filesToReceive.put(fileObject.getId(), fileObject);
     }
 
-    public void removeFileToReceive(File file) {
-        filesToReceive.remove(file.getId(), file);
+    public void removeFileToReceive(String fileID) {
+        filesToReceive.remove(fileID);
     }
 
-    public Optional<File> getFileToReceive(String fileID) {
+    public Optional<FileObject> getFileToReceive(String fileID) {
         return Optional.ofNullable(this.filesToReceive.get(fileID));
     }
 
-    public void addFileToSend(File file) {
-        filesToSend.put(file.getId(), file);
+    public void addFileToSend(FileObject fileObject) {
+        filesToSend.put(fileObject.getId(), fileObject);
     }
 
-    public synchronized void removeFileToSend(File file) {
-        filesToSend.remove(file.getId(), file);
+    public synchronized void removeFileToSend(String fileID) {
+        filesToSend.remove(fileID);
     }
 
-    public Optional<File> getFileToSend(String fileID) {
+    public Optional<FileObject> getFileToSend(String fileID) {
         return Optional.ofNullable(this.filesToSend.get(fileID));
     }
 
-    public Collection<File> getFilesToReceive() {
+    public Collection<FileObject> getFilesToReceive() {
         return filesToReceive.values();
     }
 
-    public Collection<File> getFilesToSend() {
+    public Collection<FileObject> getFilesToSend() {
         return filesToSend.values();
     }
 }

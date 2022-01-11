@@ -1,7 +1,7 @@
 package nl.saxion.itech.server.service;
 
 import nl.saxion.itech.server.data.DataObject;
-import nl.saxion.itech.server.model.File;
+import nl.saxion.itech.server.model.FileObject;
 
 import java.io.*;
 import java.util.NoSuchElementException;
@@ -62,10 +62,10 @@ public class FileTransferService implements Service {
         }
     }
 
-    private void handleTransfer(File file) throws IOException {
+    private void handleTransfer(FileObject fileObject) throws IOException {
         // TODO: use DataInputStream instead
-        var in = new DataInputStream(file.getSenderInputStream());
-        var out = new DataOutputStream(file.getRecipientOutputStream());
+        var in = new DataInputStream(fileObject.getSenderInputStream());
+        var out = new DataOutputStream(fileObject.getRecipientOutputStream());
         in.transferTo(out);
         // To simulate sending bytes, for now sending lines of text.
         // TODO: perhaps the code should look like the commented code below
@@ -75,25 +75,23 @@ public class FileTransferService implements Service {
 //            out.flush();
 //        }
 
-//        var fileSize = file.getFileSize();
-//        int total = 0;
-//        int readBytes = 0;
-//
-//        byte[] chunk = new byte[16 * 1024];
-//        while (total < fileSize && (readBytes = in.read(chunk, 0, Math.min(chunk.length, fileSize))) > 0) {
-//            in.transferTo(out);
-//            out.write(chunk, 0, readBytes);
-//            out.flush();
-//            total += readBytes;
-//        }
-//
-//        // TODO: send checksum
+        var fileSize = file.getFileSize();
+        int total = 0;
+        int readBytes = 0;
+        byte[] chunk = new byte[16 * 1024];
+        while (total < fileSize && (readBytes = in.read(chunk, 0, Math.min(chunk.length, fileSize))) > 0) {
+            out.write(chunk, 0, readBytes);
+            out.flush();
+            total += readBytes;
+        }
+
+        // TODO: send checksum
 
         in.close();
         out.close();
     }
 
-    private File getFile(String fileId) {
+    private FileObject getFile(String fileId) {
         var optional = this.data.getFile(fileId);
 
         if (optional.isEmpty()) {
@@ -104,13 +102,13 @@ public class FileTransferService implements Service {
         return optional.get();
     }
 
-    private synchronized void updateFileUploader(File file, InputStream in) {
-        file.setSenderInputStream(in);
+    private synchronized void updateFileUploader(FileObject fileObject, InputStream in) {
+        fileObject.setSenderInputStream(in);
         notify();
     }
 
-    private synchronized void updateFileDownloader(File file, OutputStream out) {
-        file.setRecipientOutputStream(out);
+    private synchronized void updateFileDownloader(FileObject fileObject, OutputStream out) {
+        fileObject.setRecipientOutputStream(out);
         notify();
     }
 }
