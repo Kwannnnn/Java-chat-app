@@ -66,7 +66,7 @@ public class FileTransferService implements Service {
         // TODO: use DataInputStream instead
         var in = new DataInputStream(file.getSenderInputStream());
         var out = new DataOutputStream(file.getRecipientOutputStream());
-
+        in.transferTo(out);
         // To simulate sending bytes, for now sending lines of text.
         // TODO: perhaps the code should look like the commented code below
 //        String line;
@@ -75,17 +75,19 @@ public class FileTransferService implements Service {
 //            out.flush();
 //        }
 
-        var fileSize = file.getFileSize();
-        int total = 0;
-        int readBytes = 0;
-        byte[] chunk = new byte[16 * 1024];
-        while (total < fileSize && (readBytes = in.read(chunk, 0, Math.min(chunk.length, fileSize))) > 0) {
-            out.write(chunk, 0, readBytes);
-            out.flush();
-            total += readBytes;
-        }
-
-        // TODO: send checksum
+//        var fileSize = file.getFileSize();
+//        int total = 0;
+//        int readBytes = 0;
+//
+//        byte[] chunk = new byte[16 * 1024];
+//        while (total < fileSize && (readBytes = in.read(chunk, 0, Math.min(chunk.length, fileSize))) > 0) {
+//            in.transferTo(out);
+//            out.write(chunk, 0, readBytes);
+//            out.flush();
+//            total += readBytes;
+//        }
+//
+//        // TODO: send checksum
 
         in.close();
         out.close();
