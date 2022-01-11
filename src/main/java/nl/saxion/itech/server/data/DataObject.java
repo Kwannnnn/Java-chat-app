@@ -36,9 +36,11 @@ public class DataObject {
     }
 
     public synchronized void removeClient(Client client) {
-        this.chatClients.remove(client.getUsername(), client);
-        this.clientPingThreads.get(client.getUsername()).cancel();
-        this.clientPingThreads.remove(client.getUsername());
+        if (client.getUsername() != null) {
+            this.chatClients.remove(client.getUsername(), client);
+            this.clientPingThreads.get(client.getUsername()).cancel();
+            this.clientPingThreads.remove(client.getUsername());
+        }
     }
 
     public synchronized Optional<Client> getClient(String username) {
