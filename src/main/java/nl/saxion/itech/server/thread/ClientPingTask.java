@@ -51,7 +51,6 @@ public class ClientPingTask extends TimerTask {
     private synchronized void disconnectClient() {
         try {
             this.out.println(CMD_DSCN + " " + CMD_TIMEOUT);
-            log("<< [" + client + "] " + PING_MESSAGE);
             this.client.getOutputStream().close();
             this.client.getInputStream().close();
             this.cancel();

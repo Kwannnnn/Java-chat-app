@@ -3,20 +3,26 @@ package nl.saxion.itech.server.data;
 import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.FileObject;
 import nl.saxion.itech.server.model.Group;
+import nl.saxion.itech.server.thread.ClientPingTask;
 import nl.saxion.itech.server.thread.GroupPingThread;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.Timer;
+
+import static nl.saxion.itech.shared.ProtocolConstants.PING_INITIAL_DELAY_MS;
 
 public class DataObject {
     private final HashMap<String, Client> chatClients;
+    private final HashMap<String, ClientPingTask> clientPingThreads;
     private final HashMap<String, Group> groups;
     private final HashMap<String, GroupPingThread> groupPingThreads;
     private final HashMap<String, FileObject> files;
 
     public DataObject() {
         this.chatClients = new HashMap<>();
+        this.clientPingThreads = new HashMap<>();
         this.groups = new HashMap<>();
         this.groupPingThreads = new HashMap<>();
         this.files = new HashMap<>();
@@ -24,10 +30,15 @@ public class DataObject {
 
     public synchronized void addClient(Client client) {
         this.chatClients.put(client.getUsername(), client);
+        var clientPingTask = new ClientPingTask(client);
+        this.clientPingThreads.put(client.getUsername(), clientPingTask);
+        new Timer().scheduleAtFixedRate(clientPingTask, 0, PING_INITIAL_DELAY_MS);
     }
 
     public synchronized void removeClient(Client client) {
         this.chatClients.remove(client.getUsername(), client);
+        this.clientPingThreads.get(client.getUsername()).cancel();
+        this.clientPingThreads.remove(client.getUsername());
     }
 
     public synchronized Optional<Client> getClient(String username) {
@@ -52,6 +63,11 @@ public class DataObject {
 
     public synchronized Optional<Group> getGroup(String groupName) {
         return Optional.ofNullable(this.groups.get(groupName));
+    }
+
+    public synchronized void removeGroup(String groupName) {
+        this.groups.remove(groupName);
+        this.groupPingThreads.remove(groupName);
     }
 
     public synchronized boolean hasGroup(String groupName) {

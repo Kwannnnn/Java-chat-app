@@ -19,6 +19,7 @@ class IntegrationMultipleUserTests {
     private static final String USERNAME_2 = "user2";
     private static final String MESSAGE_1 = "message1";
     private static final String MESSAGE_2 = "message2";
+    private static final String VALID_GROUP_NAME = "cats";
 
     private Socket socketUser1, socketUser2;
     private BufferedReader inUser1, inUser2;
@@ -248,6 +249,112 @@ class IntegrationMultipleUserTests {
         sendMessageUser2(CMD_CONN + " " + USERNAME_1); // CONN user1
         String resUser2 = receiveLineWithTimeout(this.inUser2); // ER01 User already logged in
         assertEquals(CMD_ER01 + " " + ER01_BODY, resUser2);
+    }
+
+    @Test
+    @DisplayName("RQ-U203 - GRP JOIN Message")
+    void GRP_JOIN() {
+        receiveLineWithTimeout(inUser1); //info message
+        receiveLineWithTimeout(inUser2); //info message
+
+        // Connect user 1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // Connect user2
+        sendMessageUser2(CMD_CONN + " " + USERNAME_2); // CONN user2
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2
+        assumeTrue(resUser2.startsWith(CMD_OK));
+
+        // First create a group
+        sendMessageUser1(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME); // GRP NEW cats
+        String grpNewResponse = receiveLineWithTimeout(this.inUser1); // OK GRP NEW cats
+        assumeTrue(grpNewResponse.startsWith(CMD_OK));
+
+        // user2 joins the group
+        sendMessageUser2(CMD_GRP + " " + CMD_JOIN + " " + VALID_GROUP_NAME); // GRP JOIN cats
+        String user2Response = receiveLineWithTimeout(this.inUser2); // OK GRP JOIN cats
+        assertEquals(CMD_OK + " " + CMD_GRP + " " + CMD_JOIN + " " + VALID_GROUP_NAME, user2Response);
+
+        String grpJoinUser1Notification = receiveLineWithTimeout(this.inUser1); // GRP JOIN cats user2
+        assertEquals(CMD_GRP + " " + CMD_JOIN + " " + VALID_GROUP_NAME + " " + USERNAME_2, grpJoinUser1Notification);
+
+        // Cleanup
+        sendMessageUser1(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME); // GRP DSCN cats
+        sendMessageUser2(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME); // GRP DSCN cats
+    }
+
+    @Test
+    @DisplayName("RQ-U203 - Bad Weather - GRP JOIN - grpJoinWithoutBeingConnectedRespondsE03")
+    void GRP_JOIN_Bad_Weather_ER03() {
+        receiveLineWithTimeout(inUser1); // Receive INFO message
+
+        // given
+        sendMessageUser1(CMD_GRP + " " + CMD_JOIN + " " + VALID_GROUP_NAME); // GRP JOIN cats
+        // when
+        String grpJoinServerResponse = receiveLineWithTimeout(this.inUser1); // ER03 Please log in first
+        // then
+        assertEquals(CMD_ER03 + " " + ER03_BODY, grpJoinServerResponse);
+    }
+
+    @Test
+    @DisplayName("RQ-U203 - Bad Weather - GRP JOIN - grpJoinNonExistingGroupRespondsE07")
+    void GRP_JOIN_Bad_Weather_ER07() {
+        receiveLineWithTimeout(inUser1); // Receive INFO message
+
+        // Connect user 1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // Try to join group cats, which does not exist
+        sendMessageUser1(CMD_GRP + " " + CMD_JOIN + " " + VALID_GROUP_NAME); // GRP JOIN cats
+        // when
+        String grpJoinResponse = receiveLineWithTimeout(this.inUser1); // ER07 A group with this name does not exist
+        // then
+        assertEquals(CMD_ER07 + " " + ER07_BODY, grpJoinResponse);
+    }
+
+    @Test
+    @DisplayName("RQ-U203 - Bad Weather - GRP JOIN - grpJoinWithMissingArgumentsRespondsE08")
+    void GRP_JOIN_Bad_Weather_ER08() {
+        receiveLineWithTimeout(inUser1); // Receive INFO message
+
+        // Connect user 1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // GRP JOIN - missing group name
+        sendMessageUser1(CMD_GRP + " " + CMD_JOIN); // GRP JOIN
+        String grpJoinResponse = receiveLineWithTimeout(this.inUser1); // ER08 Missing parameters
+        assertEquals(CMD_ER08 + " " + ER08_BODY, grpJoinResponse);
+    }
+
+    @Test
+    @DisplayName("RQ-U203 - Bad Weather - GRP JOIN - grpJoinWhileAlreadyPartOfGroupRespondsE09")
+    void GRP_JOIN_Bad_Weather_ER09() {
+        receiveLineWithTimeout(inUser1); // Receive INFO message
+
+        // Connect user 1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // Create and (automatically) join the group
+        var grpNewMessage = CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME;
+        sendMessageUser1(grpNewMessage); // GRP NEW cats
+        String grpNewResponse = receiveLineWithTimeout(this.inUser1); // OK GRP NEW cats
+        assertEquals(CMD_OK + " " + grpNewMessage, grpNewResponse);
+
+        // GRP JOIN cats, while already a member of the group
+        sendMessageUser1(CMD_GRP + " " + CMD_JOIN + " " + VALID_GROUP_NAME); // GRP JOIN
+        String grpJoinResponse = receiveLineWithTimeout(this.inUser1); // ER09 You are already in this group
+        assertEquals(CMD_ER09 + " " + ER09_BODY, grpJoinResponse);
+
+        // Cleanup
+        sendMessageUser1(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME); // GRP DSCN cats
     }
 
     private void sendMessageUser1(String message) {

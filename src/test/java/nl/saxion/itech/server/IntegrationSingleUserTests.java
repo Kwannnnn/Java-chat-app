@@ -20,6 +20,7 @@ class IntegrationSingleUserTests {
     private static final String VALID_USERNAME = "myname";
     private static final String INVALID_USERNAME = "*a*";
     private static final String VALID_GROUP_NAME = "cats";
+    private static final String VALID_GROUP_NAME_2 = "dogs";
     private static final String INVALID_GROUP_NAME = "*g*";
 
 
@@ -138,6 +139,10 @@ class IntegrationSingleUserTests {
         String allServerResponse = receiveLineWithTimeout(in); // OK GRP NEW cats
         // then
         assertEquals(CMD_OK + " " + CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME, allServerResponse);
+
+        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME);
+        String grpDscnResponse = receiveLineWithTimeout(in); // OK GRP DSCN cats
+        assumeTrue(grpDscnResponse.startsWith(CMD_OK));
     }
 
     @Test
@@ -188,6 +193,10 @@ class IntegrationSingleUserTests {
         String allServerResponse = receiveLineWithTimeout(in); // ER06 A group with this name already exists
         // then
         assertEquals(CMD_ER06 + " " + ER06_BODY, allServerResponse);
+
+        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME);
+        String grpDscnResponse = receiveLineWithTimeout(in); // OK GRP DSCN cats
+        assumeTrue(grpDscnResponse.startsWith(CMD_OK));
     }
 
     @Test
@@ -207,8 +216,8 @@ class IntegrationSingleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U203 - GRP JOIN Message")
-    void GRP_JOIN() {
+    @DisplayName("RQ-U204 - GRP ALL Message")
+    void GRP_ALL() {
         receiveLineWithTimeout(in); // Receive info message
         sendMessage(CMD_CONN + " " + VALID_USERNAME); // C: CONN myname
         String connServerResponse = receiveLineWithTimeout(in); // S: OK CONN myname
@@ -216,15 +225,28 @@ class IntegrationSingleUserTests {
 
         // First create a group
         sendMessage(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME); // GRP NEW cats
-        String grpNewServerResponse = receiveLineWithTimeout(this.in);
-        assumeTrue(connServerResponse.startsWith(CMD_OK));
+        String grpNew1ServerResponse = receiveLineWithTimeout(this.in);
+        assumeTrue(grpNew1ServerResponse.startsWith(CMD_OK));
+
+        // Create another group
+        sendMessage(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME_2); // GRP NEW dogs
+        String grpNew2ServerResponse = receiveLineWithTimeout(this.in);
+        assumeTrue(grpNew2ServerResponse.startsWith(CMD_OK));
 
         // given
-        sendMessage(CMD_GRP + " " + CMD_JOIN + " " + VALID_GROUP_NAME); // GRP JOIN cats
+        sendMessage(CMD_GRP + " " + CMD_ALL); // GRP ALL
         // when
-        String allServerResponse = receiveLineWithTimeout(in); // OK GRP JOIN cats
+        String allServerResponse = receiveLineWithTimeout(in); // GRP ALL cats,dogs
         // then
-        assertEquals(CMD_OK + " " + CMD_GRP + " " + CMD_JOIN + " " + VALID_GROUP_NAME, allServerResponse);
+        assertEquals(CMD_OK + " " + CMD_GRP + " " + CMD_ALL + " " + VALID_GROUP_NAME + "," + VALID_GROUP_NAME_2, allServerResponse);
+
+        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME);
+        String grpDscn1Response = receiveLineWithTimeout(in); // OK GRP DSCN cats
+        assumeTrue(grpDscn1Response.startsWith(CMD_OK));
+
+        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME_2);
+        String grpDscn2Response = receiveLineWithTimeout(in); // OK GRP DSCN dogs
+        assumeTrue(grpDscn2Response.startsWith(CMD_OK));
     }
 
     private void sendMessage(String message) {

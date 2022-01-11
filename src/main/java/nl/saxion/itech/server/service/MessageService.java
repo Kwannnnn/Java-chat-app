@@ -47,10 +47,6 @@ public class MessageService implements Service {
         }
     }
 
-    private void startClientPingThread(Client client) {
-        new Timer().scheduleAtFixedRate(new ClientPingTask(client), 0, PING_INITIAL_DELAY_MS);
-    }
-
     private void handleIncomingMessages(Client client) throws IOException {
         var in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 
@@ -236,7 +232,6 @@ public class MessageService implements Service {
         sender.setUsername(username);
         sender.setStatus(ClientStatus.CLIENT_CONNECTED);
         this.data.addClient(sender);
-        startClientPingThread(sender);
 
         return okConn(username);
     }
@@ -290,7 +285,7 @@ public class MessageService implements Service {
         var header = tokenizer.nextToken().toUpperCase();
 
         return switch (header) {
-            case CMD_NEW -> handleGroupNewMessage(tokenizer);
+            case CMD_NEW -> handleGroupNewMessage(tokenizer, sender);
             case CMD_ALL -> handleGroupAllMessage();
             case CMD_JOIN -> handleGroupJoinMessage(tokenizer, sender);
             case CMD_MSG -> handleGroupMessageMessage(tokenizer, sender);
@@ -311,11 +306,17 @@ public class MessageService implements Service {
             return error.get();
         }
 
-        var group = this.data.getGroup(groupName);
+        var groupOptional = this.data.getGroup(groupName);
 
-        assert group.isPresent() : "This group is not present, but it should be";
+        assert groupOptional.isPresent() : "This group is not present, but it should be";
 
-        group.get().removeClient(senderUsername);
+        var group = groupOptional.get();
+        group.removeClient(senderUsername);
+
+        if (group.getClients().size() == 0) {
+            this.data.removeGroup(groupName);
+        }
+
         return okGrpDscn(groupName);
     }
 
@@ -374,7 +375,7 @@ public class MessageService implements Service {
         return okGrpAll(clients);
     }
 
-    private Message handleGroupNewMessage(StringTokenizer tokenizer) {
+    private Message handleGroupNewMessage(StringTokenizer tokenizer, Client sender) {
         var groupName = tokenizer.nextToken();
         var error = invalidGroupName(groupName)
                 .or(() -> groupAlreadyExists(groupName));
@@ -384,7 +385,9 @@ public class MessageService implements Service {
             return error.get();
         }
 
-        this.data.addGroup(new Group(groupName));
+        var group = new Group(groupName);
+        group.addClient(sender);
+        this.data.addGroup(group);
         return okGrpNew(groupName);
     }
     //================================================================================
