@@ -4,8 +4,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
-public abstract class FileChecksum {
+public final class FileChecksum {
+
+    public static String getFileChecksumMD5(File file) throws IOException, NoSuchAlgorithmException {
+        MessageDigest md5Digest = MessageDigest.getInstance("MD5");
+        return getFileChecksum(md5Digest, file);
+    }
+
     /**
      * Generates a checksum hash for a given file using a specified hashing algorithm.
      *
