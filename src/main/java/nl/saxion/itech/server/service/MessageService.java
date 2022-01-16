@@ -9,6 +9,7 @@ import nl.saxion.itech.server.model.FileObject;
 import nl.saxion.itech.server.model.Group;
 import nl.saxion.itech.server.thread.ClientPingTask;
 import nl.saxion.itech.server.util.Logger;
+import nl.saxion.itech.shared.security.RSA;
 
 import java.io.*;
 import java.util.*;
@@ -23,15 +24,18 @@ import static nl.saxion.itech.shared.ProtocolConstants.*;
  * processes those messages and sends back a response to the client.
  */
 public class MessageService implements Service {
+    private final RSA rsa;
     private final DataObject data;
     private Logger logger;
 
     public MessageService(DataObject data) {
         this.data = data;
+        this.rsa = new RSA();
     }
 
     @Override
     public void serve(InputStream in, OutputStream out) {
+        var rsa = new RSA();
         this.logger = Logger.getInstance();
 
         var client = new Client(in, out);
@@ -44,6 +48,7 @@ public class MessageService implements Service {
             // Make sure remove the client from the data if he is connected
             // and close the socket if it hasn't been closed yet
             this.data.removeClient(client);
+
         }
     }
 
@@ -90,8 +95,7 @@ public class MessageService implements Service {
         }
 
         try {
-            var username = payload.nextToken();
-            return handleConnectMessage(username, sender);
+            return handleConnectMessage(payload, sender);
         } catch (NoSuchElementException e) {
             return missingParametersError();
         }
@@ -221,7 +225,10 @@ public class MessageService implements Service {
 
     //region other messages
     //================================================================================
-    private Message handleConnectMessage(String username, Client sender) {
+    private Message handleConnectMessage(StringTokenizer tokenizer, Client sender) {
+        var username = tokenizer.nextToken();
+        var publicKey = tokenizer.nextToken();
+
         var error = usernameIsNotValid(username)
                 .or(() -> userIsAlreadyLoggedIn(username));
 
@@ -231,6 +238,7 @@ public class MessageService implements Service {
 
         sender.setUsername(username);
         sender.setStatus(ClientStatus.CLIENT_CONNECTED);
+        sender.setPublicKey(publicKey);
         this.data.addClient(sender);
 
         return okConn(username);
@@ -251,13 +259,15 @@ public class MessageService implements Service {
     private Message handleDirectMessage(StringTokenizer tokenizer, Client sender) {
         var recipientUsername = tokenizer.nextToken();
         var message = getRemainingTokens(tokenizer);
-        var recipient = this.data.getClient(recipientUsername);
+        var recipientOptional = this.data.getClient(recipientUsername);
 
-        if (recipient.isEmpty()) {
+        if (recipientOptional.isEmpty()) {
             return recipientNotConnectedError();
         }
 
-        sendMessage(msg(sender.getUsername(), message), recipient.get());
+        var recipient = recipientOptional.get();
+//        exchangeSessionKeys(sender, recipient);
+        sendMessage(msg(sender.getUsername(), message), recipient);
         return okMsg(recipientUsername, message);
     }
 

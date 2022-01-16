@@ -3,6 +3,7 @@ package nl.saxion.itech.server.model;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.Instant;
+import java.util.HashMap;
 
 public class Client {
     private String username;
@@ -12,11 +13,20 @@ public class Client {
     private InputStream in;
     private OutputStream out;
     private boolean receivedPong;
+    private String publicKey;
 
     public Client(InputStream in, OutputStream out) {
         this.in = in;
         this.out = out;
         this.status = ClientStatus.CLIENT_NEW;
+    }
+
+    public void setPublicKey(String publicKey) {
+        this.publicKey = publicKey;
+    }
+
+    public String getPublicKey() {
+        return publicKey;
     }
 
     public String getUsername() {
