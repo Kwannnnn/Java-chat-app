@@ -47,8 +47,7 @@ public class FileTransferService implements Service {
             }
 
             handleTransfer(file);
-            // TODO: send checksum
-            
+
         } catch (NoSuchElementException e) {
             // Missing parameters
         } catch (RuntimeException e) {
@@ -63,19 +62,9 @@ public class FileTransferService implements Service {
     }
 
     private void handleTransfer(FileObject fileObject) throws IOException {
-        // TODO: use DataInputStream instead
         var in = new DataInputStream(fileObject.getSenderInputStream());
         var out = new DataOutputStream(fileObject.getRecipientOutputStream());
         in.transferTo(out);
-        // To simulate sending bytes, for now sending lines of text.
-        // TODO: perhaps the code should look like the commented code below
-//        String line;
-//        while ((line = in.readLine()) != null) {
-//            out.println(line);
-//            out.flush();
-//        }
-
-        // TODO: send checksum
     }
 
     private FileObject getFile(String fileId) {

@@ -8,7 +8,6 @@ import static nl.saxion.itech.shared.ProtocolConstants.*;
 
 import java.io.*;
 import java.net.Socket;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class FileDownloadThread extends Thread {

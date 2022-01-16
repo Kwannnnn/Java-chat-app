@@ -6,10 +6,15 @@ import nl.saxion.itech.client.newDesign.ServerMessageHandler;
 import nl.saxion.itech.client.threads.InputHandler;
 import nl.saxion.itech.client.threads.MessageReceiver;
 import nl.saxion.itech.client.threads.MessageSender;
+import nl.saxion.itech.shared.security.RSA;
 
+import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.net.Socket;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
@@ -22,6 +27,10 @@ public class ChatClient {
     private Thread writeThread;
     private Thread CLIThread;
     private String currentUser;
+    private RSA rsa;
+    private HashMap<String, SecretKey> incomingSessionKeys;
+    private HashMap<String, SecretKey> outgoingSessionKeys;
+
     private ServerMessageHandler messageHandler;
     private BlockingQueue<Message> messagesQueue = new LinkedBlockingQueue<>();
     private final ConcurrentHashMap<String, FileObject> filesToReceive = new ConcurrentHashMap<>();
@@ -29,6 +38,7 @@ public class ChatClient {
 
     public ChatClient() {
         try {
+            this.rsa = new RSA();
             props.load(ChatClient.class.getResourceAsStream("config.properties"));
             Socket socket = new Socket(props.getProperty("host"), Integer.parseInt(props.getProperty("port")));
             this.readThread = new Thread(new MessageSender(socket, this));
@@ -102,11 +112,27 @@ public class ChatClient {
         return Optional.ofNullable(this.filesToSend.get(fileID));
     }
 
+    public String getPublicKeyAsString() {
+        return rsa.getPublicKeyAsString();
+    }
+
+    public PrivateKey getPrivateKey() {
+        return rsa.getPrivateKey();
+    }
+
     public Collection<FileObject> getFilesToReceive() {
         return filesToReceive.values();
     }
 
     public Collection<FileObject> getFilesToSend() {
         return filesToSend.values();
+    }
+
+    public void addIncomingSessionKey(String recipientUsername, SecretKey sessionKey) {
+        this.incomingSessionKeys.put(recipientUsername, sessionKey);
+    }
+
+    public void addOutgoingSessionKey(String recipientUsername, SecretKey sessionKey) {
+        this.incomingSessionKeys.put(recipientUsername, sessionKey);
     }
 }

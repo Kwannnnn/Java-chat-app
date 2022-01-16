@@ -8,9 +8,9 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 public class MessageSender extends Thread {
-    private Socket socket;
+    private final Socket socket;
     private PrintWriter writer;
-    private ChatClient client;
+    private final ChatClient client;
 
     public MessageSender(Socket socket, ChatClient client) {
         this.socket = socket;

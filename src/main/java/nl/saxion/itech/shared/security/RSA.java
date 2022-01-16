@@ -23,25 +23,19 @@ public class RSA {
         }
     }
 
-    public String encrypt(String message) throws NoSuchPaddingException,
-            NoSuchAlgorithmException,
-            InvalidKeyException,
-            IllegalBlockSizeException,
-            BadPaddingException {
-        var cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.ENCRYPT_MODE, this.publicKey);
-        var encrypted = cipher.doFinal(message.getBytes());
-        return Base64.getEncoder().encodeToString(encrypted);
+    public PrivateKey getPrivateKey() {
+        return privateKey;
     }
 
-    public String decrypt(String message) throws NoSuchPaddingException,
-            NoSuchAlgorithmException,
-            InvalidKeyException,
-            IllegalBlockSizeException,
-            BadPaddingException {
-        var cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.DECRYPT_MODE, this.privateKey);
-        var decrypted = cipher.doFinal(Base64.getDecoder().decode(message));
-        return new String(decrypted);
+    public PublicKey getPublicKey() {
+        return publicKey;
+    }
+
+    public String getPublicKeyAsString() {
+        return Base64.getEncoder().encodeToString(publicKey.getEncoded());
+    }
+
+    public String getPrivateKeyAsString() {
+        return Base64.getEncoder().encodeToString(publicKey.getEncoded());
     }
 }

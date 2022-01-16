@@ -232,6 +232,26 @@ public final class ServerMessageDictionary {
                 CMD_FAIL + " " + fileId);
     }
 
+    public static TextMessage encryptionSessionRequest(String recipientUsername) {
+        return new TextMessage(CMD_ENCRYPT + " " + CMD_SESSION,
+                CMD_REQ + " " + recipientUsername);
+    }
+
+    public static TextMessage encryptionSessionSend(String recipientUsername, String sessionKey) {
+        return new TextMessage(CMD_ENCRYPT + " " + CMD_SESSION,
+                CMD_SEND + " " + recipientUsername + " " + sessionKey);
+    }
+
+    public static TextMessage okEncryptionSessionRequest(String recipientUsername) {
+        return new TextMessage(CMD_OK + " " + CMD_ENCRYPT + " " + CMD_SESSION,
+                CMD_REQ + " " + recipientUsername);
+    }
+
+    public static TextMessage okEncryptionSessionSend(String recipientUsername, String sessionKey) {
+        return new TextMessage(CMD_OK + " " + CMD_ENCRYPT + " " + CMD_SESSION,
+                CMD_SEND + " " + recipientUsername + " " + sessionKey);
+    }
+
     /**
      * @param fileId the id of the file being sent
      * @param filename the name of the file being sent

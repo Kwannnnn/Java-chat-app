@@ -113,8 +113,59 @@ public class MessageService implements Service {
             case CMD_ALL -> handleAllMessage();
             case CMD_GRP -> handleGroupMessage(payload, sender);
             case CMD_FILE -> handleFileMessage(payload, sender);
+            case CMD_ENCRYPT -> handleEncryptMessage(payload, sender);
             default -> unknownCommandError();
         };
+    }
+
+    private Message handleEncryptMessage(StringTokenizer payload, Client sender) {
+        var header = payload.nextToken().toUpperCase();
+
+        return switch (header) {
+            case CMD_SESSION -> handleEncryptSessionMessage(payload, sender);
+            default -> unknownCommandError();
+        };
+    }
+
+    private Message handleEncryptSessionMessage(StringTokenizer payload, Client sender) {
+        var header = payload.nextToken().toUpperCase();
+
+        return switch (header) {
+            case CMD_REQ -> handleEncryptSessionRequestMessage(payload, sender);
+            case CMD_SEND -> handleEncryptSessionSendMessage(payload, sender);
+            default -> unknownCommandError();
+        };
+    }
+
+    private Message handleEncryptSessionSendMessage(StringTokenizer payload, Client sender) {
+        var recipientUsername = payload.nextToken();
+        var client = this.data.getClient(recipientUsername);
+
+        if (client.isEmpty()) {
+            return recipientNotConnectedError();
+        }
+
+        var recipient = client.get();
+        String sessionKey = payload.nextToken();
+        // TODO: 16/1/2022 decrypt this shit with sender's public key
+        String halfDecryptedSessionKey = "z$B&E)H@McQfTjWn";
+        sendMessage(encryptionSessionSend(sender.getUsername(), halfDecryptedSessionKey), recipient);
+
+        return okEncryptionSessionSend(recipientUsername, sessionKey);
+    }
+
+    private Message handleEncryptSessionRequestMessage(StringTokenizer payload, Client sender) {
+        var recipientUsername = payload.nextToken();
+        var client = this.data.getClient(recipientUsername);
+
+        if (client.isEmpty()) {
+            return recipientNotConnectedError();
+        }
+
+        var recipient = client.get();
+        sendMessage(encryptionSessionRequest(sender.getUsername()), recipient);
+
+        return okEncryptionSessionRequest(recipientUsername);
     }
 
     //region file messages

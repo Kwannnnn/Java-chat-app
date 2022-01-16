@@ -56,7 +56,8 @@ public final class ProtocolInterpreter {
         for (String client : clients) {
             System.out.println(client);
         }
-        System.out.println("======================");    }
+        System.out.println("======================");
+    }
 
     public static void showSuccessfulGroupNewMessage(String groupName) {
         System.out.println(italic("New group successfully created: ") + groupName);
@@ -95,7 +96,7 @@ public final class ProtocolInterpreter {
     }
 
     public static void showSuccessfulDirectMessage(String recipient, String message) {
-        System.out.println(italic("Successfully sent to user " + bold(recipient) +" message: " + message));
+        System.out.println(italic("Successfully sent to user " + bold(recipient) + " message: " + message));
     }
 
     public static void showSuccessfulDisconnectMessage() {
@@ -195,5 +196,23 @@ public final class ProtocolInterpreter {
     public static void showFileTransferFailMessage(String fileID) {
         System.out.println(italic("File transfer was not successful."));
         System.out.println(italic("File id: " + fileID));
+    }
+
+    public static void showEncryptionSessionRequestMessage(String senderUsername) {
+        System.out.println(italic("New session key request from " + bold(senderUsername)));
+    }
+
+    public static void showSuccessfulEncryptionSessionRequestMessage(String recipientUsername) {
+        System.out.println(italic("Request for session key successfully sent to " + bold(recipientUsername)));
+    }
+
+    public static void showEncryptionSessionSendMessage(String senderUsername) {
+        System.out.println(italic("Session key received from " + bold(senderUsername))
+                + ". Connection successfully established.");
+    }
+
+    public static void showSuccessfulEncryptionSessionSendMessage(String recipientUsername) {
+        System.out.println(italic("Session key sent to " + bold(recipientUsername))
+                + ". Connection successfully established.");
     }
 }
