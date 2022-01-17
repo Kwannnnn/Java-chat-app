@@ -17,6 +17,13 @@ public final class ServerMessageDictionary {
         return new TextMessage(CMD_INFO, INFO_BODY);
     }
 
+    public static TextMessage session(String senderUsername,
+                                  String encryptedSessionKey) {
+        return new TextMessage(
+                CMD_SESSION,
+                senderUsername + " " + encryptedSessionKey);
+    }
+
     /**
      * @param senderUsername the username of the sender of the message
      * @param message the broadcast message body
@@ -110,12 +117,14 @@ public final class ServerMessageDictionary {
 
     /**
      * @param username the username parameter
+     * @param publicKey the publicKey parameter
      * @return OK CONN [username]
      */
-    public static TextMessage okConn(String username) {
+    public static TextMessage okConn(String username,
+                                     String publicKey) {
         return new TextMessage(
                 CMD_OK + " " + CMD_CONN,
-                username);
+                username + " " + publicKey);
     }
 
     /**
@@ -250,6 +259,16 @@ public final class ServerMessageDictionary {
     public static TextMessage okEncryptionSessionSend(String recipientUsername, String sessionKey) {
         return new TextMessage(CMD_OK + " " + CMD_ENCRYPT + " " + CMD_SESSION,
                 CMD_SEND + " " + recipientUsername + " " + sessionKey);
+    }
+
+    public static TextMessage okPubk(String username, String publicKey) {
+        return new TextMessage(CMD_OK + " " + CMD_PUBK,
+                username + " " + publicKey);
+    }
+
+    public static TextMessage okSession(String username, String sessionKey) {
+        return new TextMessage(CMD_OK + " " + CMD_SESSION,
+                username + " " + sessionKey);
     }
 
     /**

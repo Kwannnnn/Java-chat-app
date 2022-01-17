@@ -1,11 +1,13 @@
 package nl.saxion.itech.client;
 
+import nl.saxion.itech.client.newDesign.ClientEntity;
 import nl.saxion.itech.client.newDesign.FileObject;
 import nl.saxion.itech.client.newDesign.Message;
 import nl.saxion.itech.client.newDesign.ServerMessageHandler;
 import nl.saxion.itech.client.threads.InputHandler;
 import nl.saxion.itech.client.threads.MessageReceiver;
 import nl.saxion.itech.client.threads.MessageSender;
+import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.shared.security.RSA;
 
 import javax.crypto.SecretKey;
@@ -23,37 +25,48 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class ChatClient {
     private static final Properties props = new Properties();
-    private Thread readThread;
-    private Thread writeThread;
-    private Thread CLIThread;
+    private final Thread readThread;
+    private final Thread writeThread;
+    private final Thread CLIThread;
+    private final RSA rsa;
+
+    private final HashMap<String, ClientEntity> connectedClients;
+
     private String currentUser;
-    private RSA rsa;
-    private HashMap<String, SecretKey> incomingSessionKeys;
-    private HashMap<String, SecretKey> outgoingSessionKeys;
 
     private ServerMessageHandler messageHandler;
     private BlockingQueue<Message> messagesQueue = new LinkedBlockingQueue<>();
     private final ConcurrentHashMap<String, FileObject> filesToReceive = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, FileObject> filesToSend = new ConcurrentHashMap<>();
 
-    public ChatClient() {
-        try {
-            this.rsa = new RSA();
-            props.load(ChatClient.class.getResourceAsStream("config.properties"));
-            Socket socket = new Socket(props.getProperty("host"), Integer.parseInt(props.getProperty("port")));
-            this.readThread = new Thread(new MessageSender(socket, this));
-            this.writeThread = new Thread(new MessageReceiver(socket, this));
-            this.CLIThread = new InputHandler(this);
-            this.messageHandler = new ServerMessageHandler(this);
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-        }
+    public ChatClient() throws IOException {
+        props.load(ChatClient.class.getResourceAsStream("config.properties"));
+        Socket socket = new Socket(props.getProperty("host"), Integer.parseInt(props.getProperty("port")));
+        this.rsa = new RSA();
+        this.readThread = new Thread(new MessageSender(socket, this));
+        this.writeThread = new Thread(new MessageReceiver(socket, this));
+        this.CLIThread = new InputHandler(this);
+        this.messageHandler = new ServerMessageHandler(this);
+        this.connectedClients = new HashMap<>();
     }
 
     public void start() {
         this.readThread.start();
         this.writeThread.start();
         this.CLIThread.start();
+    }
+
+    public synchronized void addConnectedClient(ClientEntity client) {
+        this.connectedClients.put(client.getUsername(), client);
+        this.notify();
+    }
+
+    public synchronized void removeConnectClient(String username) {
+        this.connectedClients.remove(username);
+    }
+
+    public synchronized Optional<ClientEntity> getClientEntity(String username) {
+        return Optional.ofNullable(this.connectedClients.get(username));
     }
 
     public synchronized void setCurrentUser(String currentUser) {
@@ -126,13 +139,5 @@ public class ChatClient {
 
     public Collection<FileObject> getFilesToSend() {
         return filesToSend.values();
-    }
-
-    public void addIncomingSessionKey(String recipientUsername, SecretKey sessionKey) {
-        this.incomingSessionKeys.put(recipientUsername, sessionKey);
-    }
-
-    public void addOutgoingSessionKey(String recipientUsername, SecretKey sessionKey) {
-        this.incomingSessionKeys.put(recipientUsername, sessionKey);
     }
 }

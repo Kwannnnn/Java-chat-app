@@ -7,7 +7,6 @@ import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.ClientStatus;
 import nl.saxion.itech.server.model.FileObject;
 import nl.saxion.itech.server.model.Group;
-import nl.saxion.itech.server.thread.ClientPingTask;
 import nl.saxion.itech.server.util.Logger;
 import nl.saxion.itech.shared.security.RSA;
 
@@ -113,59 +112,35 @@ public class MessageService implements Service {
             case CMD_ALL -> handleAllMessage();
             case CMD_GRP -> handleGroupMessage(payload, sender);
             case CMD_FILE -> handleFileMessage(payload, sender);
-            case CMD_ENCRYPT -> handleEncryptMessage(payload, sender);
+            case CMD_PUBK -> handlePubkMessage(payload);
+            case CMD_SESSION -> handleSessionMessage(payload, sender);
             default -> unknownCommandError();
         };
     }
 
-    private Message handleEncryptMessage(StringTokenizer payload, Client sender) {
-        var header = payload.nextToken().toUpperCase();
+    private Message handleSessionMessage(StringTokenizer payload, Client sender) {
+        var username = payload.nextToken();
+        var sessionKey = payload.nextToken();
 
-        return switch (header) {
-            case CMD_SESSION -> handleEncryptSessionMessage(payload, sender);
-            default -> unknownCommandError();
-        };
-    }
-
-    private Message handleEncryptSessionMessage(StringTokenizer payload, Client sender) {
-        var header = payload.nextToken().toUpperCase();
-
-        return switch (header) {
-            case CMD_REQ -> handleEncryptSessionRequestMessage(payload, sender);
-            case CMD_SEND -> handleEncryptSessionSendMessage(payload, sender);
-            default -> unknownCommandError();
-        };
-    }
-
-    private Message handleEncryptSessionSendMessage(StringTokenizer payload, Client sender) {
-        var recipientUsername = payload.nextToken();
-        var client = this.data.getClient(recipientUsername);
+        var client = this.data.getClient(username);
 
         if (client.isEmpty()) {
             return recipientNotConnectedError();
         }
 
-        var recipient = client.get();
-        String sessionKey = payload.nextToken();
-        // TODO: 16/1/2022 decrypt this shit with sender's public key
-        String halfDecryptedSessionKey = "z$B&E)H@McQfTjWn";
-        sendMessage(encryptionSessionSend(sender.getUsername(), halfDecryptedSessionKey), recipient);
-
-        return okEncryptionSessionSend(recipientUsername, sessionKey);
+        sendMessage(session(sender.getUsername(), sessionKey), client.get());
+        return okSession(username, sessionKey);
     }
 
-    private Message handleEncryptSessionRequestMessage(StringTokenizer payload, Client sender) {
-        var recipientUsername = payload.nextToken();
-        var client = this.data.getClient(recipientUsername);
+    private Message handlePubkMessage(StringTokenizer payload) {
+        var username = payload.nextToken();
+        var client = this.data.getClient(username);
 
         if (client.isEmpty()) {
             return recipientNotConnectedError();
         }
 
-        var recipient = client.get();
-        sendMessage(encryptionSessionRequest(sender.getUsername()), recipient);
-
-        return okEncryptionSessionRequest(recipientUsername);
+        return okPubk(username, client.get().getPublicKey());
     }
 
     //region file messages
@@ -292,7 +267,7 @@ public class MessageService implements Service {
         sender.setPublicKey(publicKey);
         this.data.addClient(sender);
 
-        return okConn(username);
+        return okConn(username, publicKey);
     }
 
     private Message handleDisconnectMessage(Client client) throws ClientDisconnectedException {

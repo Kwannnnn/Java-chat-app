@@ -5,6 +5,9 @@ import static nl.saxion.itech.shared.ProtocolConstants.*;
 import nl.saxion.itech.client.newDesign.BaseMessage;
 import nl.saxion.itech.client.newDesign.FileChecksum;
 import nl.saxion.itech.client.newDesign.Message;
+import nl.saxion.itech.shared.security.AES;
+import nl.saxion.itech.shared.security.util.SecurityUtil;
+
 import static nl.saxion.itech.shared.ANSIColorCodes.*;
 
 import java.io.File;
@@ -148,6 +151,39 @@ public class InputHandler extends Thread {
         String username = scanner.nextLine();
         System.out.print(">> Please enter the message you want to send: ");
         String message = scanner.nextLine();
+
+        if (this.client.getClientEntity(username).isEmpty()) {
+            addMessageToQueue(new BaseMessage(CMD_PUBK, username));
+        }
+
+        while (this.client.getClientEntity(username).isEmpty()) {
+            synchronized (this.client) {
+                try {
+                    this.client.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        var clientEntity = this.client.getClientEntity(username);
+        assert clientEntity.isPresent() : "Unknown public key, but it should have arrived!";
+
+        var recipient = clientEntity.get();
+        var sessionKey = recipient.getSessionKey();
+
+        if (sessionKey == null) {
+            var aes = new AES();
+            var sessionKeyString = aes.getPrivateKeyAsString();
+            sessionKey = aes.getSecretKey();
+            recipient.setSessionKey(sessionKey);
+
+            var recipientPublicKey = recipient.getPublicKey();
+            var encryptedSessionKey = SecurityUtil.encrypt(sessionKeyString, recipientPublicKey, "RSA");
+            addMessageToQueue(new BaseMessage(CMD_SESSION, username + " " + encryptedSessionKey));
+        }
+
+        message = SecurityUtil.encrypt(message, sessionKey, "AES");
         addMessageToQueue(new BaseMessage(CMD_MSG, username + " " + message));
     }
 

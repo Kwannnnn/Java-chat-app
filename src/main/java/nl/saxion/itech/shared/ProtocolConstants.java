@@ -26,6 +26,7 @@ public final class ProtocolConstants {
     public static final String CMD_FAIL = "FAIL";
     public static final String CMD_ENCRYPT = "ENCRYPT";
     public static final String CMD_SESSION = "SESSION";
+    public static final String CMD_PUBK = "PUBK";
     public static final String CMD_SEND = "SEND";
 
     public static final String CMD_ER00 = "ER00";

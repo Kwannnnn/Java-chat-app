@@ -17,7 +17,6 @@ import java.io.OutputStream;
  * connections, and logs activity to a specified stream.
  */
 public class Server {
-    private static final boolean SHOULD_PING = false;
     // Internal state of the server
     private final DataObject data;
     private final ServiceManager serviceManager;
@@ -38,10 +37,6 @@ public class Server {
             this.logger = Logger.getInstance();
             this.logger.init(logStream);
             this.logger.logMessage("Logger initiated");
-        }
-
-        if (SHOULD_PING) {
-            new PingThread(data).start();
         }
     }
 

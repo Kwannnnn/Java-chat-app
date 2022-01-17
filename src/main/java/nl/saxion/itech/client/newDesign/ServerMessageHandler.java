@@ -44,11 +44,26 @@ public class ServerMessageHandler {
                 case CMD_ALL -> handleAllMessage(payload);
                 case CMD_FILE -> handleFileMessage(payload);
                 case CMD_DSCN -> handleDisconnectMessage();
-                case CMD_ENCRYPT -> handleEncryptionMessage(payload);
+                case CMD_SESSION -> handleSessionMessage(payload);
                 default -> handleErrorMessage(payload);
             }
         } catch (NoSuchElementException e) {
             unknownResponseFromServer();
+        }
+    }
+
+    private void handleSessionMessage(StringTokenizer payload) {
+        String username = payload.nextToken();
+        String encryptedSessionKey = payload.nextToken();
+        var sessionKeyString = SecurityUtil.decrypt(encryptedSessionKey, this.client.getPrivateKey(), "RSA");
+        var sessionKey = SecurityUtil.getSessionKey(sessionKeyString);
+
+        var clientEntity = this.client.getClientEntity(username);
+
+        if (clientEntity.isEmpty()) {
+            this.client.addConnectedClient(new ClientEntity(username, sessionKey));
+        } else {
+            clientEntity.get().setSessionKey(sessionKey);
         }
     }
 
@@ -201,79 +216,6 @@ public class ServerMessageHandler {
     }
     //endregion
 
-    //region encryption messages
-    private void handleEncryptionMessage(StringTokenizer payload) {
-        var header = payload.nextToken().toUpperCase();
-
-        switch (header) {
-            case CMD_SESSION -> handleEncryptionSessionMessage(payload);
-            default -> unknownResponseFromServer();
-        }
-    }
-
-    private void handleEncryptionSessionMessage(StringTokenizer payload) {
-        var header = payload.nextToken().toUpperCase();
-
-        switch (header) {
-//            case CMD_SESSION -> handleEncryptionSessionRequestMessage(payload);
-//            case CMD_SEND -> handleEncryptionSessionSendMessage(payload);
-            default -> unknownResponseFromServer();
-        }
-    }
-
-    private void handleEncryptionSessionSendMessage(StringTokenizer payload) throws NoSuchAlgorithmException {
-        String senderUsername = payload.nextToken();
-        String encryptedSessionKey = payload.nextToken();
-
-        PrivateKey privateKey = this.client.getPrivateKey();
-
-        // TODO: decrypt and save
-        //get the key object from the publicKey String
-        String decryptedSessionKeyString = SecurityUtil.decrypt(encryptedSessionKey, privateKey, "AES");
-        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(decryptedSessionKeyString));
-        KeyFactory keyFactory = KeyFactory.getInstance("AES");
-        byte[] decodedKey = Base64.getDecoder().decode(decryptedSessionKeyString);
-        // rebuild key using SecretKeySpec
-        SecretKey sessionKeyObject = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
-        this.client.addIncomingSessionKey(senderUsername, sessionKeyObject);
-
-        ProtocolInterpreter.showEncryptionSessionSendMessage(senderUsername);
-    }
-
-    private void handleEncryptionSessionRequestMessage(StringTokenizer payload)
-        //TODO: deal with later
-            throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String recipientUsername = payload.nextToken();
-        String publicKey = payload.nextToken();
-
-        PrivateKey privateKey = this.client.getPrivateKey();
-
-        //generate new session key
-        AES aes = new AES();
-        String sessionKeyString = aes.getPrivateKeyAsString();
-        SecretKey sessionKey = aes.getSecretKey();
-        //add to session key hashmap
-        this.client.addOutgoingSessionKey(recipientUsername, sessionKey);
-
-        //encrypt session key using our private key
-        String onceEncryptedSessionKey = SecurityUtil.encrypt(sessionKeyString, privateKey, "RSA");
-
-        //encrypt it again with the sender's public key
-        //first get the key object from the publicKey String
-        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKey));
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        PublicKey publicKeyObject = keyFactory.generatePublic(keySpec);
-
-        String doubleEncryptedSessionKey = SecurityUtil.encrypt(onceEncryptedSessionKey, publicKeyObject, "RSA");
-
-        this.client.addMessageToQueue(new BaseMessage(CMD_ENCRYPT + " " + CMD_SESSION + " " + CMD_SEND,
-                recipientUsername + " " + doubleEncryptedSessionKey));
-
-        ProtocolInterpreter.showEncryptionSessionRequestMessage(recipientUsername);
-    }
-
-    //endregion
-
     //region ok messages
     //================================================================================
     private void handleOKMessage(StringTokenizer payload) {
@@ -286,8 +228,16 @@ public class ServerMessageHandler {
             case CMD_MSG -> handleOkDirectMessage(payload);
             case CMD_FILE -> handleOkFileMessage(payload);
             case CMD_ENCRYPT -> handleOkEncryptionMessage(payload);
+            case CMD_PUBK -> handleOkPubkMessage(payload);
             default -> unknownResponseFromServer();
         }
+    }
+
+    private void handleOkPubkMessage(StringTokenizer payload) {
+        var username = payload.nextToken();
+        var publicKey = SecurityUtil.getPublicKeyFromString(payload.nextToken());
+
+        this.client.addConnectedClient(new ClientEntity(username, publicKey));
     }
 
     private void handleOkBroadcastMessage(String message) {
