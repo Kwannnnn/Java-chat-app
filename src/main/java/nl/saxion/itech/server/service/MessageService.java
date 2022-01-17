@@ -34,7 +34,6 @@ public class MessageService implements Service {
 
     @Override
     public void serve(InputStream in, OutputStream out) {
-        var rsa = new RSA();
         this.logger = Logger.getInstance();
 
         var client = new Client(in, out);

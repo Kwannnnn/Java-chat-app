@@ -98,8 +98,23 @@ public class ServerMessageHandler {
     // direct message
     private void handleDirectMessage(StringTokenizer payload) {
         String sender = payload.nextToken();
-        String directMessage = getRemainingTokens(payload);
-        ProtocolInterpreter.showIncomingDirectMessage(sender, directMessage);
+        String encryptedMessage = payload.nextToken();
+
+        var clientEntityOptional = this.client.getClientEntity(sender);
+        if (clientEntityOptional.isEmpty()) {
+            //TODO: say sth
+            return;
+        }
+
+        var sessionKey = clientEntityOptional.get().getSessionKey();
+
+        if (sessionKey == null) {
+            // TODO: say something
+            return;
+        }
+
+        String decryptedMessage = SecurityUtil.decrypt(encryptedMessage, sessionKey, "AES");
+        ProtocolInterpreter.showIncomingDirectMessage(sender, decryptedMessage);
     }
 
     // broadcast message
