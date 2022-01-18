@@ -47,6 +47,10 @@ public final class ServerMessageDictionary {
                 senderUsername + " " + message);
     }
 
+    public static TextMessage dscn(String username) {
+        return new TextMessage(CMD_DSCN, username);
+    }
+
     /**
      * @param senderUsername the username of the sender of the message
      * @param message the message body

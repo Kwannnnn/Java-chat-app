@@ -1,7 +1,10 @@
 package nl.saxion.itech.client.threads;
+
 import nl.saxion.itech.client.ChatClient;
 import nl.saxion.itech.client.ProtocolInterpreter;
+
 import static nl.saxion.itech.shared.ProtocolConstants.*;
+
 import nl.saxion.itech.client.newDesign.BaseMessage;
 import nl.saxion.itech.client.newDesign.FileChecksum;
 import nl.saxion.itech.client.newDesign.Message;
@@ -12,7 +15,6 @@ import static nl.saxion.itech.shared.ANSIColorCodes.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
 
@@ -115,13 +117,13 @@ public class InputHandler extends Thread {
     private void handleFileDenyMessage() {
         System.out.print(">> Please enter the transfer id you want to deny: ");
         String transferID = scanner.nextLine();
-        addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_ACK , CMD_DENY + " " + transferID));
+        addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_ACK, CMD_DENY + " " + transferID));
     }
 
     private void handleFileAcceptMessage() {
         System.out.print(">> Please enter the transfer id you want to accept: ");
         String transferID = scanner.nextLine();
-        addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_ACK , CMD_ACCEPT + " " + transferID));
+        addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_ACK, CMD_ACCEPT + " " + transferID));
     }
 
     private void handleFileSendMessage() {
@@ -156,6 +158,7 @@ public class InputHandler extends Thread {
             addMessageToQueue(new BaseMessage(CMD_PUBK, username));
         }
 
+        //TODO: timeout
         while (this.client.getClientEntity(username).isEmpty()) {
             synchronized (this.client) {
                 try {

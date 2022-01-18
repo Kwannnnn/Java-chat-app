@@ -6,6 +6,7 @@ public final class ProtocolConstants {
     public static final String CMD_BCST = "BCST";
     public static final String CMD_PING = "PING";
     public static final String CMD_PONG = "PONG";
+    public static final String CMD_AUTH = "AUTH";
     public static final String CMD_TIMEOUT = "TIMEOUT";
     public static final String CMD_OK = "OK";
     public static final String CMD_DSCN = "DSCN";

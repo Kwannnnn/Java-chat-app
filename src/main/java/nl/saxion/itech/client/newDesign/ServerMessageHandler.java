@@ -7,17 +7,10 @@ import static nl.saxion.itech.shared.ProtocolConstants.*;
 import nl.saxion.itech.client.ProtocolInterpreter;
 import nl.saxion.itech.client.threads.FileDownloadThread;
 import nl.saxion.itech.client.threads.FileUploadThread;
-import nl.saxion.itech.shared.security.AES;
 import nl.saxion.itech.shared.security.util.SecurityUtil;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.net.Socket;
-import java.security.*;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
@@ -43,7 +36,7 @@ public class ServerMessageHandler {
                 case CMD_GRP -> handleGroupMessage(payload);
                 case CMD_ALL -> handleAllMessage(payload);
                 case CMD_FILE -> handleFileMessage(payload);
-                case CMD_DSCN -> handleDisconnectMessage();
+                case CMD_DSCN -> handleDisconnectMessage(payload);
                 case CMD_SESSION -> handleSessionMessage(payload);
                 default -> handleErrorMessage(payload);
             }
@@ -88,11 +81,12 @@ public class ServerMessageHandler {
     }
 
     // disconnect message
-    private void handleDisconnectMessage() {
-        this.client.closeConnection();
-        // TODO: close all other sockets used by this client
-        //TODO: decide what to do
-        ProtocolInterpreter.showSuccessfulDisconnectMessage();
+    private void handleDisconnectMessage(StringTokenizer payload) {
+        String username = payload.nextToken();
+        this.client.removeConnectClient(username);
+        // TODO: Use assertion
+        System.out.println(this.client.getClientEntity(username));
+        //TODO: say sth maybe
     }
 
     // direct message
@@ -244,8 +238,14 @@ public class ServerMessageHandler {
             case CMD_FILE -> handleOkFileMessage(payload);
             case CMD_ENCRYPT -> handleOkEncryptionMessage(payload);
             case CMD_PUBK -> handleOkPubkMessage(payload);
+            case CMD_DSCN -> handleOkDscnMessage();
             default -> unknownResponseFromServer();
         }
+    }
+
+    private void handleOkDscnMessage() {
+        this.client.closeConnection();
+        ProtocolInterpreter.showSuccessfulDisconnectMessage();
     }
 
     private void handleOkPubkMessage(StringTokenizer payload) {

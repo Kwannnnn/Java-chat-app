@@ -18,8 +18,6 @@ public class FileTransferService implements Service {
     @Override
     public void serve(InputStream in, OutputStream out) {
         try {
-            // TODO: perhaps use DataInputStream instead containing this information
-            // now it just simulates a "handshake" between the sender and receiver
             var dataInputStream = new BufferedReader(new InputStreamReader(in));
 
             var controlMessage = dataInputStream.readLine();

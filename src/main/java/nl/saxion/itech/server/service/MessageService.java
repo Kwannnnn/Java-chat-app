@@ -23,13 +23,11 @@ import static nl.saxion.itech.shared.ProtocolConstants.*;
  * processes those messages and sends back a response to the client.
  */
 public class MessageService implements Service {
-    private final RSA rsa;
     private final DataObject data;
     private Logger logger;
 
     public MessageService(DataObject data) {
         this.data = data;
-        this.rsa = new RSA();
     }
 
     @Override
@@ -42,6 +40,8 @@ public class MessageService implements Service {
             handleIncomingMessages(client);
         } catch (IOException e) {
             // Proceed to finally clause
+        }  catch (ClientDisconnectedException e) {
+            // Client has decided to disconnect, stop reading input;
         } finally {
             // Make sure remove the client from the data if he is connected
             // and close the socket if it hasn't been closed yet
@@ -50,7 +50,7 @@ public class MessageService implements Service {
         }
     }
 
-    private void handleIncomingMessages(Client client) throws IOException {
+    private void handleIncomingMessages(Client client) throws IOException, ClientDisconnectedException {
         var in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 
         String line;
@@ -58,15 +58,10 @@ public class MessageService implements Service {
             // Log the input
             log(">> [" + client + "] " + line);
 
-            try {
-                var response = Optional.ofNullable(handleClient(line, client));
-                if (response.isPresent()) {
-                    var message = response.get();
-                    sendMessage(message, client);
-                }
-            } catch (ClientDisconnectedException e) {
-                // Client has decided to disconnect, stop reading input
-                break;
+            var response = Optional.ofNullable(handleClient(line, client));
+            if (response.isPresent()) {
+                var message = response.get();
+                sendMessage(message, client);
             }
         }
     }
@@ -75,11 +70,13 @@ public class MessageService implements Service {
         var payload = new StringTokenizer(message);
 
         try {
-            return sender.getStatus() == ClientStatus.CLIENT_CONNECTED ?
-                    handleConnectedClient(payload, sender) :
-                    handleUnknownClient(payload, sender);
+            return sender.getStatus() == ClientStatus.CLIENT_CONNECTED
+                    || sender.getStatus() == ClientStatus.CLIENT_AUTHENTICATED
+                    ? handleConnectedClient(payload, sender)
+                    : handleUnknownClient(payload, sender);
         } catch (NoSuchElementException e) {
             return sender.getStatus() == ClientStatus.CLIENT_CONNECTED
+                    || sender.getStatus() == ClientStatus.CLIENT_AUTHENTICATED
                     ? missingParametersError()
                     : unknownCommandError();
         }
@@ -107,6 +104,7 @@ public class MessageService implements Service {
             case CMD_DSCN -> handleDisconnectMessage(sender);
             case CMD_BCST -> handleBroadcast(payload, sender);
             case CMD_PONG -> handlePong(sender);
+            case CMD_AUTH -> handleAuth(payload, sender);
             case CMD_MSG -> handleDirectMessage(payload, sender);
             case CMD_ALL -> handleAllMessage();
             case CMD_GRP -> handleGroupMessage(payload, sender);
@@ -115,6 +113,21 @@ public class MessageService implements Service {
             case CMD_SESSION -> handleSessionMessage(payload, sender);
             default -> unknownCommandError();
         };
+    }
+
+    private Message handleAuth(StringTokenizer payload, Client sender) {
+        var password = payload.nextToken();
+
+        // TODO: hash password
+        String salt = sender.getSalt();
+        String passwordHash = "";
+        // TODO: compare hashes
+
+        // TODO: error handling: user does not have password, wrong password
+        var error = userNotRegistered(sender)
+                .or(() -> passwordMismatch(passwordHash, sender.getPasswordHash()));
+
+        return error.orElseGet(ServerMessageDictionary::okAuth);
     }
 
     private Message handleSessionMessage(StringTokenizer payload, Client sender) {
@@ -269,8 +282,14 @@ public class MessageService implements Service {
         return okConn(username, publicKey);
     }
 
-    private Message handleDisconnectMessage(Client client) throws ClientDisconnectedException {
-        sendMessage(okDscn(), client);
+    private Message handleDisconnectMessage(Client sender) throws ClientDisconnectedException {
+        var allOtherClients = this.data.getAllClients()
+                .stream()
+                .filter(client -> !client.equals(sender)).toList();
+
+        sendMessageToAll(dscn(sender.getUsername()), allOtherClients);
+
+        sendMessage(okDscn(), sender);
         throw new ClientDisconnectedException();
     }
 
@@ -281,9 +300,9 @@ public class MessageService implements Service {
         return null;
     }
 
-    private Message handleDirectMessage(StringTokenizer tokenizer, Client sender) {
-        var recipientUsername = tokenizer.nextToken();
-        var message = getRemainingTokens(tokenizer);
+    private Message handleDirectMessage(StringTokenizer payload, Client sender) {
+        var recipientUsername = payload.nextToken();
+        var message = getRemainingTokens(payload);
         var recipientOptional = this.data.getClient(recipientUsername);
 
         if (recipientOptional.isEmpty()) {
@@ -291,7 +310,6 @@ public class MessageService implements Service {
         }
 
         var recipient = recipientOptional.get();
-//        exchangeSessionKeys(sender, recipient);
         sendMessage(msg(sender.getUsername(), message), recipient);
         return okMsg(recipientUsername, message);
     }
@@ -305,8 +323,8 @@ public class MessageService implements Service {
         return okAll(clients);
     }
 
-    private Message handleBroadcast(StringTokenizer tokenizer, Client sender) {
-        var messageToBroadcast = getRemainingTokens(tokenizer);
+    private Message handleBroadcast(StringTokenizer payload, Client sender) {
+        var messageToBroadcast = getRemainingTokens(payload);
 
         broadcastMessage(bcst(sender.getUsername(), messageToBroadcast), sender);
         return okBcst(messageToBroadcast);
@@ -316,21 +334,21 @@ public class MessageService implements Service {
 
     //region group messages
     //================================================================================
-    private Message handleGroupMessage(StringTokenizer tokenizer, Client sender) {
-        var header = tokenizer.nextToken().toUpperCase();
+    private Message handleGroupMessage(StringTokenizer payload, Client sender) {
+        var header = payload.nextToken().toUpperCase();
 
         return switch (header) {
-            case CMD_NEW -> handleGroupNewMessage(tokenizer, sender);
+            case CMD_NEW -> handleGroupNewMessage(payload, sender);
             case CMD_ALL -> handleGroupAllMessage();
-            case CMD_JOIN -> handleGroupJoinMessage(tokenizer, sender);
-            case CMD_MSG -> handleGroupMessageMessage(tokenizer, sender);
-            case CMD_DSCN -> handleGroupDisconnectMessage(tokenizer, sender);
+            case CMD_JOIN -> handleGroupJoinMessage(payload, sender);
+            case CMD_MSG -> handleGroupMessageMessage(payload, sender);
+            case CMD_DSCN -> handleGroupDisconnectMessage(payload, sender);
             default -> unknownCommandError();
         };
     }
 
-    private Message handleGroupDisconnectMessage(StringTokenizer tokenizer, Client sender) {
-        var groupName = tokenizer.nextToken();
+    private Message handleGroupDisconnectMessage(StringTokenizer payload, Client sender) {
+        var groupName = payload.nextToken();
         var senderUsername = sender.getUsername();
 
         // error handling
@@ -355,9 +373,9 @@ public class MessageService implements Service {
         return okGrpDscn(groupName);
     }
 
-    private Message handleGroupMessageMessage(StringTokenizer tokenizer, Client sender) {
-        var groupName = tokenizer.nextToken();
-        var message = getRemainingTokens(tokenizer);
+    private Message handleGroupMessageMessage(StringTokenizer payload, Client sender) {
+        var groupName = payload.nextToken();
+        var message = getRemainingTokens(payload);
         var senderUsername = sender.getUsername();
 
         // error handling
@@ -378,8 +396,8 @@ public class MessageService implements Service {
         return okGrpMsg(groupName, message);
     }
 
-    private Message handleGroupJoinMessage(StringTokenizer tokenizer, Client sender) {
-        var groupName = tokenizer.nextToken();
+    private Message handleGroupJoinMessage(StringTokenizer payload, Client sender) {
+        var groupName = payload.nextToken();
 
         //error handling
         var error = userAlreadyMemberOfGroup(groupName, sender.getUsername())
@@ -410,8 +428,8 @@ public class MessageService implements Service {
         return okGrpAll(clients);
     }
 
-    private Message handleGroupNewMessage(StringTokenizer tokenizer, Client sender) {
-        var groupName = tokenizer.nextToken();
+    private Message handleGroupNewMessage(StringTokenizer payload, Client sender) {
+        var groupName = payload.nextToken();
         var error = invalidGroupName(groupName)
                 .or(() -> groupAlreadyExists(groupName));
 
@@ -558,8 +576,8 @@ public class MessageService implements Service {
         log("<< [" + client + "] " + message);
     }
 
-    private String getRemainingTokens(StringTokenizer tokenizer) throws NoSuchElementException {
-        var remainder = tokenizer.nextToken("");
+    private String getRemainingTokens(StringTokenizer payload) throws NoSuchElementException {
+        var remainder = payload.nextToken("");
         return remainder.trim();
     }
 
