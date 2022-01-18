@@ -8,6 +8,7 @@ import nl.saxion.itech.server.model.ClientStatus;
 import nl.saxion.itech.server.model.FileObject;
 import nl.saxion.itech.server.model.Group;
 import nl.saxion.itech.server.util.Logger;
+import nl.saxion.itech.server.util.ServerMessageDictionary;
 import nl.saxion.itech.shared.security.RSA;
 
 import java.io.*;
@@ -481,6 +482,18 @@ public class MessageService implements Service {
     private Optional<Message> invalidGroupName(String groupName) {
         return !isValidGroupName(groupName)
                 ? Optional.of(invalidGroupNameError()) // Invalid group name
+                : Optional.empty();
+    }
+
+    private Optional<Message> userNotRegistered(Client client) {
+        return client.getPasswordHash() == null
+                ? Optional.of(userNotRegisteredError()) // Password does not match
+                : Optional.empty();
+    }
+
+    private Optional<Message> passwordMismatch(String passwordHash1, String passwordHash2) {
+        return !passwordHash1.equals(passwordHash2)
+                ? Optional.of(passwordMismatchError()) // Password does not match
                 : Optional.empty();
     }
 

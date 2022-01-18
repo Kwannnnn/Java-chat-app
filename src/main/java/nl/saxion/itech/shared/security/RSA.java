@@ -1,9 +1,5 @@
 package nl.saxion.itech.shared.security;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.security.*;
 import java.util.Base64;
 
@@ -19,7 +15,7 @@ public class RSA {
             this.privateKey = keyPair.getPrivate();
             this.publicKey = keyPair.getPublic();
         } catch (NoSuchAlgorithmException e) {
-            // Exception can be ignored, since RSA exists
+            throw new AssertionError(e);
         }
     }
 

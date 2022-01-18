@@ -12,7 +12,7 @@ public class AES {
             var generator = KeyGenerator.getInstance("AES");
             this.secretKey = generator.generateKey();
         } catch (NoSuchAlgorithmException e) {
-            // Exception can be ignored, since RSA exists
+            throw new AssertionError(e);
         }
     }
 

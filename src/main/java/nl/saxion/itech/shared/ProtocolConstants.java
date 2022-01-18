@@ -44,7 +44,9 @@ public final class ProtocolConstants {
     public static final String CMD_ER11 = "ER11";
     public static final String CMD_ER12 = "ER12";
     public static final String CMD_ER13 = "ER13";
-    public static final String CMD_ER14 = "ER13";
+    public static final String CMD_ER14 = "ER14";
+    public static final String CMD_ER15 = "ER15";
+    public static final String CMD_ER16 = "ER16";
     public static final String CMD_ER66 = "ER66";
 
     public static final String INFO_BODY = "Welcome to the server";
@@ -63,6 +65,8 @@ public final class ProtocolConstants {
     public static final String ER12_BODY = "You have already been authenticated";
     public static final String ER13_BODY = "Unknown transfer";
     public static final String ER14_BODY = "This file is not yet or in the process of being sent.";
+    public static final String ER15_BODY = "User is not registered";
+    public static final String ER16_BODY = "Password does not match";
     public static final String ER66_BODY = "You are already logged in";
     public static final String DSCN_BODY = "Goodbye";
 

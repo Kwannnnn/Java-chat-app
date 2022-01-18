@@ -9,6 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.UUID;
 
 public class Client {
     private String username;
@@ -85,5 +86,13 @@ public class Client {
         return this.username == null
                 ? "-"
                 : this.username;
+    }
+
+    public String getPasswordHash() {
+       return this.passwordHash;
+    }
+
+    public String getSalt() {
+        return salt;
     }
 }

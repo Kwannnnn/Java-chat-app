@@ -171,6 +171,14 @@ public final class ServerMessageDictionary {
     }
 
     /**
+     * @return OK AUTH
+     */
+    public static TextMessage okAuth() {
+        return new TextMessage(
+                CMD_OK + " " + CMD_AUTH);
+    }
+
+    /**
      * @param groupName the group name of the newly created group
      * @return OK GRP NEW [group name]
      */
@@ -404,5 +412,19 @@ public final class ServerMessageDictionary {
      */
     public static TextMessage fileNotSentError() {
         return new TextMessage(CMD_ER14, ER14_BODY);
+    }
+
+    /**
+     * @return ER15 User not registered
+     */
+    public static TextMessage userNotRegisteredError() {
+        return new TextMessage(CMD_ER15, ER15_BODY);
+    }
+
+    /**
+     * @return ER156 Password does not match
+     */
+    public static TextMessage passwordMismatchError() {
+        return new TextMessage(CMD_ER16, ER16_BODY);
     }
 }
