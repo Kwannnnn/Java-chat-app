@@ -220,7 +220,6 @@ class IntegrationMultipleUserTests {
         String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2
         assumeTrue(resUser2.startsWith(CMD_OK));
 
-
         var expectedResult_ER08 = CMD_ER08 + " " + ER08_BODY; // ER08 Missing parameters
 
         // MSG - missing recipient and message

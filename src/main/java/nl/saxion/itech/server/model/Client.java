@@ -13,8 +13,6 @@ import java.util.UUID;
 
 public class Client {
     private String username;
-    private String passwordHash;
-    private String salt;
     private Instant lastPong;
     private ClientStatus status;
     private InputStream in;
@@ -22,15 +20,10 @@ public class Client {
     private boolean receivedPong;
     private String publicKey;
 
-    public Client(InputStream in, OutputStream out){
+    public Client(InputStream in, OutputStream out) {
         this.in = in;
         this.out = out;
         this.status = ClientStatus.CLIENT_NEW;
-        this.salt = HashUtil.generateSalt();
-    }
-
-    public void generateHash(String plainPassword) {
-        this.passwordHash = HashUtil.generateHash(plainPassword);
     }
 
     public void setPublicKey(String publicKey) {
@@ -86,13 +79,5 @@ public class Client {
         return this.username == null
                 ? "-"
                 : this.username;
-    }
-
-    public String getPasswordHash() {
-       return this.passwordHash;
-    }
-
-    public String getSalt() {
-        return salt;
     }
 }

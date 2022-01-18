@@ -1,5 +1,6 @@
 package nl.saxion.itech.server.data;
 
+import nl.saxion.itech.server.model.AuthenticatedUser;
 import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.server.model.FileObject;
 import nl.saxion.itech.server.model.Group;
@@ -14,6 +15,13 @@ import java.util.Timer;
 import static nl.saxion.itech.shared.ProtocolConstants.PING_INITIAL_DELAY_MS;
 
 public class DataObject {
+    private static final HashMap<String, AuthenticatedUser> REGISTERED_USERS = new HashMap<>();
+    static {
+        REGISTERED_USERS.put("Carlo", new AuthenticatedUser("Carlo", "Password1"));
+        REGISTERED_USERS.put("Trish", new AuthenticatedUser("Trish", "Password2"));
+        REGISTERED_USERS.put("Lia", new AuthenticatedUser("Lia", "Password2"));
+    }
+
     private final HashMap<String, Client> chatClients;
     private final HashMap<String, ClientPingTask> clientPingThreads;
     private final HashMap<String, Group> groups;
@@ -89,4 +97,8 @@ public class DataObject {
     }
 
     public synchronized void removeFile(String fileID) { this.files.remove(fileID);}
+
+    public HashMap<String, AuthenticatedUser> getRegisteredUsers() {
+        return REGISTERED_USERS;
+    }
 }

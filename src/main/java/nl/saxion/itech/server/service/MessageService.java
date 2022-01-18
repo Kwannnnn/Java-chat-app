@@ -9,7 +9,7 @@ import nl.saxion.itech.server.model.FileObject;
 import nl.saxion.itech.server.model.Group;
 import nl.saxion.itech.server.util.Logger;
 import nl.saxion.itech.server.util.ServerMessageDictionary;
-import nl.saxion.itech.shared.security.RSA;
+import nl.saxion.itech.shared.security.util.HashUtil;
 
 import java.io.*;
 import java.util.*;
@@ -120,13 +120,15 @@ public class MessageService implements Service {
         var password = payload.nextToken();
 
         // TODO: hash password
-        String salt = sender.getSalt();
-        String passwordHash = "";
+
         // TODO: compare hashes
 
         // TODO: error handling: user does not have password, wrong password
-        var error = userNotRegistered(sender)
-                .or(() -> passwordMismatch(passwordHash, sender.getPasswordHash()));
+        var error = userNotRegistered(sender);
+        var authenticatedUser = this.data.getRegisteredUsers().get(sender.getUsername());
+        String passwordHash = HashUtil.generateHash(authenticatedUser.getSalt(), password);
+
+        error = error.or(() -> passwordMismatch(passwordHash, authenticatedUser.getPasswordHash()));
 
         return error.orElseGet(ServerMessageDictionary::okAuth);
     }
@@ -486,7 +488,7 @@ public class MessageService implements Service {
     }
 
     private Optional<Message> userNotRegistered(Client client) {
-        return client.getPasswordHash() == null
+        return !this.data.getRegisteredUsers().containsKey(client.getUsername())
                 ? Optional.of(userNotRegisteredError()) // Password does not match
                 : Optional.empty();
     }
