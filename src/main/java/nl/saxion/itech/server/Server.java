@@ -3,7 +3,6 @@ package nl.saxion.itech.server;
 import nl.saxion.itech.server.data.DataObject;
 import nl.saxion.itech.server.service.Service;
 import nl.saxion.itech.server.service.ServiceManager;
-import nl.saxion.itech.server.thread.PingThread;
 import nl.saxion.itech.server.util.Logger;
 
 import java.io.IOException;

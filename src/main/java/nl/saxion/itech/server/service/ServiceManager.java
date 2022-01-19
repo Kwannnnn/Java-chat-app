@@ -30,8 +30,4 @@ public class ServiceManager {
 
         return listener;
     }
-
-    public Collection<ServiceListener> getRunningService() {
-        return this.runningService.values();
-    }
 }

@@ -1,22 +1,13 @@
 package nl.saxion.itech.server.model;
 
-import nl.saxion.itech.shared.security.util.HashUtil;
-
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.UUID;
 
 public class Client {
     private String username;
-    private Instant lastPong;
     private ClientStatus status;
-    private InputStream in;
-    private OutputStream out;
+    private final InputStream in;
+    private final OutputStream out;
     private boolean receivedPong;
     private String publicKey;
 
@@ -54,16 +45,8 @@ public class Client {
         this.status = status;
     }
 
-    public Instant getLastPong() {
-        return lastPong;
-    }
-
     public ClientStatus getStatus() {
         return this.status;
-    }
-
-    public void updateLastPong() {
-        this.lastPong = Instant.now();
     }
 
     public void setReceivedPong(boolean receivedPong) {

@@ -59,12 +59,18 @@ class IntegrationSingleUserTests {
     }
 
     @Test
+    @DisplayName("emptyMessageShouldReturnUnknownCommand")
+    void emptyMessage() {
+        receiveLineWithTimeout(in); // Receive info message
+        sendMessage("");
+        String response = receiveLineWithTimeout(in);
+        assertEquals(CMD_ER00 + " " + ER00_BODY, response);
+    }
+
+    @Test
     @DisplayName("RQ-S100 - receiveInfoMessage")
     void receiveInfoMessage() {
-        // given
-        // when
         String firstLine = receiveLineWithTimeout(in); // INFO Welcome to the server
-        // then
         assertTrue(firstLine.matches(CMD_INFO + " " + INFO_BODY));
     }
 
@@ -227,20 +233,17 @@ class IntegrationSingleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-??? - Bad Weather - GRP - grpWithoutAnyParametersShouldReturnE00")
-    void GRP_Bad_Weather_ER00() {
+    @DisplayName("RQ-U202 - GRP - badWeatherGrpWithoutAnyParametersShouldReturnE08")
+    void GRP_Bad_Weather_ER08() {
         sendInitialConnMessage();
 
-        // given
-        sendMessage(CMD_GRP); // GRP NEW cats
-        // when
-        String allServerResponse = receiveLineWithTimeout(in); // OK GRP NEW cats
-        // then
-        assertEquals(CMD_ER00 + " " + ER00_BODY, allServerResponse);
+        sendMessage(CMD_GRP);
+        String response = receiveLineWithTimeout(in);
+        assertEquals(CMD_ER08 + " " + ER08_BODY, response);
     }
 
     @Test
-    @DisplayName("RQ-U202 - Bad Weather - GRP NEW - grpNewWithoutBeingConnectedRespondsE03")
+    @DisplayName("RQ-U202 - GRP NEW - badWeatherUserNotConnectedShouldReturnE03")
     void GRP_NEW_Bad_Weather_ER03() {
         receiveLineWithTimeout(in); // Receive info message
 
@@ -253,7 +256,7 @@ class IntegrationSingleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U202 - Bad Weather - GRP NEW - grpNewWithInvalidGroupNameRespondsE05")
+    @DisplayName("RQ-U202 - GRP NEW - badWeatherInvalidGroupNameShouldReturnE05")
     void GRP_NEW_Bad_Weather_ER05() {
         sendInitialConnMessage();
 
@@ -266,7 +269,7 @@ class IntegrationSingleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U202 - Bad Weather - GRP NEW - grpNewGroupNameAlreadyExistsE06")
+    @DisplayName("RQ-U202 - GRP NEW - badWeatherGroupNameAlreadyExistsE06")
     void GRP_NEW_Bad_Weather_ER06() {
         sendInitialConnMessage();
 
@@ -288,7 +291,7 @@ class IntegrationSingleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U202 - Bad Weather - GRP NEW - grpNewWithMissingArgumentsRespondsE08")
+    @DisplayName("RQ-U202 - GRP NEW - badWeatherMissingArgumentsShouldRespondE08")
     void GRP_NEW_Bad_Weather_ER08() {
         sendInitialConnMessage();
 
@@ -301,7 +304,7 @@ class IntegrationSingleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U204 - GRP ALL Message")
+    @DisplayName("RQ-U204 - GRP ALL Message - goodWeather")
     void GRP_ALL() {
         sendInitialConnMessage();
 
@@ -330,6 +333,55 @@ class IntegrationSingleUserTests {
         String grpDscn2Response = receiveLineWithTimeout(in); // OK GRP DSCN dogs
         assumeTrue(grpDscn2Response.startsWith(CMD_OK));
     }
+
+    @Test
+    @DisplayName("RQ-U204 - GRP ALL Message - badWeatherUserNotConnectedShouldReturnER03")
+    void GRP_ALL_Bad_Weather_ER03() {
+        receiveLineWithTimeout(in); // Receive info message
+
+        // given
+        sendMessage(CMD_GRP + " " + CMD_ALL); // GRP ALL
+        // when
+        String allServerResponse = receiveLineWithTimeout(in);
+        // then
+        assertEquals(CMD_ER03 + " " + ER03_BODY, allServerResponse);
+    }
+
+    @Test
+    @DisplayName("RQ-U205 - GRP MSG Message - goodWeather")
+    void GRP_MSG() {
+        receiveLineWithTimeout(in); // Receive info message
+
+        // given
+        sendMessage(CMD_GRP + " " + CMD_ALL); // GRP ALL
+        // when
+        String allServerResponse = receiveLineWithTimeout(in);
+        // then
+        assertEquals(CMD_ER03 + " " + ER03_BODY, allServerResponse);
+    }
+
+    @Test
+    @DisplayName("RQ-U204 - GRP MSG Message - badWeatherNotLoggedInShouldReturnER03")
+    void GRP_MSG_Bad_Weather_ER03() {
+        receiveLineWithTimeout(in); //info message
+
+        // sends GRP MSG message
+        String message = "hello";
+        sendMessage(CMD_GRP + " " + CMD_MSG + " " + VALID_GROUP_NAME + " " + message);
+
+        String response = receiveLineWithTimeout(in); // GRP MSG cats hello
+
+        // user2's response from server
+        String user2GrpMsgResponse = receiveLineWithTimeout(this.inUser2);
+        assertEquals(CMD_GRP + " " + CMD_MSG + " " + VALID_GROUP_NAME + " " + USERNAME_1 + " " + message,
+                user2GrpMsgResponse);
+
+        // Cleanup
+        sendMessageUser1(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME); // GRP DSCN cats
+        sendMessageUser2(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME); // GRP DSCN cats
+    }
+
+
 
     @Test
     @DisplayName("RQ-U102 - DSCN message")

@@ -77,7 +77,7 @@ public class MessageService implements Service {
                     ? handleConnectedClient(payload, sender)
                     : handleUnknownClient(payload, sender);
         } catch (NoSuchElementException e) {
-            return unknownCommandError(); // TODO: test empty message
+            return unknownCommandError();
         }
     }
 
@@ -296,8 +296,6 @@ public class MessageService implements Service {
 
     private Message handlePong(Client sender) {
         sender.setReceivedPong(true);
-        sender.updateLastPong();
-
         return null;
     }
 
