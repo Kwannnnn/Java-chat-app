@@ -1,5 +1,6 @@
 package nl.saxion.itech.server;
 
+import nl.saxion.itech.shared.security.RSA;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
@@ -19,6 +20,7 @@ class IntegrationPacketBreakup {
     private PrintWriter out;
 
     private final static int max_delta_allowed_ms = 100;
+    public static final RSA RSA = new RSA();
 
     @BeforeAll
     static void setupAll() throws IOException {
@@ -45,13 +47,13 @@ class IntegrationPacketBreakup {
         receiveLineWithTimeout(in); //info message
         out.print("CONN m");
         out.flush();
-        out.print("yname\r\nBC");
+        out.print("yname " + RSA.getPublicKeyAsString() + "\r\nBC");
         out.flush();
         out.print("ST a\r\n");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         // TODO: reflect in documentation updated protocol
-        assertEquals("OK CONN myname", serverResponse);
+        assertEquals("OK CONN myname "  + RSA.getPublicKeyAsString(), serverResponse);
         serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK BCST a", serverResponse);
         // logout to make sure tests succeed without restarting the server

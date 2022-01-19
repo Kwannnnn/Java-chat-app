@@ -1,5 +1,6 @@
 package nl.saxion.itech.server;
 
+import nl.saxion.itech.shared.security.RSA;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
@@ -20,6 +21,8 @@ class IntegrationMultipleUserTests {
     private static final String MESSAGE_1 = "message1";
     private static final String MESSAGE_2 = "message2";
     private static final String VALID_GROUP_NAME = "cats";
+    public static final RSA RSA_USER_1 = new RSA();
+    public static final RSA RSA_USER_2 = new RSA();
 
     private Socket socketUser1, socketUser2;
     private BufferedReader inUser1, inUser2;
@@ -61,13 +64,13 @@ class IntegrationMultipleUserTests {
         receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
 
         // Connect user1
-        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
-        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + " " + RSA_USER_1.getPublicKeyAsString()); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
         assumeTrue(resUser1.startsWith(CMD_OK));
 
         // Connect user2
-        sendMessageUser2(CMD_CONN + " " + USERNAME_2); // CONN user2
-        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2
+        sendMessageUser2(CMD_CONN + " " + USERNAME_2 + " " + RSA_USER_2.getPublicKeyAsString()); // CONN user2 publicKey
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2 publicKey
         assumeTrue(resUser2.startsWith(CMD_OK));
 
         // Send BCST from user1
@@ -107,8 +110,8 @@ class IntegrationMultipleUserTests {
         receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
 
         // Connect user1
-        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
-        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + " " + RSA_USER_1.getPublicKeyAsString()); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
         assumeTrue(resUser1.startsWith(CMD_OK));
 
         // BCST - missing message
@@ -125,13 +128,13 @@ class IntegrationMultipleUserTests {
         receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
 
         // Connect user1
-        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
-        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + " " + RSA_USER_1.getPublicKeyAsString()); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
         assumeTrue(resUser1.startsWith(CMD_OK));
 
         // Connect user2
-        sendMessageUser2(CMD_CONN + " " + USERNAME_2); // CONN user1
-        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user1
+        sendMessageUser2(CMD_CONN + " " + USERNAME_2 + " " + RSA_USER_2.getPublicKeyAsString()); // CONN user1 publicKey
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user1 publicKey
         assumeTrue(resUser1.startsWith(CMD_OK));
 
         // user1: ALL
@@ -158,18 +161,18 @@ class IntegrationMultipleUserTests {
         receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
 
         // Connect user1
-        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
-        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + " " + RSA_USER_1.getPublicKeyAsString()); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
         assumeTrue(resUser1.startsWith(CMD_OK));
 
         // Connect user2
-        sendMessageUser2(CMD_CONN + " " + USERNAME_2); // CONN user2
-        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2
+        sendMessageUser2(CMD_CONN + " " + USERNAME_2 + " " + RSA_USER_1.getPublicKeyAsString()); // CONN user2 publicKey
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2 publicKey
         assumeTrue(resUser2.startsWith(CMD_OK));
 
         // Send MSG from user1 to user2
         var message1 = CMD_MSG + " " + USERNAME_2 + " " + MESSAGE_1;
-        sendMessageUser1(message1); // MSG user2 message1
+        sendMessageUser1(message1); // MSG user2 message2
         String serverResponseUser1 = receiveLineWithTimeout(inUser1); // OK MSG user2 message1
         assertEquals(CMD_OK + " " + message1, serverResponseUser1);
 
@@ -194,8 +197,8 @@ class IntegrationMultipleUserTests {
         receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
 
         // Connect user1
-        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
-        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + " " + RSA_USER_1.getPublicKeyAsString()); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
         assumeTrue(resUser1.startsWith(CMD_OK));
 
         // MSG user2 message1, while user2 is not connected
@@ -211,13 +214,13 @@ class IntegrationMultipleUserTests {
         receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
 
         // Connect user1
-        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
-        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + "  " + RSA_USER_1.getPublicKeyAsString()); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
         assumeTrue(resUser1.startsWith(CMD_OK));
 
         // Connect user2
-        sendMessageUser2(CMD_CONN + " " + USERNAME_2); // CONN user2
-        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2
+        sendMessageUser2(CMD_CONN + " " + USERNAME_2 + " " + RSA_USER_2.getPublicKeyAsString()); // CONN user2 publicKey
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2 publicKey
         assumeTrue(resUser2.startsWith(CMD_OK));
 
         var expectedResult_ER08 = CMD_ER08 + " " + ER08_BODY; // ER08 Missing parameters
@@ -240,30 +243,30 @@ class IntegrationMultipleUserTests {
         receiveLineWithTimeout(inUser2); //info message
 
         // Connect user 1
-        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
-        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + " " + RSA_USER_1.getPublicKeyAsString()); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
         assumeTrue(resUser1.startsWith(CMD_OK));
 
         // Connect using same username
-        sendMessageUser2(CMD_CONN + " " + USERNAME_1); // CONN user1
+        sendMessageUser2(CMD_CONN + " " + USERNAME_1 + "  " + RSA_USER_2.getPublicKeyAsString()); // CONN user1 publicKey
         String resUser2 = receiveLineWithTimeout(this.inUser2); // ER01 User already logged in
         assertEquals(CMD_ER01 + " " + ER01_BODY, resUser2);
     }
 
     @Test
-    @DisplayName("RQ-U203 - GRP JOIN Message")
+    @DisplayName("RQ-U203 - GRP JOIN Message - shouldRespondWithOkGrpJoin")
     void GRP_JOIN() {
         receiveLineWithTimeout(inUser1); //info message
         receiveLineWithTimeout(inUser2); //info message
 
         // Connect user 1
-        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
-        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + " " + RSA_USER_1.getPublicKeyAsString()); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
         assumeTrue(resUser1.startsWith(CMD_OK));
 
         // Connect user2
-        sendMessageUser2(CMD_CONN + " " + USERNAME_2); // CONN user2
-        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2
+        sendMessageUser2(CMD_CONN + " " + USERNAME_2 + " " + RSA_USER_2.getPublicKeyAsString()); // CONN user2 publicKey
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2 publicKey
         assumeTrue(resUser2.startsWith(CMD_OK));
 
         // First create a group
@@ -303,8 +306,8 @@ class IntegrationMultipleUserTests {
         receiveLineWithTimeout(inUser1); // Receive INFO message
 
         // Connect user 1
-        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
-        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + " " + RSA_USER_1.getPublicKeyAsString()); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
         assumeTrue(resUser1.startsWith(CMD_OK));
 
         // Try to join group cats, which does not exist
@@ -321,8 +324,8 @@ class IntegrationMultipleUserTests {
         receiveLineWithTimeout(inUser1); // Receive INFO message
 
         // Connect user 1
-        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
-        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + " " + RSA_USER_1.getPublicKeyAsString()); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
         assumeTrue(resUser1.startsWith(CMD_OK));
 
         // GRP JOIN - missing group name
@@ -337,8 +340,8 @@ class IntegrationMultipleUserTests {
         receiveLineWithTimeout(inUser1); // Receive INFO message
 
         // Connect user 1
-        sendMessageUser1(CMD_CONN + " " + USERNAME_1); // CONN user1
-        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + " " + RSA_USER_1.getPublicKeyAsString()); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
         assumeTrue(resUser1.startsWith(CMD_OK));
 
         // Create and (automatically) join the group

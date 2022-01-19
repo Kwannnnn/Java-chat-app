@@ -41,7 +41,7 @@ public class MessageService implements Service {
             handleIncomingMessages(client);
         } catch (IOException e) {
             // Proceed to finally clause
-        }  catch (ClientDisconnectedException e) {
+        }  catch (ClientDisconnectedException e) { // TODO: test disconnect
             // Client has decided to disconnect, stop reading input;
         } finally {
             // Make sure remove the client from the data if he is connected
@@ -77,10 +77,7 @@ public class MessageService implements Service {
                     ? handleConnectedClient(payload, sender)
                     : handleUnknownClient(payload, sender);
         } catch (NoSuchElementException e) {
-            return sender.getStatus() == ClientStatus.CLIENT_CONNECTED
-//                    || sender.getStatus() == ClientStatus.CLIENT_AUTHENTICATED
-                    ? missingParametersError()
-                    : unknownCommandError();
+            return unknownCommandError(); // TODO: test empty message
         }
     }
 
@@ -120,11 +117,6 @@ public class MessageService implements Service {
     private Message handleAuth(StringTokenizer payload, Client sender) {
         var password = payload.nextToken();
 
-        // TODO: hash password
-
-        // TODO: compare hashes
-
-        // TODO: error handling: user does not have password!, wrong password
         var authenticatedUser = this.data.getAuthenticatedUsers().get(sender.getUsername());
         String passwordHash = HashUtil.generateHash(authenticatedUser.getSalt(), password);
 
@@ -345,7 +337,7 @@ public class MessageService implements Service {
             case CMD_NEW -> handleGroupNewMessage(payload, sender);
             case CMD_ALL -> handleGroupAllMessage();
             case CMD_JOIN -> handleGroupJoinMessage(payload, sender);
-            case CMD_MSG -> handleGroupMessageMessage(payload, sender);
+            case CMD_MSG -> handleGroupMessageMessage(payload, sender); // TODO: test
             case CMD_DSCN -> handleGroupDisconnectMessage(payload, sender);
             default -> unknownCommandError();
         };
@@ -360,7 +352,7 @@ public class MessageService implements Service {
                 .or(() -> groupDoesNotExist(groupName));
         if (error.isPresent()) {
             // An error message has occurred
-            return error.get();
+            return error.get(); // TODO: test
         }
 
         var groupOptional = this.data.getGroup(groupName);

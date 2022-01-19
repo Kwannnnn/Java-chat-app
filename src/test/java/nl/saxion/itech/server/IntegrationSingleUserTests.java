@@ -1,5 +1,6 @@
 package nl.saxion.itech.server;
 
+import nl.saxion.itech.shared.security.RSA;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
@@ -22,6 +23,7 @@ class IntegrationSingleUserTests {
     private static final String VALID_GROUP_NAME = "cats";
     private static final String VALID_GROUP_NAME_2 = "dogs";
     private static final String INVALID_GROUP_NAME = "*g*";
+    public static final RSA RSA = new RSA();
 
 
     private static int ping_time_ms;
@@ -70,12 +72,12 @@ class IntegrationSingleUserTests {
     void loginSucceedsWithOK() {
         receiveLineWithTimeout(in); // Receive info message
         // given
-        var message = CMD_CONN + " " + VALID_USERNAME; // CONN myname
+        var message = CMD_CONN + " " + VALID_USERNAME + " " + RSA.getPublicKeyAsString(); // CONN myname publicKey
         sendMessage(message);
         // when
-        String serverResponse = receiveLineWithTimeout(in); // OK CONN myname
+        String serverResponse = receiveLineWithTimeout(in); // OK CONN myname publicKey
         // then
-        assertEquals(CMD_OK + " " + CMD_CONN + " " + VALID_USERNAME, serverResponse);
+        assertEquals(CMD_OK + " " + message, serverResponse);
     }
 
     @Test
@@ -95,7 +97,7 @@ class IntegrationSingleUserTests {
     void loginInvalidCharactersWithER02() {
         receiveLineWithTimeout(in); // Receive info message
         // given
-        sendMessage(CMD_CONN + " " + INVALID_USERNAME); // CONN *a*
+        sendMessage(CMD_CONN + " " + INVALID_USERNAME + " " + RSA.getPublicKeyAsString()); // CONN *a* publicKey
         // when
         String serverResponse = receiveLineWithTimeout(in); // ER02 Username has an invalid format (only characters, numbers and underscores are allowed)
         // then
@@ -106,8 +108,8 @@ class IntegrationSingleUserTests {
     @DisplayName("RQ-S100 - pingShouldBeReceivedOnCorrectTime")
     void pingShouldBeReceivedOnCorrectTime(TestReporter testReporter) {
         receiveLineWithTimeout(in); // Receive info message
-        sendMessage(CMD_CONN + " " + VALID_USERNAME); // CONN myname
-        receiveLineWithTimeout(in); // OK CONN myname
+        sendMessage(CMD_CONN + " " + VALID_USERNAME + " " + RSA.getPublicKeyAsString()); // CONN myname publicKey
+        receiveLineWithTimeout(in); // OK CONN myname publicKey
 
         //Make sure the test does not hang when no response is received by using assertTimeoutPreemptively
         assertTimeoutPreemptively(ofMillis(ping_time_ms + ping_time_ms_delta_allowed), () -> {
@@ -129,8 +131,8 @@ class IntegrationSingleUserTests {
     @DisplayName("RQ-U202 - GRP NEW Message")
     void GRP_NEW() {
         receiveLineWithTimeout(in); // Receive info message
-        sendMessage(CMD_CONN + " " + VALID_USERNAME); // C: CONN myname
-        String connServerResponse = receiveLineWithTimeout(in); // S: OK CONN myname
+        sendMessage(CMD_CONN + " " + VALID_USERNAME + " " + RSA.getPublicKeyAsString()); // C: CONN myname publicKey
+        String connServerResponse = receiveLineWithTimeout(in); // S: OK CONN myname publicKey
         assumeTrue(connServerResponse.startsWith(CMD_OK));
 
         // given
@@ -143,6 +145,22 @@ class IntegrationSingleUserTests {
         sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME);
         String grpDscnResponse = receiveLineWithTimeout(in); // OK GRP DSCN cats
         assumeTrue(grpDscnResponse.startsWith(CMD_OK));
+    }
+
+    @Test
+    @DisplayName("RQ-??? - Bad Weather - GRP - grpWithoutAnyParametersShouldReturnE00")
+    void GRP_Bad_Weather_ER00() {
+        receiveLineWithTimeout(in); // Receive info message
+        sendMessage(CMD_CONN + " " + VALID_USERNAME + " " + RSA.getPublicKeyAsString()); // C: CONN myname publicKey
+        String connServerResponse = receiveLineWithTimeout(in); // S: OK CONN myname publicKey
+        assumeTrue(connServerResponse.startsWith(CMD_OK));
+
+        // given
+        sendMessage(CMD_GRP); // GRP NEW cats
+        // when
+        String allServerResponse = receiveLineWithTimeout(in); // OK GRP NEW cats
+        // then
+        assertEquals(CMD_ER00 + " " + ER00_BODY, allServerResponse);
     }
 
     @Test
@@ -162,8 +180,8 @@ class IntegrationSingleUserTests {
     @DisplayName("RQ-U202 - Bad Weather - GRP NEW - grpNewWithInvalidGroupNameRespondsE05")
     void GRP_NEW_Bad_Weather_ER05() {
         receiveLineWithTimeout(in); // Receive info message
-        sendMessage(CMD_CONN + " " + VALID_USERNAME); // C: CONN myname
-        String connServerResponse = receiveLineWithTimeout(in); // S: OK CONN myname
+        sendMessage(CMD_CONN + " " + VALID_USERNAME + " " + RSA.getPublicKeyAsString()); // C: CONN myname publicKey
+        String connServerResponse = receiveLineWithTimeout(in); // S: OK CONN myname publicKey
         assumeTrue(connServerResponse.startsWith(CMD_OK));
 
         // given
@@ -178,8 +196,8 @@ class IntegrationSingleUserTests {
     @DisplayName("RQ-U202 - Bad Weather - GRP NEW - grpNewGroupNameAlreadyExistsE06")
     void GRP_NEW_Bad_Weather_ER06() {
         receiveLineWithTimeout(in); // Receive info message
-        sendMessage(CMD_CONN + " " + VALID_USERNAME); // C: CONN myname
-        String connServerResponse = receiveLineWithTimeout(in); // S: OK CONN myname
+        sendMessage(CMD_CONN + " " + VALID_USERNAME + " " + RSA.getPublicKeyAsString()); // C: CONN myname publicKey
+        String connServerResponse = receiveLineWithTimeout(in); // S: OK CONN myname publicKey
         assumeTrue(connServerResponse.startsWith(CMD_OK));
 
         // Create a group
@@ -203,8 +221,8 @@ class IntegrationSingleUserTests {
     @DisplayName("RQ-U202 - Bad Weather - GRP NEW - grpNewWithMissingArgumentsRespondsE08")
     void GRP_NEW_Bad_Weather_ER08() {
         receiveLineWithTimeout(in); // Receive info message
-        sendMessage(CMD_CONN + " " + VALID_USERNAME); // C: CONN myname
-        String connServerResponse = receiveLineWithTimeout(in); // S: OK CONN myname
+        sendMessage(CMD_CONN + " " + VALID_USERNAME + " " + RSA.getPublicKeyAsString()); // C: CONN myname publicKey
+        String connServerResponse = receiveLineWithTimeout(in); // S: OK CONN myname publicKey
         assumeTrue(connServerResponse.startsWith(CMD_OK));
 
         // Create a group with missing name
@@ -219,8 +237,8 @@ class IntegrationSingleUserTests {
     @DisplayName("RQ-U204 - GRP ALL Message")
     void GRP_ALL() {
         receiveLineWithTimeout(in); // Receive info message
-        sendMessage(CMD_CONN + " " + VALID_USERNAME); // C: CONN myname
-        String connServerResponse = receiveLineWithTimeout(in); // S: OK CONN myname
+        sendMessage(CMD_CONN + " " + VALID_USERNAME + " " + RSA.getPublicKeyAsString()); // C: CONN myname publicKey
+        String connServerResponse = receiveLineWithTimeout(in); // S: OK CONN myname publicKey
         assumeTrue(connServerResponse.startsWith(CMD_OK));
 
         // First create a group

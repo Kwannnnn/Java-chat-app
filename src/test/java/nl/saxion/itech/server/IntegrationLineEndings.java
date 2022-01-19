@@ -1,5 +1,6 @@
 package nl.saxion.itech.server;
 
+import nl.saxion.itech.shared.security.RSA;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
@@ -18,6 +19,7 @@ class IntegrationLineEndings {
     private PrintWriter out;
 
     private final static int max_delta_allowed_ms = 100;
+    public static final RSA RSA = new RSA();
 
     @BeforeAll
     static void setupAll() throws IOException {
@@ -42,11 +44,11 @@ class IntegrationLineEndings {
     @DisplayName("RQ-B202 - windowsLineEndingIsAllowed")
     void windowsLineEndingIsAllowed() {
         receiveLineWithTimeout(in); //info message
-        out.print("CONN myname\r\nBCST a\r\n");
+        out.print("CONN myname "  + RSA.getPublicKeyAsString() + "\r\nBCST a\r\n");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         // TODO: reflect in documentation updated protocol
-        assertEquals("OK CONN myname", serverResponse);
+        assertEquals("OK CONN myname " + RSA.getPublicKeyAsString(), serverResponse);
         serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK BCST a", serverResponse);
     }
@@ -55,11 +57,11 @@ class IntegrationLineEndings {
     @DisplayName("RQ-B202 - linuxLineEndingIsAllowed")
     void linuxLineEndingIsAllowed() {
         receiveLineWithTimeout(in); //info message
-        out.print("CONN myname\nBCST a\n");
+        out.print("CONN myname "  + RSA.getPublicKeyAsString() + "\nBCST a\n");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
         // TODO: reflect in documentation updated protocol
-        assertEquals("OK CONN myname", serverResponse);
+        assertEquals("OK CONN myname " + RSA.getPublicKeyAsString(), serverResponse);
         serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK BCST a", serverResponse);
     }
