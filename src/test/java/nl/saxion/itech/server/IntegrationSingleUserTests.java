@@ -21,7 +21,7 @@ class IntegrationSingleUserTests {
     private static final String VALID_USERNAME = "Carlo";
     private static final String VALID_PASSWORD = "Password1";
     private static final String INVALID_USERNAME = "*a*";
-    private static final String VALID_GROUP_NAME = "cats";
+    private static final String VALID_GROUP_NAME_1 = "cats";
     private static final String VALID_GROUP_NAME_2 = "dogs";
     private static final String INVALID_GROUP_NAME = "*g*";
     public static final RSA RSA = new RSA();
@@ -137,7 +137,7 @@ class IntegrationSingleUserTests {
     @Test
     @DisplayName("RQ-S100 - PONG message")
     void PONG() {
-        sendInitialConnMessage();
+        connectUser();
 
         //Make sure the test does not hang when no response is received by using assertTimeoutPreemptively
         String ping = receivePingWithTimeout(in);
@@ -158,7 +158,7 @@ class IntegrationSingleUserTests {
     @Test
     @DisplayName("RQ-U211 - AUTH message - goodWeather")
     void AUTH_Good_Weather() {
-        sendInitialConnMessage();
+        connectUser();
 
         sendMessage(CMD_AUTH + " " + VALID_PASSWORD);
         String response = receiveLineWithTimeout(in);
@@ -180,7 +180,7 @@ class IntegrationSingleUserTests {
     @Test
     @DisplayName("RQ-U211 - AUTH message - badWeatherMissingParameterShouldReturnER08")
     void AUTH_Bad_Weather_ER08() {
-        sendInitialConnMessage();
+        connectUser();
 
         // send username without password
         sendMessage(CMD_AUTH);
@@ -192,7 +192,7 @@ class IntegrationSingleUserTests {
     @Test
     @DisplayName("RQ-U211 - AUTH message - badWeatherInvalidCredentialsShouldReturnER11")
     void AUTH_Bad_Weather_ER11() {
-        sendInitialConnMessage();
+        connectUser();
 
         // send username without password
         sendMessage(CMD_AUTH + " " + "wrong password");
@@ -218,28 +218,36 @@ class IntegrationSingleUserTests {
     @Test
     @DisplayName("RQ-U202 - GRP NEW Message - goodWeather")
     void GRP_NEW() {
-        sendInitialConnMessage();
+        connectUser();
 
         // given
-        sendMessage(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME); // GRP NEW cats
+        sendMessage(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME_1); // GRP NEW cats
         // when
         String allServerResponse = receiveLineWithTimeout(in); // OK GRP NEW cats
         // then
-        assertEquals(CMD_OK + " " + CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME, allServerResponse);
+        assertEquals(CMD_OK + " " + CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME_1, allServerResponse);
 
-        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME);
-        String grpDscnResponse = receiveLineWithTimeout(in); // OK GRP DSCN cats
-        assumeTrue(grpDscnResponse.startsWith(CMD_OK));
+        disconnectFromGroup1();
     }
 
     @Test
     @DisplayName("RQ-U202 - GRP - badWeatherGrpWithoutAnyParametersShouldReturnE08")
     void GRP_Bad_Weather_ER08() {
-        sendInitialConnMessage();
+        connectUser();
 
         sendMessage(CMD_GRP);
         String response = receiveLineWithTimeout(in);
         assertEquals(CMD_ER08 + " " + ER08_BODY, response);
+    }
+
+    @Test
+    @DisplayName("RQ-U202 - GRP - badWeatherGrpUnknownCommandShouldReturnE00")
+    void GRP_Bad_Weather_ER00() {
+        connectUser();
+
+        sendMessage(CMD_GRP + " " + "UNKNOWN");
+        String response = receiveLineWithTimeout(in);
+        assertEquals(CMD_ER00 + " " + ER00_BODY, response);
     }
 
     @Test
@@ -248,7 +256,7 @@ class IntegrationSingleUserTests {
         receiveLineWithTimeout(in); // Receive info message
 
         // given
-        sendMessage(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME); // GRP NEW cats
+        sendMessage(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME_1); // GRP NEW cats
         // when
         String allServerResponse = receiveLineWithTimeout(in); // ER03 Please log in first
         // then
@@ -258,7 +266,7 @@ class IntegrationSingleUserTests {
     @Test
     @DisplayName("RQ-U202 - GRP NEW - badWeatherInvalidGroupNameShouldReturnE05")
     void GRP_NEW_Bad_Weather_ER05() {
-        sendInitialConnMessage();
+        connectUser();
 
         // given
         sendMessage(CMD_GRP + " " + CMD_NEW + " " + INVALID_GROUP_NAME); // GRP NEW cats
@@ -271,21 +279,21 @@ class IntegrationSingleUserTests {
     @Test
     @DisplayName("RQ-U202 - GRP NEW - badWeatherGroupNameAlreadyExistsE06")
     void GRP_NEW_Bad_Weather_ER06() {
-        sendInitialConnMessage();
+        connectUser();
 
         // Create a group
-        sendMessage(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME); // GRP NEW cats
+        sendMessage(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME_1); // GRP NEW cats
         String grpNewServerResponse = receiveLineWithTimeout(in); // OK GRP NEW cats
         assumeTrue(grpNewServerResponse.startsWith(CMD_OK));
 
         // given
-        sendMessage(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME); // GRP NEW cats
+        sendMessage(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME_1); // GRP NEW cats
         // when
         String allServerResponse = receiveLineWithTimeout(in); // ER06 A group with this name already exists
         // then
         assertEquals(CMD_ER06 + " " + ER06_BODY, allServerResponse);
 
-        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME);
+        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME_1);
         String grpDscnResponse = receiveLineWithTimeout(in); // OK GRP DSCN cats
         assumeTrue(grpDscnResponse.startsWith(CMD_OK));
     }
@@ -293,7 +301,7 @@ class IntegrationSingleUserTests {
     @Test
     @DisplayName("RQ-U202 - GRP NEW - badWeatherMissingArgumentsShouldRespondE08")
     void GRP_NEW_Bad_Weather_ER08() {
-        sendInitialConnMessage();
+        connectUser();
 
         // Create a group with missing name
         sendMessage(CMD_GRP + " " + CMD_NEW); // GRP NEW
@@ -306,10 +314,10 @@ class IntegrationSingleUserTests {
     @Test
     @DisplayName("RQ-U204 - GRP ALL Message - goodWeather")
     void GRP_ALL() {
-        sendInitialConnMessage();
+        connectUser();
 
         // First create a group
-        sendMessage(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME); // GRP NEW cats
+        sendMessage(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME_1); // GRP NEW cats
         String grpNew1ServerResponse = receiveLineWithTimeout(this.in);
         assumeTrue(grpNew1ServerResponse.startsWith(CMD_OK));
 
@@ -323,9 +331,9 @@ class IntegrationSingleUserTests {
         // when
         String allServerResponse = receiveLineWithTimeout(in); // GRP ALL cats,dogs
         // then
-        assertEquals(CMD_OK + " " + CMD_GRP + " " + CMD_ALL + " " + VALID_GROUP_NAME + "," + VALID_GROUP_NAME_2, allServerResponse);
+        assertEquals(CMD_OK + " " + CMD_GRP + " " + CMD_ALL + " " + VALID_GROUP_NAME_1 + "," + VALID_GROUP_NAME_2, allServerResponse);
 
-        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME);
+        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME_1);
         String grpDscn1Response = receiveLineWithTimeout(in); // OK GRP DSCN cats
         assumeTrue(grpDscn1Response.startsWith(CMD_OK));
 
@@ -348,45 +356,80 @@ class IntegrationSingleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U205 - GRP MSG Message - goodWeather")
-    void GRP_MSG() {
-        receiveLineWithTimeout(in); // Receive info message
-
-        // given
-        sendMessage(CMD_GRP + " " + CMD_ALL); // GRP ALL
-        // when
-        String allServerResponse = receiveLineWithTimeout(in);
-        // then
-        assertEquals(CMD_ER03 + " " + ER03_BODY, allServerResponse);
-    }
-
-    @Test
-    @DisplayName("RQ-U204 - GRP MSG Message - badWeatherNotLoggedInShouldReturnER03")
+    @DisplayName("RQ-U205 - GRP MSG Message - badWeatherNotLoggedInShouldReturnER03")
     void GRP_MSG_Bad_Weather_ER03() {
         receiveLineWithTimeout(in); //info message
 
         // sends GRP MSG message
         String message = "hello";
-        sendMessage(CMD_GRP + " " + CMD_MSG + " " + VALID_GROUP_NAME + " " + message);
+        sendMessage(CMD_GRP + " " + CMD_MSG + " " + VALID_GROUP_NAME_1 + " " + message);
 
-        String response = receiveLineWithTimeout(in); // GRP MSG cats hello
-
-        // user2's response from server
-        String user2GrpMsgResponse = receiveLineWithTimeout(this.inUser2);
-        assertEquals(CMD_GRP + " " + CMD_MSG + " " + VALID_GROUP_NAME + " " + USERNAME_1 + " " + message,
-                user2GrpMsgResponse);
-
-        // Cleanup
-        sendMessageUser1(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME); // GRP DSCN cats
-        sendMessageUser2(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME); // GRP DSCN cats
+        //response from server
+        String response = receiveLineWithTimeout(in);
+        assertEquals(CMD_ER03 + " " + ER03_BODY, response);
     }
 
+    @Test
+    @DisplayName("RQ-U205 - GRP MSG Message - badWeatherGroupDoesNotExistShouldReturnER07")
+    void GRP_MSG_Bad_Weather_ER07() {
+        connectUser();
 
+        // sends GRP MSG message
+        String message = "hello";
+        sendMessage(CMD_GRP + " " + CMD_MSG + " " + "nonexistentGroup" + " " + message);
+
+        //response from server
+        String response = receiveLineWithTimeout(in);
+        assertEquals(CMD_ER07 + " " + ER07_BODY, response);
+    }
 
     @Test
-    @DisplayName("RQ-U102 - DSCN message")
-    void DSCN() {
-        sendInitialConnMessage();
+    @DisplayName("RQ-U205 - GRP MSG Message - badWeatherMissingParametersShouldReturnER08")
+    void GRP_MSG_Bad_Weather_ER08() {
+        connectUser();
+
+        // sends GRP MSG message
+        String message = "hello";
+        sendMessage(CMD_GRP + " " + CMD_MSG);
+
+        //response from server
+        String response = receiveLineWithTimeout(in);
+        assertEquals(CMD_ER08 + " " + ER08_BODY, response);
+    }
+
+    @Test
+    @DisplayName("RQ-U209 - GRP DSCN Message - Good Weather")
+    void GRP_DSCN_Good_Weather() {
+        connectUser();
+
+        // First create a group
+        sendMessage(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME_1); // GRP NEW cats
+        String grpNew1ServerResponse = receiveLineWithTimeout(this.in);
+        assumeTrue(grpNew1ServerResponse.startsWith(CMD_OK));
+
+        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME_1);
+
+        //response from server
+        String response = receiveLineWithTimeout(in);
+        assertEquals(CMD_OK + " " + CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME_1, response);
+    }
+
+//    @Test
+//    @DisplayName("RQ-U209 - GRP DSCN Message - badWeatherGroupDoesNotExistShouldReturnER07")
+//    void GRP_DSCN_Bad_Weather_ER07() {
+//        connectUser();
+//
+//        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME_1);
+//
+//        //response from server
+//        String response = receiveLineWithTimeout(in);
+//        assertEquals(CMD_ER07 + " " + ER07_BODY, response);
+//    }
+
+    @Test
+    @DisplayName("RQ-U102 - DSCN message - Good Weather")
+    void DSCN_Good_Weather() {
+        connectUser();
 
         sendMessage(CMD_DSCN);
         String response = receiveLineWithTimeout(in);
@@ -406,10 +449,22 @@ class IntegrationSingleUserTests {
         return assertTimeoutPreemptively(ofMillis(ping_time_ms + ping_time_ms_delta_allowed), () -> reader.readLine());
     }
 
-    private void sendInitialConnMessage() {
+    private void connectUser() {
         receiveLineWithTimeout(in); // Receive info message
-        sendMessage(CMD_CONN + " " + VALID_USERNAME + " " + RSA.getPublicKeyAsString()); // C: CONN myname publicKey
-        String connServerResponse = receiveLineWithTimeout(in); // S: OK CONN myname publicKey
+        sendMessage(CMD_CONN + " " + VALID_USERNAME + " " + RSA.getPublicKeyAsString()); // C: CONN Carlo publicKey
+        String connServerResponse = receiveLineWithTimeout(in); // S: OK CONN Carlo publicKey
         assumeTrue(connServerResponse.startsWith(CMD_OK));
+    }
+
+    private void disconnectFromGroup1() {
+        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME_1);
+        String grpDscnResponse = receiveLineWithTimeout(in); // OK GRP DSCN cats
+        assumeTrue(grpDscnResponse.startsWith(CMD_OK));
+    }
+
+    private void disconnectFromGroup2() {
+        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME_2);
+        String grpDscnResponse = receiveLineWithTimeout(in); // OK GRP DSCN dogs
+        assumeTrue(grpDscnResponse.startsWith(CMD_OK));
     }
 }

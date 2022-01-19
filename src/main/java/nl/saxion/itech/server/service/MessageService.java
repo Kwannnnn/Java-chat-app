@@ -253,7 +253,6 @@ public class MessageService implements Service {
         sendMessage(fileAckAccept(fileId), fileObject.getSender());
 
         // send file transfer message to both users
-        // TODO: hard coded port number
         sendMessage(fileTrUpload(fileId, 1338), fileObject.getSender());
         return fileTrDownload(fileId, 1338);
     }
@@ -341,7 +340,7 @@ public class MessageService implements Service {
             case CMD_NEW -> handleGroupNewMessage(payload, sender);
             case CMD_ALL -> handleGroupAllMessage();
             case CMD_JOIN -> handleGroupJoinMessage(payload, sender);
-            case CMD_MSG -> handleGroupMessageMessage(payload, sender); // TODO: test
+            case CMD_MSG -> handleGroupMessageMessage(payload, sender);
             case CMD_DSCN -> handleGroupDisconnectMessage(payload, sender);
             default -> unknownCommandError();
         };
