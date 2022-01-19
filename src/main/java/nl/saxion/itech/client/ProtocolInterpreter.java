@@ -170,31 +170,31 @@ public final class ProtocolInterpreter {
     }
 
     public static void showFileTransferProcessClosed() {
-        System.out.println(italic("The file transfer process has been shut down."));
+        System.out.println(italic("The file transfer process has been shut down"));
     }
 
     public static void showFileDownloadSuccess(String fileID) {
-        System.out.println(italic("File successfully downloaded."));
+        System.out.println(italic("File successfully downloaded"));
         System.out.println(italic("File id: " + fileID));
     }
 
     public static void showFileDownloadFailure(String fileID) {
-        System.out.println(italic("Something went wrong when downloading the file."));
+        System.out.println(italic("Something went wrong when downloading the file"));
         System.out.println(italic("File id: " + fileID));
     }
 
     public static void showFinishedFileUpload(String fileID) {
-        System.out.println(italic("Finished uploading file. Waiting for response from receiver."));
+        System.out.println(italic("Finished uploading file. Waiting for response from receiver"));
         System.out.println(italic("File id: " + fileID));
     }
 
     public static void showFileTransferSuccessMessage(String fileID) {
-        System.out.println(italic("File transfer was successfully executed."));
+        System.out.println(italic("File transfer was successfully executed"));
         System.out.println(italic("File id: " + fileID));
     }
 
     public static void showFileTransferFailMessage(String fileID) {
-        System.out.println(italic("File transfer was not successful."));
+        System.out.println(italic("File transfer was not successful"));
         System.out.println(italic("File id: " + fileID));
     }
 
@@ -214,5 +214,25 @@ public final class ProtocolInterpreter {
     public static void showSuccessfulEncryptionSessionSendMessage(String recipientUsername) {
         System.out.println(italic("Session key sent to " + bold(recipientUsername))
                 + ". Connection successfully established.");
+    }
+
+    public static void showSuccessfulAuthenticationMessage() {
+        System.out.println(italic("You have been successfully authenticated"));
+    }
+
+    public static void showUserDisconnected(String username) {
+        System.out.println(italic("User " + username + " has disconnected from the server"));
+    }
+
+    public static void showMissingSecureConnection(String senderUsername) {
+        System.out.println(italic(ANSI_RED + "You haven't established a secure connection with " + senderUsername) + ANSI_RESET);
+    }
+
+    public static void showMissingSessionKey(String senderUsername) {
+        System.out.println(italic(ANSI_RED + "Session key with " + bold(senderUsername) + " missing") + ANSI_RESET);
+    }
+
+    public static void showUnknownResponseFromServer() {
+        System.out.println("Unknown response from server");
     }
 }

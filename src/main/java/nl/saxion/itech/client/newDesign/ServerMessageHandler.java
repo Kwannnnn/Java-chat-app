@@ -45,6 +45,10 @@ public class ServerMessageHandler {
         }
     }
 
+    private void unknownResponseFromServer() {
+        ProtocolInterpreter.showUnknownResponseFromServer();
+    }
+
     private void handleSessionMessage(StringTokenizer payload) {
         String username = payload.nextToken();
         String encryptedSessionKey = payload.nextToken();
@@ -58,9 +62,6 @@ public class ServerMessageHandler {
         } else {
             clientEntity.get().setSessionKey(sessionKey);
         }
-    }
-
-    private void unknownResponseFromServer() {
     }
 
     // error message
@@ -83,32 +84,30 @@ public class ServerMessageHandler {
     // disconnect message
     private void handleDisconnectMessage(StringTokenizer payload) {
         String username = payload.nextToken();
-        this.client.removeConnectClient(username);
-        // TODO: Use assertion
-        System.out.println(this.client.getClientEntity(username));
-        //TODO: say sth maybe
+        this.client.removeConnectedClient(username);
+        ProtocolInterpreter.showUserDisconnected(username);
     }
 
     // direct message
     private void handleDirectMessage(StringTokenizer payload) {
-        String sender = payload.nextToken();
+        String senderUsername = payload.nextToken();
         String encryptedMessage = payload.nextToken();
 
-        var clientEntityOptional = this.client.getClientEntity(sender);
+        var clientEntityOptional = this.client.getClientEntity(senderUsername);
         if (clientEntityOptional.isEmpty()) {
-            //TODO: say sth
+            ProtocolInterpreter.showMissingSecureConnection(senderUsername);
             return;
         }
 
         var sessionKey = clientEntityOptional.get().getSessionKey();
 
         if (sessionKey == null) {
-            // TODO: say something
+            ProtocolInterpreter.showMissingSessionKey(senderUsername);
             return;
         }
 
         String decryptedMessage = SecurityUtil.decrypt(encryptedMessage, sessionKey, "AES");
-        ProtocolInterpreter.showIncomingDirectMessage(sender, decryptedMessage);
+        ProtocolInterpreter.showIncomingDirectMessage(senderUsername, decryptedMessage);
     }
 
     // broadcast message
@@ -232,15 +231,19 @@ public class ServerMessageHandler {
 
         switch (header) {
             case CMD_CONN -> handleOkConnectMessage(getRemainingTokens(payload));
+            case CMD_AUTH -> handleOkAuthMessage();
             case CMD_BCST -> handleOkBroadcastMessage(getRemainingTokens(payload));
             case CMD_GRP -> handleOkGroupMessage(payload);
             case CMD_MSG -> handleOkDirectMessage(payload);
             case CMD_FILE -> handleOkFileMessage(payload);
-            case CMD_ENCRYPT -> handleOkEncryptionMessage(payload);
             case CMD_PUBK -> handleOkPubkMessage(payload);
             case CMD_DSCN -> handleOkDscnMessage();
             default -> unknownResponseFromServer();
         }
+    }
+
+    private void handleOkAuthMessage() {
+        ProtocolInterpreter.showSuccessfulAuthenticationMessage();
     }
 
     private void handleOkDscnMessage() {
@@ -270,40 +273,6 @@ public class ServerMessageHandler {
         String body = getRemainingTokens(payload);
         ProtocolInterpreter.showSuccessfulDirectMessage(recipient, body);
     }
-
-    //region ok encryption messages
-    //================================================================================
-    private void handleOkEncryptionMessage(StringTokenizer payload) {
-        String header = payload.nextToken().toUpperCase();
-
-        switch (header) {
-            case CMD_SESSION -> handleOkEncryptionSessionMessage(payload);
-            default -> unknownResponseFromServer();
-        }
-    }
-
-    private void handleOkEncryptionSessionMessage(StringTokenizer payload) {
-        String header = payload.nextToken().toUpperCase();
-
-        switch (header) {
-            case CMD_SEND -> handleOkEncryptionSessionSendMessage(payload);
-            case CMD_REQ -> handleOkEncryptionSessionRequestMessage(payload);
-            default -> unknownResponseFromServer();
-        }
-    }
-
-    private void handleOkEncryptionSessionRequestMessage(StringTokenizer payload) {
-        String recipientUsername = payload.nextToken();
-        ProtocolInterpreter.showSuccessfulEncryptionSessionRequestMessage(recipientUsername);
-    }
-
-    private void handleOkEncryptionSessionSendMessage(StringTokenizer payload) {
-        String recipientUsername = payload.nextToken();
-        ProtocolInterpreter.showSuccessfulEncryptionSessionSendMessage(recipientUsername);
-    }
-
-    //================================================================================
-    //endregion
 
 
     //region Ok file messages
@@ -389,12 +358,6 @@ public class ServerMessageHandler {
     private void handleOkGroupAllMessage(String message) {
         ProtocolInterpreter.showSuccessfulGroupAllMessage(message.split(","));
     }
-    //================================================================================
-    //endregion
-
-    //region ok encryption messages
-    //================================================================================
-
     //================================================================================
     //endregion
 

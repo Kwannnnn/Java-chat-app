@@ -83,6 +83,7 @@ public class InputHandler extends Thread {
 
         switch (input) {
             case "?" -> showMenu();
+            case "A" -> handleAuthenticationMessage();
             case "B" -> handleBroadcastMessage();
             case "GN" -> handleGroupNewMessage();
             case "GA" -> handleGroupAllMessage();
@@ -97,9 +98,17 @@ public class InputHandler extends Thread {
         }
     }
 
+    private void handleAuthenticationMessage() {
+        System.out.print(">> Please enter your password: ");
+        String password = scanner.nextLine();
+
+        this.client.addMessageToQueue(new BaseMessage(CMD_AUTH, password));
+    }
+
     private void showMenu() {
         System.out.print(ANSI_MAGENTA +
                 """
+                         A: \t Authenticate yourself
                          B: \t Broadcast a message to every client on the server
                         DM: \t Send a direct message
                          GN: \t Create a group
@@ -169,10 +178,10 @@ public class InputHandler extends Thread {
             }
         }
 
-        var clientEntity = this.client.getClientEntity(username);
-        assert clientEntity.isPresent() : "Unknown public key, but it should have arrived!";
+        var clientOptional = this.client.getClientEntity(username);
+        assert clientOptional.isPresent() : "Unknown public key, but it should have arrived!";
 
-        var recipient = clientEntity.get();
+        var recipient = clientOptional.get();
         var sessionKey = recipient.getSessionKey();
 
         if (sessionKey == null) {

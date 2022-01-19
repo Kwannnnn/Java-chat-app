@@ -417,12 +417,12 @@ public final class ServerMessageDictionary {
     /**
      * @return ER15 User not registered
      */
-    public static TextMessage userNotRegisteredError() {
+    public static TextMessage userNotAuthenticatedError() {
         return new TextMessage(CMD_ER15, ER15_BODY);
     }
 
     /**
-     * @return ER156 Password does not match
+     * @return ER16 Password does not match
      */
     public static TextMessage passwordMismatchError() {
         return new TextMessage(CMD_ER16, ER16_BODY);

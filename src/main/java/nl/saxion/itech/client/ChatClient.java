@@ -7,14 +7,11 @@ import nl.saxion.itech.client.newDesign.ServerMessageHandler;
 import nl.saxion.itech.client.threads.InputHandler;
 import nl.saxion.itech.client.threads.MessageReceiver;
 import nl.saxion.itech.client.threads.MessageSender;
-import nl.saxion.itech.server.model.Client;
 import nl.saxion.itech.shared.security.RSA;
 
-import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Optional;
@@ -34,8 +31,8 @@ public class ChatClient {
 
     private String currentUser;
 
-    private ServerMessageHandler messageHandler;
-    private BlockingQueue<Message> messagesQueue = new LinkedBlockingQueue<>();
+    private final ServerMessageHandler messageHandler;
+    private final BlockingQueue<Message> messagesQueue = new LinkedBlockingQueue<>();
     private final ConcurrentHashMap<String, FileObject> filesToReceive = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, FileObject> filesToSend = new ConcurrentHashMap<>();
 
@@ -61,7 +58,7 @@ public class ChatClient {
         this.notify();
     }
 
-    public synchronized void removeConnectClient(String username) {
+    public synchronized void removeConnectedClient(String username) {
         this.connectedClients.remove(username);
     }
 

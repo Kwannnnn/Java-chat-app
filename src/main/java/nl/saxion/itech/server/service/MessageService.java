@@ -57,7 +57,8 @@ public class MessageService implements Service {
         String line;
         while ((line = in.readLine()) != null) {
             // Log the input
-            log(">> [" + client + "] " + line);
+            String clientUsername = this.data.userIsAuthenticated(client.getUsername()) ? "*" + client.getUsername() : client.getUsername();
+            log(">> [" + clientUsername + "] " + line);
 
             var response = Optional.ofNullable(handleClient(line, client));
             if (response.isPresent()) {
@@ -72,12 +73,12 @@ public class MessageService implements Service {
 
         try {
             return sender.getStatus() == ClientStatus.CLIENT_CONNECTED
-                    || sender.getStatus() == ClientStatus.CLIENT_AUTHENTICATED
+//                    || sender.getStatus() == ClientStatus.CLIENT_AUTHENTICATED
                     ? handleConnectedClient(payload, sender)
                     : handleUnknownClient(payload, sender);
         } catch (NoSuchElementException e) {
             return sender.getStatus() == ClientStatus.CLIENT_CONNECTED
-                    || sender.getStatus() == ClientStatus.CLIENT_AUTHENTICATED
+//                    || sender.getStatus() == ClientStatus.CLIENT_AUTHENTICATED
                     ? missingParametersError()
                     : unknownCommandError();
         }
@@ -123,12 +124,11 @@ public class MessageService implements Service {
 
         // TODO: compare hashes
 
-        // TODO: error handling: user does not have password, wrong password
-        var error = userNotRegistered(sender);
-        var authenticatedUser = this.data.getRegisteredUsers().get(sender.getUsername());
+        // TODO: error handling: user does not have password!, wrong password
+        var authenticatedUser = this.data.getAuthenticatedUsers().get(sender.getUsername());
         String passwordHash = HashUtil.generateHash(authenticatedUser.getSalt(), password);
 
-        error = error.or(() -> passwordMismatch(passwordHash, authenticatedUser.getPasswordHash()));
+        var error = userNotAuthenticated(sender).or(() -> passwordMismatch(passwordHash, authenticatedUser.getPasswordHash()));
 
         return error.orElseGet(ServerMessageDictionary::okAuth);
     }
@@ -255,6 +255,7 @@ public class MessageService implements Service {
         sendMessage(fileAckAccept(fileId), fileObject.getSender());
 
         // send file transfer message to both users
+        // TODO: hard coded port number
         sendMessage(fileTrUpload(fileId, 1338), fileObject.getSender());
         return fileTrDownload(fileId, 1338);
     }
@@ -487,9 +488,9 @@ public class MessageService implements Service {
                 : Optional.empty();
     }
 
-    private Optional<Message> userNotRegistered(Client client) {
-        return !this.data.getRegisteredUsers().containsKey(client.getUsername())
-                ? Optional.of(userNotRegisteredError()) // Password does not match
+    private Optional<Message> userNotAuthenticated(Client client) {
+        return !this.data.getAuthenticatedUsers().containsKey(client.getUsername())
+                ? Optional.of(userNotAuthenticatedError()) // User not authenticated
                 : Optional.empty();
     }
 
