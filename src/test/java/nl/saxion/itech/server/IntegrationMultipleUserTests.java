@@ -1,6 +1,8 @@
 package nl.saxion.itech.server;
 
+import nl.saxion.itech.shared.security.AES;
 import nl.saxion.itech.shared.security.RSA;
+import nl.saxion.itech.shared.security.util.SecurityUtil;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
@@ -23,6 +25,8 @@ class IntegrationMultipleUserTests {
     private static final String VALID_GROUP_NAME = "cats";
     public static final RSA RSA_USER_1 = new RSA();
     public static final RSA RSA_USER_2 = new RSA();
+    public static final AES AES_USER_1 = new AES();
+    public static final AES AES_USER_2 = new AES();
 
     private Socket socketUser1, socketUser2;
     private BufferedReader inUser1, inUser2;
@@ -93,7 +97,7 @@ class IntegrationMultipleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U101 - Bad Weather - BCST - bcstWithoutBeingConnectedRespondsE03")
+    @DisplayName("RQ-U101 - Bad Weather - BCST - bcstWithoutBeingConnectedRespondsER03")
     void BCST_Bad_Weather_ER03() {
         receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
 
@@ -104,7 +108,7 @@ class IntegrationMultipleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U101 - Bad Weather - BCST - bcstWithMissingArgumentsRespondsE08")
+    @DisplayName("RQ-U101 - Bad Weather - BCST - bcstWithMissingArgumentsRespondsER08")
     void BCST_Bad_Weather_ER08() {
         receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
         receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
@@ -144,7 +148,7 @@ class IntegrationMultipleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U200 - Bad Weather - ALL - allWithoutBeingConnectedRespondsE03")
+    @DisplayName("RQ-U200 - Bad Weather - ALL - allWithoutBeingConnectedRespondsER03")
     void ALL_Bad_Weather_ER03() {
         receiveLineWithTimeout(this.inUser1); // Receive info message
 
@@ -181,7 +185,7 @@ class IntegrationMultipleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U201 - Bad Weather - MSG - msgWithoutBeingConnectedRespondsE03")
+    @DisplayName("RQ-U201 - Bad Weather - MSG - msgWithoutBeingConnectedRespondsER03")
     void MSG_Bad_Weather_ER03() {
         receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
 
@@ -192,7 +196,7 @@ class IntegrationMultipleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U201 - Bad Weather - MSG - msgUnknownUserRespondsE04")
+    @DisplayName("RQ-U201 - Bad Weather - MSG - msgUnknownUserRespondsER04")
     void MSG_Bad_Weather_ER04() {
         receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
 
@@ -208,7 +212,7 @@ class IntegrationMultipleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U201 - Bad Weather - MSG - msgWithMissingArgumentsRespondsE08")
+    @DisplayName("RQ-U201 - Bad Weather - MSG - msgWithMissingArgumentsRespondsER08")
     void MSG_Bad_Weather_ER08() {
         receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
         receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
@@ -288,7 +292,7 @@ class IntegrationMultipleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U203 - Bad Weather - GRP JOIN - grpJoinWithoutBeingConnectedRespondsE03")
+    @DisplayName("RQ-U203 - Bad Weather - GRP JOIN - grpJoinWithoutBeingConnectedRespondsER03")
     void GRP_JOIN_Bad_Weather_ER03() {
         receiveLineWithTimeout(inUser1); // Receive INFO message
 
@@ -301,7 +305,7 @@ class IntegrationMultipleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U203 - Bad Weather - GRP JOIN - grpJoinNonExistingGroupRespondsE07")
+    @DisplayName("RQ-U203 - Bad Weather - GRP JOIN - grpJoinNonExistingGroupRespondsER07")
     void GRP_JOIN_Bad_Weather_ER07() {
         receiveLineWithTimeout(inUser1); // Receive INFO message
 
@@ -319,7 +323,7 @@ class IntegrationMultipleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U203 - Bad Weather - GRP JOIN - grpJoinWithMissingArgumentsRespondsE08")
+    @DisplayName("RQ-U203 - Bad Weather - GRP JOIN - grpJoinWithMissingArgumentsRespondsER08")
     void GRP_JOIN_Bad_Weather_ER08() {
         receiveLineWithTimeout(inUser1); // Receive INFO message
 
@@ -335,7 +339,7 @@ class IntegrationMultipleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U203 - Bad Weather - GRP JOIN - grpJoinWhileAlreadyPartOfGroupRespondsE09")
+    @DisplayName("RQ-U203 - Bad Weather - GRP JOIN - grpJoinWhileAlreadyPartOfGroupRespondsER09")
     void GRP_JOIN_Bad_Weather_ER09() {
         receiveLineWithTimeout(inUser1); // Receive INFO message
 
@@ -357,6 +361,119 @@ class IntegrationMultipleUserTests {
 
         // Cleanup
         sendMessageUser1(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME); // GRP DSCN cats
+    }
+
+    @Test
+    @DisplayName("RQ-U400 - PUBK message - goodWeather")
+    void PUBK_Good_Weather() {
+        receiveLineWithTimeout(inUser1); //info message
+        receiveLineWithTimeout(inUser2); //info message
+
+        // Connect user 1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + " " + RSA_USER_1.getPublicKeyAsString()); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // Connect user2
+        var user2_publicKey = RSA_USER_2.getPublicKeyAsString();
+        sendMessageUser2(CMD_CONN + " " + USERNAME_2 + " " + user2_publicKey); // CONN user2 publicKey
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2 publicKey
+        assumeTrue(resUser2.startsWith(CMD_OK));
+
+        sendMessageUser1(CMD_PUBK + " " + USERNAME_2); // PUBK user2
+        String response = receiveLineWithTimeout(this.inUser1);
+
+        assertEquals(CMD_OK + " " + CMD_PUBK + " " + USERNAME_2 + " " + user2_publicKey, response);
+    }
+
+    @Test
+    @DisplayName("RQ-U400 - PUBK message - Bad Weather - grpJoinWithoutBeingConnectedRespondsER03")
+    void PUBK_Bad_Weather_ER03() {
+        receiveLineWithTimeout(inUser1); //info message
+        receiveLineWithTimeout(inUser2); //info message
+
+        // Connect user2
+        var user2_publicKey = RSA_USER_2.getPublicKeyAsString();
+        sendMessageUser2(CMD_CONN + " " + USERNAME_2 + " " + user2_publicKey); // CONN user2 publicKey
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2 publicKey
+        assumeTrue(resUser2.startsWith(CMD_OK));
+
+        sendMessageUser1(CMD_PUBK + " " + USERNAME_2); // PUBK user2
+        String response = receiveLineWithTimeout(this.inUser1);
+
+        assertEquals(CMD_ER03 + " " + ER03_BODY, response);
+    }
+
+    @Test
+    @DisplayName("RQ-U400 - PUBK message - Bad Weather - pubkUnknownUserRespondsER04")
+    void PUBK_Bad_Weather_ER04() {
+        receiveLineWithTimeout(inUser1); //info message
+
+        // Connect user1
+        var user1_publicKey = RSA_USER_1.getPublicKeyAsString();
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + " " + user1_publicKey); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        sendMessageUser1(CMD_PUBK + " " + USERNAME_2); // PUBK user2
+        String response = receiveLineWithTimeout(this.inUser1);
+
+        assertEquals(CMD_ER04 + " " + ER04_BODY, response);
+    }
+
+    @Test
+    @DisplayName("RQ-U400 - PUBK message - Bad Weather - pubkWithoutUsernameParameterRespondsER08")
+    void PUBK_Bad_Weather_ER08() {
+        receiveLineWithTimeout(inUser1); //info message
+        receiveLineWithTimeout(inUser2); //info message
+
+        // Connect user 1
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + " " + RSA_USER_1.getPublicKeyAsString()); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // Connect user2
+        var user2_publicKey = RSA_USER_2.getPublicKeyAsString();
+        sendMessageUser2(CMD_CONN + " " + USERNAME_2 + " " + user2_publicKey); // CONN user2 publicKey
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2 publicKey
+        assumeTrue(resUser2.startsWith(CMD_OK));
+
+        sendMessageUser1(CMD_PUBK); // PUBK
+        String response = receiveLineWithTimeout(this.inUser1);
+
+        assertEquals(CMD_ER08 + " " + ER08_BODY, response);
+    }
+
+    @Test
+    @DisplayName("RQ-U400 - SESSION message - goodWeather")
+    void SESSION_Good_Weather() {
+        receiveLineWithTimeout(inUser1); //info message
+        receiveLineWithTimeout(inUser2); //info message
+
+        // Connect user 1
+        var user1_publicKey = RSA_USER_1.getPublicKeyAsString();
+        var user1_privateKey = RSA_USER_1.getPrivateKey();
+        var user1_sessionKeyString = AES_USER_1.getPrivateKeyAsString();
+        sendMessageUser1(CMD_CONN + " " + USERNAME_1 + " " + user1_publicKey); // CONN user1 publicKey
+        String resUser1 = receiveLineWithTimeout(this.inUser1); // OK CONN user1 publicKey
+        assumeTrue(resUser1.startsWith(CMD_OK));
+
+        // Connect user2
+        var user2_publicKey = RSA_USER_2.getPublicKeyAsString();
+        sendMessageUser2(CMD_CONN + " " + USERNAME_2 + " " + user2_publicKey); // CONN user2 publicKey
+        String resUser2 = receiveLineWithTimeout(this.inUser2); // OK CONN user2 publicKey
+        assumeTrue(resUser2.startsWith(CMD_OK));
+
+        sendMessageUser1(CMD_PUBK + " " + USERNAME_2); // PUBK user2
+        String response = receiveLineWithTimeout(this.inUser1);
+        assumeTrue(response.equals(CMD_OK + " " + CMD_PUBK + " " + USERNAME_2 + " " + user2_publicKey));
+
+        var encryptedSessionKey = SecurityUtil.encrypt(user1_sessionKeyString, user1_privateKey, "RSA");
+        sendMessageUser1(CMD_SESSION + " " + USERNAME_2 + " " + encryptedSessionKey); // SESSION user2 Base64EncryptedSessionKey
+        String responseSessionUser1 = receiveLineWithTimeout(this.inUser1);
+        String user2message = receiveLineWithTimeout(this.inUser2);
+        assumeTrue(user2message.equals(CMD_SESSION + " " + USERNAME_1 + " " + encryptedSessionKey));
+        assertEquals(CMD_OK + " " + CMD_SESSION + " " + USERNAME_2 + " " + encryptedSessionKey, responseSessionUser1);
     }
 
     private void sendMessageUser1(String message) {

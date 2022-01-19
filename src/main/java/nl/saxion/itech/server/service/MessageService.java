@@ -355,6 +355,7 @@ public class MessageService implements Service {
         // error handling
         var error = userNotMemberOfGroup(groupName, senderUsername)
                 .or(() -> groupDoesNotExist(groupName));
+
         if (error.isPresent()) {
             // An error message has occurred
             return error.get(); // TODO: test
