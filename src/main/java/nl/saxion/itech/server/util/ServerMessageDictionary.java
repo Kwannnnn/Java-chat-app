@@ -401,6 +401,13 @@ public final class ServerMessageDictionary {
     }
 
     /**
+     * @return ER11 Password does not match
+     */
+    public static TextMessage passwordMismatchError() {
+        return new TextMessage(CMD_ER11, ER11_BODY);
+    }
+
+    /**
      * @return ER13 Unknown transfer
      */
     public static TextMessage unknownTransfer() {
@@ -419,12 +426,5 @@ public final class ServerMessageDictionary {
      */
     public static TextMessage userNotAuthenticatedError() {
         return new TextMessage(CMD_ER15, ER15_BODY);
-    }
-
-    /**
-     * @return ER16 Password does not match
-     */
-    public static TextMessage passwordMismatchError() {
-        return new TextMessage(CMD_ER16, ER16_BODY);
     }
 }

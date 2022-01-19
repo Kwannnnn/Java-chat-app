@@ -66,7 +66,6 @@ public final class ProtocolConstants {
     public static final String ER13_BODY = "Unknown transfer";
     public static final String ER14_BODY = "This file is not yet or in the process of being sent.";
     public static final String ER15_BODY = "User is not registered";
-    public static final String ER16_BODY = "Password does not match";
     public static final String ER66_BODY = "You are already logged in";
     public static final String DSCN_BODY = "Goodbye";
 

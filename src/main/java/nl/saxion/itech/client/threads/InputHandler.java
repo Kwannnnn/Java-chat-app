@@ -34,7 +34,8 @@ public class InputHandler extends Thread {
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
+                //thread interrupted on purpose, no need to print it out
             }
 
             if (!isLoggedIn()) {

@@ -7,21 +7,17 @@ import java.util.UUID;
 public class FileObject {
     private final String id;
     private final String filename;
-    private final int fileSize;
-    private final String checksum;
     private boolean isSent;
     private final Client sender;
     private final Client recipient;
     private InputStream senderInputStream;
     private OutputStream recipientOutputStream;
 
-    public FileObject(String filename, Client sender, Client recipient, int fileSize, String checksum) {
+    public FileObject(String filename, Client sender, Client recipient) {
         this.id = UUID.randomUUID().toString();
         this.filename = filename;
         this.sender = sender;
         this.recipient = recipient;
-        this.fileSize = fileSize;
-        this.checksum = checksum;
         this.isSent = false;
     }
 
@@ -41,10 +37,6 @@ public class FileObject {
         return recipientOutputStream;
     }
 
-    public int getFileSize() {
-        return fileSize;
-    }
-
     public String getId() {
         return id;
     }
@@ -55,14 +47,6 @@ public class FileObject {
 
     public Client getRecipient() {
         return recipient;
-    }
-
-    public String getFilename() {
-        return filename;
-    }
-
-    public String getChecksum() {
-        return checksum;
     }
 
     public boolean isSent() {

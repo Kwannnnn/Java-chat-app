@@ -28,8 +28,9 @@ public class MessageReceiver extends Thread {
     @Override
     public void run() {
         try {
-            while (!socket.isClosed()) {
-                this.client.handleMessage(reader.readLine());
+            String line;
+            while ((line = reader.readLine()) != null) {
+                this.client.handleMessage(line);
             }
         } catch (IOException e) {
             System.err.println(e.getMessage());

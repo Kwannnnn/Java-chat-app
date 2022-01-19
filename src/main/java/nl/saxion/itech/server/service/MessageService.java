@@ -41,7 +41,7 @@ public class MessageService implements Service {
             handleIncomingMessages(client);
         } catch (IOException e) {
             // Proceed to finally clause
-        }  catch (ClientDisconnectedException e) { // TODO: test disconnect
+        }  catch (ClientDisconnectedException e) {
             // Client has decided to disconnect, stop reading input;
         } finally {
             // Make sure remove the client from the data if he is connected
@@ -97,30 +97,35 @@ public class MessageService implements Service {
 
     private Message handleConnectedClient(StringTokenizer payload, Client sender)
             throws ClientDisconnectedException {
-        var header = payload.nextToken().toUpperCase();
+        try {
+            var header = payload.nextToken().toUpperCase();
 
-        return switch (header) {
-            case CMD_DSCN -> handleDisconnectMessage(sender);
-            case CMD_BCST -> handleBroadcast(payload, sender);
-            case CMD_PONG -> handlePong(sender);
-            case CMD_AUTH -> handleAuth(payload, sender);
-            case CMD_MSG -> handleDirectMessage(payload, sender);
-            case CMD_ALL -> handleAllMessage();
-            case CMD_GRP -> handleGroupMessage(payload, sender);
-            case CMD_FILE -> handleFileMessage(payload, sender);
-            case CMD_PUBK -> handlePubkMessage(payload);
-            case CMD_SESSION -> handleSessionMessage(payload, sender);
-            default -> unknownCommandError();
-        };
+            return switch (header) {
+                case CMD_DSCN -> handleDisconnectMessage(sender);
+                case CMD_BCST -> handleBroadcast(payload, sender);
+                case CMD_PONG -> handlePong(sender);
+                case CMD_AUTH -> handleAuth(payload, sender);
+                case CMD_MSG -> handleDirectMessage(payload, sender);
+                case CMD_ALL -> handleAllMessage();
+                case CMD_GRP -> handleGroupMessage(payload, sender);
+                case CMD_FILE -> handleFileMessage(payload, sender);
+                case CMD_PUBK -> handlePubkMessage(payload);
+                case CMD_SESSION -> handleSessionMessage(payload, sender);
+                default -> unknownCommandError();
+            };
+        } catch (NoSuchElementException e) {
+            return missingParametersError();
+        }
     }
 
     private Message handleAuth(StringTokenizer payload, Client sender) {
         var password = payload.nextToken();
 
-        var authenticatedUser = this.data.getAuthenticatedUsers().get(sender.getUsername());
-        String passwordHash = HashUtil.generateHash(authenticatedUser.getSalt(), password);
-
-        var error = userNotAuthenticated(sender).or(() -> passwordMismatch(passwordHash, authenticatedUser.getPasswordHash()));
+        var error = userNotAuthenticated(sender).or(() -> {
+            var authenticatedUser = this.data.getAuthenticatedUsers().get(sender.getUsername());
+            String passwordHash = HashUtil.generateHash(authenticatedUser.getSalt(), password);
+            return passwordMismatch(passwordHash, authenticatedUser.getPasswordHash());
+        });
 
         return error.orElseGet(ServerMessageDictionary::okAuth);
     }
@@ -205,7 +210,7 @@ public class MessageService implements Service {
         }
 
         var recipient = client.get();
-        var file = new FileObject(filename, sender, recipient, fileSize, checksum);
+        var file = new FileObject(filename, sender, recipient);
         this.data.addFile(file);
         sendMessage(fileReq(file.getId(), sender.getUsername(), filename, fileSize, checksum), recipient);
 
