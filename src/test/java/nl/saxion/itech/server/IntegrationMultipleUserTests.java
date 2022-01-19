@@ -23,10 +23,9 @@ class IntegrationMultipleUserTests {
     private static final String MESSAGE_1 = "message1";
     private static final String MESSAGE_2 = "message2";
     private static final String VALID_GROUP_NAME = "cats";
-    public static final RSA RSA_USER_1 = new RSA();
-    public static final RSA RSA_USER_2 = new RSA();
-    public static final AES AES_USER_1 = new AES();
-    public static final AES AES_USER_2 = new AES();
+    private static final RSA RSA_USER_1 = new RSA();
+    private static final RSA RSA_USER_2 = new RSA();
+    private static final AES AES_USER_1 = new AES();
 
     private Socket socketUser1, socketUser2;
     private BufferedReader inUser1, inUser2;
@@ -457,6 +456,64 @@ class IntegrationMultipleUserTests {
         String user2message = receiveLineWithTimeout(this.inUser2);
         assumeTrue(user2message.equals(CMD_SESSION + " " + USERNAME_1 + " " + encryptedSessionKey));
         assertEquals(CMD_OK + " " + CMD_SESSION + " " + USERNAME_2 + " " + encryptedSessionKey, responseSessionUser1);
+    }
+
+    @Test
+    @DisplayName("RQ-U400 - SESSION message - Bad Weather - sessionWithoutBeingConnectedRespondsER03")
+    void SESSION_Bad_Weather_ER03() {
+        receiveLineWithTimeout(inUser1); //info message
+        receiveLineWithTimeout(inUser2); //info message
+
+        var user1_privateKey = RSA_USER_1.getPrivateKey();
+        var user1_sessionKeyString = AES_USER_1.getPrivateKeyAsString();
+
+        var encryptedSessionKey = SecurityUtil.encrypt(user1_sessionKeyString, user1_privateKey, "RSA");
+        sendMessageUser1(CMD_SESSION + " " + USERNAME_2 + " " + encryptedSessionKey); // SESSION user2 Base64EncryptedSessionKey
+        String responseSessionUser1 = receiveLineWithTimeout(this.inUser1);
+        assertEquals(CMD_ER03 + " " + ER03_BODY, responseSessionUser1);
+    }
+
+    @Test
+    @DisplayName("RQ-U400 - SESSION message - Bad Weather - sessionToUnknownUserRespondsER04")
+    void SESSION_Bad_Weather_ER04() {
+        receiveLineWithTimeout(inUser1); //info message
+        receiveLineWithTimeout(inUser2); //info message
+
+        var user1_privateKey = RSA_USER_1.getPrivateKey();
+        var user1_sessionKeyString = AES_USER_1.getPrivateKeyAsString();
+
+        // Connect user 1
+        connectUser1();
+
+        var encryptedSessionKey = SecurityUtil.encrypt(user1_sessionKeyString, user1_privateKey, "RSA");
+        sendMessageUser1(CMD_SESSION + " " + USERNAME_2 + " " + encryptedSessionKey); // SESSION user2 Base64EncryptedSessionKey
+        String responseSessionUser1 = receiveLineWithTimeout(this.inUser1);
+        assertEquals(CMD_ER04 + " " + ER04_BODY, responseSessionUser1);
+    }
+
+    @Test
+    @DisplayName("RQ-U400 - SESSION message - Bad Weather - sessionWithMissingParametersRespondsER08")
+    void SESSION_Bad_Weather_ER08() {
+        receiveLineWithTimeout(inUser1); //info message
+        receiveLineWithTimeout(inUser2); //info message
+
+        var user1_privateKey = RSA_USER_1.getPrivateKey();
+        var user1_sessionKeyString = AES_USER_1.getPrivateKeyAsString();
+
+        // Connect user 1
+        connectUser1();
+
+        // Connect user 1
+        connectUser2();
+
+        var encryptedSessionKey = SecurityUtil.encrypt(user1_sessionKeyString, user1_privateKey, "RSA");
+        sendMessageUser1(CMD_SESSION + " " + USERNAME_2); // SESSION user2
+        String responseSessionUser1 = receiveLineWithTimeout(this.inUser1);
+        assertEquals(CMD_ER08 + " " + ER08_BODY, responseSessionUser1);
+
+        sendMessageUser1(CMD_SESSION); // SESSION
+        responseSessionUser1 = receiveLineWithTimeout(this.inUser1);
+        assertEquals(CMD_ER08 + " " + ER08_BODY, responseSessionUser1);
     }
 
     private void sendMessageUser1(String message) {
