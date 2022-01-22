@@ -240,6 +240,7 @@ class IntegrationMultipleUserTests {
         // First create a group
         sendMessageUser1(CMD_GRP + " " + CMD_NEW + " " + VALID_GROUP_NAME_1); // GRP NEW cats
         String grpNewResponse = receiveLineWithTimeout(this.inUser1); // OK GRP NEW cats
+        System.out.println(grpNewResponse);
         assumeTrue(grpNewResponse.startsWith(CMD_OK));
 
         // user2 joins the group
@@ -411,14 +412,14 @@ class IntegrationMultipleUserTests {
         String user1GrpMsgResponse1 = receiveLineWithTimeout(this.inUser1); // GRP MSG cats hello
         String user1GrpMsgResponse2 = receiveLineWithTimeout(this.inUser1); // OK GRP MSG cats hello
 
-        assumeTrue((CMD_GRP + " " + CMD_MSG + " " + VALID_GROUP_NAME_1 + " " + USERNAME_1 + " " + message)
+        assumeTrue((CMD_GRP + " " + CMD_MSG + " " + VALID_GROUP_NAME_1 + " " + message)
                 .equals(user1GrpMsgResponse1));
         assumeTrue((CMD_OK + " " + CMD_GRP + " " + CMD_MSG + " " + VALID_GROUP_NAME_1 + " " + message)
                 .equals(user1GrpMsgResponse2));
 
         // user2's response from server
         String user2GrpMsgResponse = receiveLineWithTimeout(this.inUser2);
-        assertEquals(CMD_GRP + " " + CMD_MSG + " " + VALID_GROUP_NAME_1 + " " + USERNAME_1 + " " + message,
+        assertEquals(CMD_GRP + " " + CMD_MSG + " " + VALID_GROUP_NAME_1 + " " + message,
                 user2GrpMsgResponse);
 
         // Cleanup

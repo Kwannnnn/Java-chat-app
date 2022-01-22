@@ -202,7 +202,7 @@ class IntegrationSingleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-U211 - AUTH message - badWeatherUserNotAuthenticatedShouldReturnER15")
+    @DisplayName("RQ-U211 - AUTH message - badWeatherUserNotAuthenticatedShouldReturnER14")
     void AUTH_Bad_Weather_ER15() {
         receiveLineWithTimeout(in); // Receive info message
         sendMessage(CMD_CONN + " " + "user" + " " + RSA.getPublicKeyAsString()); // C: CONN user publicKey
@@ -212,7 +212,7 @@ class IntegrationSingleUserTests {
         sendMessage(CMD_AUTH + " " + "password");
         String response = receiveLineWithTimeout(in);
 
-        assertEquals(CMD_ER15 + " " + ER15_BODY, response);
+        assertEquals(CMD_ER14 + " " + ER14_BODY, response);
     }
 
     @Test
