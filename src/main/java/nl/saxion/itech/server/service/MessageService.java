@@ -196,6 +196,7 @@ public class MessageService implements Service {
 
     private Message handleFileReqMessage(StringTokenizer payload, Client sender) {
         var filename = payload.nextToken();
+
         var fileSize = Integer.parseInt(payload.nextToken());
         var checksum = payload.nextToken();
         var recipientUsername = payload.nextToken();
@@ -378,8 +379,8 @@ public class MessageService implements Service {
         var senderUsername = sender.getUsername();
 
         // error handling
-        var error = userNotMemberOfGroup(groupName, senderUsername)
-                .or(() -> groupDoesNotExist(groupName));
+        var error = groupDoesNotExist(groupName)
+                .or(() -> userNotMemberOfGroup(groupName, senderUsername));
         if (error.isPresent()) {
             // An error message has occurred
             return error.get();
