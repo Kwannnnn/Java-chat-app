@@ -181,10 +181,6 @@ public class MessageService implements Service {
             }
 
             var fileObject = fileOptional.get();
-            // TODO: think of a condition for this lol. For now this message is accepted everytime
-//            if ( ) {
-//                return fileNotSentError();
-//            }
 
             //send message back to the file uploader, completing the transfer
             var messageToSend = header.equals(CMD_SUCCESS) ? fileTrSuccess(fileID) : fileTrFail(fileID);
@@ -207,6 +203,10 @@ public class MessageService implements Service {
 
         if (client.isEmpty()) {
             return recipientNotConnectedError();
+        }
+
+        if (fileSize <= 0) {
+            return fileSizeError();
         }
 
         var recipient = client.get();
@@ -252,7 +252,6 @@ public class MessageService implements Service {
         sendMessage(fileAckAccept(fileId), fileObject.getSender());
 
         // send file transfer message to both users
-        // TODO: hard coded port number
         sendMessage(fileTrUpload(fileId, 1338), fileObject.getSender());
         return fileTrDownload(fileId, 1338);
     }
@@ -340,7 +339,7 @@ public class MessageService implements Service {
             case CMD_NEW -> handleGroupNewMessage(payload, sender);
             case CMD_ALL -> handleGroupAllMessage();
             case CMD_JOIN -> handleGroupJoinMessage(payload, sender);
-            case CMD_MSG -> handleGroupMessageMessage(payload, sender); // TODO: test
+            case CMD_MSG -> handleGroupMessageMessage(payload, sender);
             case CMD_DSCN -> handleGroupDisconnectMessage(payload, sender);
             default -> unknownCommandError();
         };
@@ -356,7 +355,7 @@ public class MessageService implements Service {
 
         if (error.isPresent()) {
             // An error message has occurred
-            return error.get(); // TODO: test
+            return error.get();
         }
 
         var groupOptional = this.data.getGroup(groupName);
@@ -390,8 +389,7 @@ public class MessageService implements Service {
 
         assert group.isPresent() : "This group is not present, but it should be";
 
-        sendMessageToAll(grpMsg(groupName, senderUsername, message),
-                group.get().getClients());
+        sendMessageToAll(grpMsg(groupName, message), group.get().getClients());
         group.get().updateTimestampOfClient(senderUsername);
         return okGrpMsg(groupName, message);
     }

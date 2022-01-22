@@ -3,8 +3,6 @@ package nl.saxion.itech.server.service;
 import nl.saxion.itech.server.thread.ServiceListener;
 
 import java.io.IOException;
-import java.net.http.WebSocket;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,7 +13,7 @@ public class ServiceManager {
         this.runningService = new HashMap<>();
     }
 
-    public ServiceListener addService(Service service, int port)
+    public void addService(Service service, int port)
             throws IOException {
         // Check if there is already a service running on that port
         if (this.runningService.containsKey(port))
@@ -28,6 +26,5 @@ public class ServiceManager {
         // Start the listener running.
         listener.start();
 
-        return listener;
     }
 }

@@ -16,8 +16,6 @@ import java.io.OutputStream;
  * connections, and logs activity to a specified stream.
  */
 public class Server {
-    // Internal state of the server
-    private final DataObject data;
     private final ServiceManager serviceManager;
     private Logger logger;
 
@@ -29,7 +27,7 @@ public class Server {
     public Server(DataObject data, OutputStream logStream) {
         assert data != null : "Server has not been provided with data";
 
-        this.data = data;
+        // Internal state of the server
         this.serviceManager = new ServiceManager();
 
         if (logStream != null) {

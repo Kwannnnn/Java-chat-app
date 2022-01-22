@@ -1,6 +1,6 @@
-package nl.saxion.itech.client.newDesign;
+package nl.saxion.itech.client.model.message;
 
-public class BaseMessage implements Message {
+public class BaseMessage{
     private final String header;
     private String body;
 
