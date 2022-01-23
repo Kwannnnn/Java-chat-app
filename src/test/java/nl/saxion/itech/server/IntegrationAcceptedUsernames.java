@@ -47,7 +47,6 @@ class IntegrationAcceptedUsernames {
         out.println("CONN mym " + RSA.getPublicKeyAsString());
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        // TODO: reflect in documentation updated protocol
         assertEquals("OK CONN mym " + RSA.getPublicKeyAsString(), serverResponse);
     }
 

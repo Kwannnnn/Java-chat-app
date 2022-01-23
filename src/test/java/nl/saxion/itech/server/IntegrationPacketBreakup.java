@@ -52,7 +52,6 @@ class IntegrationPacketBreakup {
         out.print("ST a\r\n");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        // TODO: reflect in documentation updated protocol
         assertEquals("OK CONN myname "  + RSA.getPublicKeyAsString(), serverResponse);
         serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK BCST a", serverResponse);

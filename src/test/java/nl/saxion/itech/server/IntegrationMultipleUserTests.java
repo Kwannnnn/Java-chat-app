@@ -63,7 +63,7 @@ class IntegrationMultipleUserTests {
 
     @Test
     @DisplayName("RQ-U101 - BCST Message")
-    void BCST() {
+    void BCST_Good_Weather() {
         receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
         receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
 
@@ -119,7 +119,7 @@ class IntegrationMultipleUserTests {
 
     @Test
     @DisplayName("RQ-U200 - ALL Message")
-    void ALL() {
+    void ALL_Good_Weather() {
         receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
         receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
 
@@ -146,7 +146,7 @@ class IntegrationMultipleUserTests {
 
     @Test
     @DisplayName("RQ-U201 - MSG Message")
-    void MSG() {
+    void MSG_Good_Weather() {
         receiveLineWithTimeout(this.inUser1); // Receive INFO message user1
         receiveLineWithTimeout(this.inUser2); // Receive INFO message user2
 
@@ -213,8 +213,8 @@ class IntegrationMultipleUserTests {
     }
 
     @Test
-    @DisplayName("RQ-S100 - Bad Weather - CONN - userAlreadyLoggedIn")
-    void userAlreadyLoggedIn(){
+    @DisplayName("RQ-S100 - Bad Weather - CONN - userAlreadyLoggedInShouldRespondER01")
+    void CONN_Bad_Weather_ER01(){
         receiveLineWithTimeout(inUser1); //info message
         receiveLineWithTimeout(inUser2); //info message
 

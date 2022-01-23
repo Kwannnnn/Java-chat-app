@@ -5,7 +5,7 @@ import java.security.*;
 import java.util.Base64;
 
 public class AES {
-    private SecretKey secretKey;
+    private final SecretKey secretKey;
 
     public AES() {
         try {

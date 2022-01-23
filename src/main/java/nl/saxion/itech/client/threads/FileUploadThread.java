@@ -5,6 +5,7 @@ import nl.saxion.itech.client.ProtocolInterpreter;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
 
 public class FileUploadThread extends Thread {
     private final ChatClient client;

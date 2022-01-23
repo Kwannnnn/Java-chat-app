@@ -44,7 +44,6 @@ public final class ProtocolConstants {
     public static final String CMD_ER11 = "ER11";
     public static final String CMD_ER12 = "ER12";
     public static final String CMD_ER13 = "ER13";
-    public static final String CMD_ER14 = "ER14";
 
     public static final String INFO_BODY = "Welcome to the server";
     public static final String ER00_BODY = "Unknown command";
@@ -61,20 +60,14 @@ public final class ProtocolConstants {
     public static final String ER11_BODY = "Password does not match";
     public static final String ER12_BODY = "Negative or zero file size";
     public static final String ER13_BODY = "Unknown transfer";
-    public static final String ER14_BODY = "User is not authenticated";
 
     public static final int GROUP_PING_TIME_MS = 120_000;
     public static final int PING_INITIAL_DELAY_MS = 10_000;
     public static final int PING_TIME_MS = 3_000;
     public static final int PING_TIME_MS_DELTA_ALLOWED = 100;
 
-    public static final int MIN_USERNAME_LENGTH = 3;
-    public static final int MAX_USERNAME_LENGTH = 14;
-
     public static boolean isValidGroupName(String groupName) {
-        var pattern = String.format(
-                "^[a-zA-Z0-9_]{%d,%d}$",
-                MIN_USERNAME_LENGTH, MAX_USERNAME_LENGTH);
+        var pattern = "^[a-zA-Z0-9_]{3,14}$";
         return groupName.matches(pattern);
     }
 

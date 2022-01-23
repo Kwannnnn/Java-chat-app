@@ -414,18 +414,6 @@ class IntegrationSingleUserTests {
         assertEquals(CMD_OK + " " + CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME_1, response);
     }
 
-//    @Test
-//    @DisplayName("RQ-U209 - GRP DSCN Message - badWeatherGroupDoesNotExistShouldReturnER07")
-//    void GRP_DSCN_Bad_Weather_ER07() {
-//        connectUser();
-//
-//        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME_1);
-//
-//        //response from server
-//        String response = receiveLineWithTimeout(in);
-//        assertEquals(CMD_ER07 + " " + ER07_BODY, response);
-//    }
-
     @Test
     @DisplayName("RQ-U102 - DSCN message - Good Weather")
     void DSCN_Good_Weather() {
@@ -459,12 +447,6 @@ class IntegrationSingleUserTests {
     private void disconnectFromGroup1() {
         sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME_1);
         String grpDscnResponse = receiveLineWithTimeout(in); // OK GRP DSCN cats
-        assumeTrue(grpDscnResponse.startsWith(CMD_OK));
-    }
-
-    private void disconnectFromGroup2() {
-        sendMessage(CMD_GRP + " " + CMD_DSCN + " " + VALID_GROUP_NAME_2);
-        String grpDscnResponse = receiveLineWithTimeout(in); // OK GRP DSCN dogs
         assumeTrue(grpDscnResponse.startsWith(CMD_OK));
     }
 }

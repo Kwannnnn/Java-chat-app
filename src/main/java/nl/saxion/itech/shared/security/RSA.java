@@ -4,8 +4,8 @@ import java.security.*;
 import java.util.Base64;
 
 public class RSA {
-    private PrivateKey privateKey;
-    private PublicKey publicKey;
+    private final PrivateKey privateKey;
+    private final PublicKey publicKey;
 
     public RSA() {
         try {
@@ -23,15 +23,8 @@ public class RSA {
         return privateKey;
     }
 
-    public PublicKey getPublicKey() {
-        return publicKey;
-    }
-
     public String getPublicKeyAsString() {
         return Base64.getEncoder().encodeToString(publicKey.getEncoded());
     }
 
-    public String getPrivateKeyAsString() {
-        return Base64.getEncoder().encodeToString(publicKey.getEncoded());
-    }
 }

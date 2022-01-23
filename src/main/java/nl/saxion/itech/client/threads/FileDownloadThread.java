@@ -8,6 +8,7 @@ import static nl.saxion.itech.shared.ProtocolConstants.*;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
 
 public class FileDownloadThread extends Thread {
@@ -34,7 +35,7 @@ public class FileDownloadThread extends Thread {
             OutputStream outputStream = socket.getOutputStream();
             var dis = new DataInputStream(inputStream);
             var out = new PrintWriter(outputStream, true);
-            var fileOutput = new BufferedOutputStream(new FileOutputStream(fileObject.getName()));
+            var fileOutput = new FileOutputStream(fileObject.getName());
 
             out.println(CMD_DOWNLOAD + " " + fileID);
             out.flush();

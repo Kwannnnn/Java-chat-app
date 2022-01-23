@@ -47,7 +47,6 @@ class IntegrationLineEndings {
         out.print("CONN myname "  + RSA.getPublicKeyAsString() + "\r\nBCST a\r\n");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        // TODO: reflect in documentation updated protocol
         assertEquals("OK CONN myname " + RSA.getPublicKeyAsString(), serverResponse);
         serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK BCST a", serverResponse);
@@ -60,7 +59,6 @@ class IntegrationLineEndings {
         out.print("CONN myname "  + RSA.getPublicKeyAsString() + "\nBCST a\n");
         out.flush();
         String serverResponse = receiveLineWithTimeout(in);
-        // TODO: reflect in documentation updated protocol
         assertEquals("OK CONN myname " + RSA.getPublicKeyAsString(), serverResponse);
         serverResponse = receiveLineWithTimeout(in);
         assertEquals("OK BCST a", serverResponse);

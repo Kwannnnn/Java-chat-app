@@ -191,8 +191,6 @@ public class InputHandler extends Thread {
             // Handle
             return;
         }
-        //TODO: timeout
-
 
         var clientOptional = this.client.getClientEntity(username);
         assert clientOptional.isPresent() : "Unknown public key, but it should have arrived!";
