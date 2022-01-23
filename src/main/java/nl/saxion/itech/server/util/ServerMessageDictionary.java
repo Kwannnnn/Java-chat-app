@@ -101,7 +101,7 @@ public final class ServerMessageDictionary {
     public static TextMessage fileTrUpload(String transferId,
                                       int portNumber) {
         return new TextMessage(
-                CMD_FILE + " " + CMD_TR,
+                CMD_FILE + " " + CMD_COMPLETE,
                 CMD_UPLOAD + " " + transferId + " " + portNumber);
     }
 
@@ -113,7 +113,7 @@ public final class ServerMessageDictionary {
     public static TextMessage fileTrDownload(String transferId,
                                       int portNumber) {
         return new TextMessage(
-                CMD_FILE + " " + CMD_TR,
+                CMD_FILE + " " + CMD_COMPLETE,
                 CMD_DOWNLOAD + " " + transferId + " " + portNumber);
     }
 
@@ -241,15 +241,15 @@ public final class ServerMessageDictionary {
                 CMD_ACCEPT + " " + fileId);
     }
 
-    public static TextMessage fileTrSuccess(String fileId) {
+    public static TextMessage fileCompleteSuccess(String fileId) {
         return new TextMessage(
-                CMD_FILE + " " + CMD_TR,
+                CMD_FILE + " " + CMD_COMPLETE,
                 CMD_SUCCESS + " " + fileId);
     }
 
-    public static TextMessage fileTrFail(String fileId) {
+    public static TextMessage fileCompleteFail(String fileId) {
         return new TextMessage(
-                CMD_FILE + " " + CMD_TR,
+                CMD_FILE + " " + CMD_COMPLETE,
                 CMD_FAIL + " " + fileId);
     }
 
@@ -419,12 +419,5 @@ public final class ServerMessageDictionary {
      */
     public static TextMessage fileNotSentError() {
         return new TextMessage(CMD_ER14, ER14_BODY);
-    }
-
-    /**
-     * @return ER15 User not registered
-     */
-    public static TextMessage userNotAuthenticatedError() {
-        return new TextMessage(CMD_ER15, ER15_BODY);
     }
 }

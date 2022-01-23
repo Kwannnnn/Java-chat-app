@@ -60,7 +60,7 @@ public class InputHandler extends Thread {
 
         var publicKey = this.client.getPublicKeyAsString();
 
-        addMessageToQueue(new BaseMessage(CMD_CONN, username + " " + publicKey));
+        addMessageToQueue(new BaseMessage(CMD_CONN, username + " " + "ass"));
     }
 
     /**

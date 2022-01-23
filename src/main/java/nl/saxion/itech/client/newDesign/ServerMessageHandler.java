@@ -131,7 +131,7 @@ public class ServerMessageHandler {
         switch (header) {
             case CMD_REQ -> handleFileRequestMessage(payload);
             case CMD_ACK -> handleFileAckMessage(payload);
-            case CMD_TR -> handleFileTransferMessage(payload);
+            case CMD_COMPLETE -> handleFileTransferMessage(payload);
             default -> unknownResponseFromServer();
         }
     }

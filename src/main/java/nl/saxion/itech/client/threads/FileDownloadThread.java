@@ -64,13 +64,13 @@ public class FileDownloadThread extends Thread {
 
     private void sendFileTrSuccessMessage(String fileID) {
         this.client.addMessageToQueue(new BaseMessage(
-                CMD_FILE + " " + CMD_TR,
+                CMD_FILE + " " + CMD_COMPLETE,
                 CMD_SUCCESS + " " + fileID));
     }
 
     private void sendFileTrFailMessage(String fileID) {
         this.client.addMessageToQueue(new BaseMessage(
-                CMD_FILE + " " + CMD_TR,
+                CMD_FILE + " " + CMD_COMPLETE,
                 CMD_FAIL + " " + fileID));
     }
 }

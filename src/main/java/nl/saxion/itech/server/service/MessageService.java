@@ -121,7 +121,7 @@ public class MessageService implements Service {
     private Message handleAuth(StringTokenizer payload, Client sender) {
         var password = payload.nextToken();
 
-        var error = userNotAuthenticated(sender).or(() -> {
+        var error = userNotRegistered(sender).or(() -> {
             var authenticatedUser = this.data.getAuthenticatedUsers().get(sender.getUsername());
             String passwordHash = HashUtil.generateHash(authenticatedUser.getSalt(), password);
             return passwordMismatch(passwordHash, authenticatedUser.getPasswordHash());
@@ -162,12 +162,12 @@ public class MessageService implements Service {
         return switch (header) {
             case CMD_REQ -> handleFileReqMessage(payload, sender);
             case CMD_ACK -> handleFileAckMessage(payload, sender);
-            case CMD_TR -> handleFileTransferMessage(payload);
+            case CMD_COMPLETE -> handleFileCompleteMessage(payload);
             default -> unknownCommandError();
         };
     }
 
-    private Message handleFileTransferMessage(StringTokenizer payload) {
+    private Message handleFileCompleteMessage(StringTokenizer payload) {
         var header = payload.nextToken().toUpperCase();
 
         boolean headerAccepted = header.equals(CMD_SUCCESS) || header.equals(CMD_FAIL);
@@ -187,7 +187,7 @@ public class MessageService implements Service {
 //            }
 
             //send message back to the file uploader, completing the transfer
-            var messageToSend = header.equals(CMD_SUCCESS) ? fileTrSuccess(fileID) : fileTrFail(fileID);
+            var messageToSend = header.equals(CMD_SUCCESS) ? fileCompleteSuccess(fileID) : fileCompleteFail(fileID);
             var fileSender = fileObject.getSender();
             sendMessage(messageToSend, fileSender);
 
@@ -485,9 +485,9 @@ public class MessageService implements Service {
                 : Optional.empty();
     }
 
-    private Optional<Message> userNotAuthenticated(Client client) {
+    private Optional<Message> userNotRegistered(Client client) {
         return !this.data.getAuthenticatedUsers().containsKey(client.getUsername())
-                ? Optional.of(userNotAuthenticatedError()) // User not authenticated
+                ? Optional.of(passwordMismatchError()) // User not authenticated
                 : Optional.empty();
     }
 

@@ -17,7 +17,7 @@ public final class ProtocolConstants {
     public static final String CMD_NEW = "NEW";
     public static final String CMD_FILE = "FILE";
     public static final String CMD_ACK = "ACK";
-    public static final String CMD_TR = "TR";
+    public static final String CMD_COMPLETE = "COMPLETE";
     public static final String CMD_REQ = "REQ";
     public static final String CMD_ACCEPT = "ACCEPT";
     public static final String CMD_DENY = "DENY";
@@ -65,7 +65,7 @@ public final class ProtocolConstants {
     public static final String ER12_BODY = "You have already been authenticated";
     public static final String ER13_BODY = "Unknown transfer";
     public static final String ER14_BODY = "This file is not yet or in the process of being sent.";
-    public static final String ER15_BODY = "User is not registered";
+    public static final String ER15_BODY = "Public Key is not a valid base64 encoded string";
     public static final String ER66_BODY = "You are already logged in";
     public static final String DSCN_BODY = "Goodbye";
 
