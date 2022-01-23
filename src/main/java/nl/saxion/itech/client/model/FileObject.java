@@ -1,4 +1,4 @@
-package nl.saxion.itech.client.newDesign;
+package nl.saxion.itech.client.model;
 
 public class FileObject {
     private final String id;

@@ -1,10 +1,11 @@
-package nl.saxion.itech.client.newDesign;
+package nl.saxion.itech.client.model;
 
 import nl.saxion.itech.client.ChatClient;
 
 import static nl.saxion.itech.shared.ProtocolConstants.*;
 
 import nl.saxion.itech.client.ProtocolInterpreter;
+import nl.saxion.itech.client.model.message.BaseMessage;
 import nl.saxion.itech.client.threads.FileDownloadThread;
 import nl.saxion.itech.client.threads.FileUploadThread;
 import nl.saxion.itech.shared.security.util.SecurityUtil;
@@ -331,7 +332,7 @@ public class ServerMessageHandler {
             case CMD_ALL -> handleOkGroupAllMessage(body);
             case CMD_NEW -> handleOkGroupNewMessage(body);
             case CMD_JOIN -> handleOkGroupJoinMessage(body);
-            case CMD_MSG -> handleOkGroupMessageMessage(payload);
+            case CMD_MSG -> handleOkGroupMessageMessage(body, payload);
             case CMD_DSCN -> handleOkGroupDisconnectMessage(body);
             default -> unknownResponseFromServer();
         }
@@ -341,8 +342,7 @@ public class ServerMessageHandler {
         ProtocolInterpreter.showSuccessfulGroupDisconnectMessage(message);
     }
 
-    private void handleOkGroupMessageMessage(StringTokenizer payload) {
-        String groupName = payload.nextToken();
+    private void handleOkGroupMessageMessage(String groupName, StringTokenizer payload) {
         String groupMessage = getRemainingTokens(payload);
         ProtocolInterpreter.showSuccessfulGroupMessageMessage(groupName, groupMessage);
     }

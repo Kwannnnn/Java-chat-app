@@ -1,4 +1,4 @@
-package nl.saxion.itech.client.newDesign;
+package nl.saxion.itech.client.model;
 
 import javax.crypto.SecretKey;
 import java.security.PublicKey;

@@ -5,9 +5,8 @@ import nl.saxion.itech.client.ProtocolInterpreter;
 
 import static nl.saxion.itech.shared.ProtocolConstants.*;
 
-import nl.saxion.itech.client.newDesign.BaseMessage;
-import nl.saxion.itech.client.newDesign.FileChecksum;
-import nl.saxion.itech.client.newDesign.Message;
+import nl.saxion.itech.client.model.message.BaseMessage;
+import nl.saxion.itech.client.util.FileChecksum;
 import nl.saxion.itech.shared.security.AES;
 import nl.saxion.itech.shared.security.util.SecurityUtil;
 
@@ -234,7 +233,7 @@ public class InputHandler extends Thread {
         addMessageToQueue(new BaseMessage(CMD_DSCN));
     }
 
-    private void addMessageToQueue(Message message) {
+    private void addMessageToQueue(BaseMessage message) {
         this.client.addMessageToQueue(message);
     }
 

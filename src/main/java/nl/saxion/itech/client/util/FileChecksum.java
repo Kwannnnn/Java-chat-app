@@ -1,4 +1,4 @@
-package nl.saxion.itech.client.newDesign;
+package nl.saxion.itech.client.util;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,7 +39,7 @@ public final class FileChecksum {
         //Get the hash's bytes
         byte[] bytes = digest.digest();
 
-        //This bytes[] has bytes in decimal format;
+        //This bytes[] has bytes in decimal format
         //Convert it to hexadecimal format
         StringBuilder sb = new StringBuilder();
         for (byte aByte : bytes) {

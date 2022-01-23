@@ -2,8 +2,8 @@ package nl.saxion.itech.client.threads;
 
 import nl.saxion.itech.client.ChatClient;
 import nl.saxion.itech.client.ProtocolInterpreter;
-import nl.saxion.itech.client.newDesign.BaseMessage;
-import nl.saxion.itech.client.newDesign.FileChecksum;
+import nl.saxion.itech.client.model.message.BaseMessage;
+import nl.saxion.itech.client.util.FileChecksum;
 import static nl.saxion.itech.shared.ProtocolConstants.*;
 
 import java.io.*;

@@ -45,9 +45,6 @@ public final class ProtocolConstants {
     public static final String CMD_ER12 = "ER12";
     public static final String CMD_ER13 = "ER13";
     public static final String CMD_ER14 = "ER14";
-    public static final String CMD_ER15 = "ER15";
-    public static final String CMD_ER16 = "ER16";
-    public static final String CMD_ER66 = "ER66";
 
     public static final String INFO_BODY = "Welcome to the server";
     public static final String ER00_BODY = "Unknown command";
@@ -62,12 +59,9 @@ public final class ProtocolConstants {
     public static final String ER09_BODY = "You are already in this group";
     public static final String ER10_BODY = "You are not part of this group";
     public static final String ER11_BODY = "Password does not match";
-    public static final String ER12_BODY = "You have already been authenticated";
+    public static final String ER12_BODY = "Negative or zero file size";
     public static final String ER13_BODY = "Unknown transfer";
-    public static final String ER14_BODY = "This file is not yet or in the process of being sent.";
-    public static final String ER15_BODY = "Public Key is not a valid base64 encoded string";
-    public static final String ER66_BODY = "You are already logged in";
-    public static final String DSCN_BODY = "Goodbye";
+    public static final String ER14_BODY = "User is not authenticated";
 
     public static final int GROUP_PING_TIME_MS = 120_000;
     public static final int PING_INITIAL_DELAY_MS = 10_000;

@@ -52,16 +52,14 @@ public final class ServerMessageDictionary {
     }
 
     /**
-     * @param senderUsername the username of the sender of the message
      * @param message the message body
-     * @return MSG [senderUsername] [message]
+     * @return GRP MSG [group name] [message]
      */
     public static TextMessage grpMsg(String groupName,
-                                     String senderUsername,
                                      String message) {
         return new TextMessage(
                 CMD_GRP + " " + CMD_MSG,
-                groupName + " " + senderUsername + " " + message);
+                groupName + " " + message);
     }
 
     /**
@@ -229,55 +227,99 @@ public final class ServerMessageDictionary {
                 groupName);
     }
 
+    /**
+     * @param fileId id of the file to be sent
+     * @return FILE ACK DENY [file id]
+     */
     public static TextMessage fileAckDeny(String fileId) {
         return new TextMessage(
                 CMD_FILE + " " + CMD_ACK,
                 CMD_DENY + " " + fileId);
     }
 
+    /**
+     * @param fileId id of the file to be sent
+     * @return FILE ACK ACCEPT [file id]
+     */
     public static TextMessage fileAckAccept(String fileId) {
         return new TextMessage(
                 CMD_FILE + " " + CMD_ACK,
                 CMD_ACCEPT + " " + fileId);
     }
 
+    /**
+     * @param fileId id of the file to be sent
+     * @return FILE TR SUCCESS [file id]
+     */
     public static TextMessage fileCompleteSuccess(String fileId) {
         return new TextMessage(
                 CMD_FILE + " " + CMD_COMPLETE,
                 CMD_SUCCESS + " " + fileId);
     }
 
+    /**
+     * @param fileId id of the file to be sent
+     * @return FILE TR FAIL [file id]
+     */
     public static TextMessage fileCompleteFail(String fileId) {
         return new TextMessage(
                 CMD_FILE + " " + CMD_COMPLETE,
                 CMD_FAIL + " " + fileId);
     }
 
+    /**
+     * @param recipientUsername username of the recipient
+     * @return ENCRYPT SESSION REQ [recipient username]
+     */
     public static TextMessage encryptionSessionRequest(String recipientUsername) {
         return new TextMessage(CMD_ENCRYPT + " " + CMD_SESSION,
                 CMD_REQ + " " + recipientUsername);
     }
 
+    /**
+     * @param recipientUsername username of the recipient
+     * @param sessionKey base64 string of the key to be sent
+     * @return ENCRYPT SESSION SEND [recipient username] [session key]
+     */
     public static TextMessage encryptionSessionSend(String recipientUsername, String sessionKey) {
         return new TextMessage(CMD_ENCRYPT + " " + CMD_SESSION,
                 CMD_SEND + " " + recipientUsername + " " + sessionKey);
     }
 
+    /**
+     * @param recipientUsername username of the recipient
+     * @return OK ENCRYPT SESSION REQ [recipient username]
+     */
     public static TextMessage okEncryptionSessionRequest(String recipientUsername) {
         return new TextMessage(CMD_OK + " " + CMD_ENCRYPT + " " + CMD_SESSION,
                 CMD_REQ + " " + recipientUsername);
     }
 
+    /**
+     * @param recipientUsername username of the recipient
+     * @param sessionKey base64 string of the key to be sent
+     * @return OK ENCRYPT SESSION SEND [recipient username] [session key]
+     */
     public static TextMessage okEncryptionSessionSend(String recipientUsername, String sessionKey) {
         return new TextMessage(CMD_OK + " " + CMD_ENCRYPT + " " + CMD_SESSION,
                 CMD_SEND + " " + recipientUsername + " " + sessionKey);
     }
 
+    /**
+     * @param username username of the recipient
+     * @param publicKey base64 string of the key to be sent
+     * @return OK PUBK [recipient username] [session key]
+     */
     public static TextMessage okPubk(String username, String publicKey) {
         return new TextMessage(CMD_OK + " " + CMD_PUBK,
                 username + " " + publicKey);
     }
 
+    /**
+     * @param username username of the intended client
+     * @param sessionKey base64 string of the key to be sent
+     * @return OK SESSION [username] [session key]
+     */
     public static TextMessage okSession(String username, String sessionKey) {
         return new TextMessage(CMD_OK + " " + CMD_SESSION,
                 username + " " + sessionKey);
@@ -408,16 +450,24 @@ public final class ServerMessageDictionary {
     }
 
     /**
+     * @return ER12 Negative or zero file size
+     */
+    public static TextMessage fileSizeError() {
+        return new TextMessage(CMD_ER12, ER12_BODY);
+    }
+
+    /**
      * @return ER13 Unknown transfer
      */
     public static TextMessage unknownTransfer() {
         return new TextMessage(CMD_ER13, ER13_BODY);
     }
 
+
     /**
-     * @return ER14 File not sent
+     * @return ER15 User not registered
      */
-    public static TextMessage fileNotSentError() {
+    public static TextMessage userNotAuthenticatedError() {
         return new TextMessage(CMD_ER14, ER14_BODY);
     }
 }

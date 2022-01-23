@@ -1,9 +1,9 @@
 package nl.saxion.itech.client;
 
-import nl.saxion.itech.client.newDesign.ClientEntity;
-import nl.saxion.itech.client.newDesign.FileObject;
-import nl.saxion.itech.client.newDesign.Message;
-import nl.saxion.itech.client.newDesign.ServerMessageHandler;
+import nl.saxion.itech.client.model.ClientEntity;
+import nl.saxion.itech.client.model.FileObject;
+import nl.saxion.itech.client.model.ServerMessageHandler;
+import nl.saxion.itech.client.model.message.BaseMessage;
 import nl.saxion.itech.client.threads.InputHandler;
 import nl.saxion.itech.client.threads.MessageReceiver;
 import nl.saxion.itech.client.threads.MessageSender;
@@ -12,7 +12,6 @@ import nl.saxion.itech.shared.security.RSA;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.PrivateKey;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Properties;
@@ -32,7 +31,7 @@ public class ChatClient {
     private String currentUser;
 
     private final ServerMessageHandler messageHandler;
-    private final BlockingQueue<Message> messagesQueue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<BaseMessage> messagesQueue = new LinkedBlockingQueue<>();
     private final ConcurrentHashMap<String, FileObject> filesToReceive = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, FileObject> filesToSend = new ConcurrentHashMap<>();
 
@@ -40,8 +39,8 @@ public class ChatClient {
         props.load(ChatClient.class.getResourceAsStream("config.properties"));
         Socket socket = new Socket(props.getProperty("host"), Integer.parseInt(props.getProperty("port")));
         this.rsa = new RSA();
-        this.readThread = new Thread(new MessageSender(socket, this));
-        this.writeThread = new Thread(new MessageReceiver(socket, this));
+        this.readThread = new MessageSender(socket, this);
+        this.writeThread = new MessageReceiver(socket, this);
         this.CLIThread = new InputHandler(this);
         this.messageHandler = new ServerMessageHandler(this);
         this.connectedClients = new HashMap<>();
@@ -78,7 +77,7 @@ public class ChatClient {
         return this.messagesQueue.isEmpty();
     }
 
-    public Message collectMessage() throws InterruptedException {
+    public BaseMessage collectMessage() throws InterruptedException {
         return this.messagesQueue.take();
     }
 
@@ -86,7 +85,7 @@ public class ChatClient {
         this.messageHandler.handle(rawMessage);
     }
 
-    public void addMessageToQueue(Message message) {
+    public void addMessageToQueue(BaseMessage message) {
         try {
             messagesQueue.put(message);
         } catch (InterruptedException e) {
@@ -128,13 +127,5 @@ public class ChatClient {
 
     public PrivateKey getPrivateKey() {
         return rsa.getPrivateKey();
-    }
-
-    public Collection<FileObject> getFilesToReceive() {
-        return filesToReceive.values();
-    }
-
-    public Collection<FileObject> getFilesToSend() {
-        return filesToSend.values();
     }
 }
