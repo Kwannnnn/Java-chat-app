@@ -8,7 +8,6 @@ import static nl.saxion.itech.shared.ProtocolConstants.*;
 
 import java.io.*;
 import java.net.Socket;
-import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
 
 public class FileDownloadThread extends Thread {
@@ -31,16 +30,15 @@ public class FileDownloadThread extends Thread {
         var fileObject = fileOptional.get();
 
         try {
-            InputStream inputStream = this.socket.getInputStream();
-            OutputStream outputStream = socket.getOutputStream();
-            var dis = new DataInputStream(inputStream);
-            var out = new PrintWriter(outputStream, true);
+            var inputStream = this.socket.getInputStream();
+            var out = new DataOutputStream(this.socket.getOutputStream());
             var fileOutput = new FileOutputStream(fileObject.getName());
 
-            out.println(CMD_DOWNLOAD + " " + fileID);
+            out.writeUTF(CMD_DOWNLOAD + " " + fileID);
             out.flush();
 
-            dis.transferTo(fileOutput);
+            inputStream.transferTo(fileOutput);
+
             fileOutput.close();
 
             // compare checksum
@@ -54,12 +52,15 @@ public class FileDownloadThread extends Thread {
                 sendFileTrFailMessage(fileID);
                 ProtocolInterpreter.showFileDownloadFailure(fileID);
             }
-
-            socket.close();
-        } catch (IOException | NoSuchAlgorithmException e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            // Error occurred with one of the input streams
+            // Proceed to finally clause
+        } catch (NoSuchAlgorithmException e) {
+            // Technically impossible if java does not change the security package
+            throw new AssertionError(e);
         } finally {
             this.client.removeFileToReceive(fileObject.getId());
+            closeSocket();
         }
     }
 
@@ -73,5 +74,14 @@ public class FileDownloadThread extends Thread {
         this.client.addMessageToQueue(new BaseMessage(
                 CMD_FILE + " " + CMD_COMPLETE,
                 CMD_FAIL + " " + fileID));
+    }
+
+    private void closeSocket() {
+        try {
+            this.socket.close();
+        } catch (IOException e) {
+            // Socket has already been closed
+            // Do nothing further
+        }
     }
 }

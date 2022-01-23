@@ -18,6 +18,7 @@ public final class ProtocolConstants {
     public static final String CMD_FILE = "FILE";
     public static final String CMD_ACK = "ACK";
     public static final String CMD_COMPLETE = "COMPLETE";
+    public static final String CMD_TR = "TR";
     public static final String CMD_REQ = "REQ";
     public static final String CMD_ACCEPT = "ACCEPT";
     public static final String CMD_DENY = "DENY";

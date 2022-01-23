@@ -1,21 +1,24 @@
 package nl.saxion.itech.server.model;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.UUID;
 
 public class FileObject {
     private final String id;
     private final String filename;
     private boolean isSent;
+    private long fileSize;
+    private String checksum;
     private final Client sender;
     private final Client recipient;
     private InputStream senderInputStream;
     private OutputStream recipientOutputStream;
 
-    public FileObject(String filename, Client sender, Client recipient) {
+    public FileObject(String filename, long fileSize, String checksum, Client sender, Client recipient) {
         this.id = UUID.randomUUID().toString();
         this.filename = filename;
+        this.fileSize = fileSize;
+        this.checksum = checksum;
         this.sender = sender;
         this.recipient = recipient;
         this.isSent = false;
@@ -47,6 +50,18 @@ public class FileObject {
 
     public Client getRecipient() {
         return recipient;
+    }
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public long getFileSize() {
+        return fileSize;
+    }
+
+    public String getChecksum() {
+        return checksum;
     }
 
     public boolean isSent() {

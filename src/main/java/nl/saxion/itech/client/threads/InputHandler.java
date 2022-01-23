@@ -14,6 +14,7 @@ import static nl.saxion.itech.shared.ANSIColorCodes.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
@@ -119,9 +120,9 @@ public class InputHandler extends Thread {
                          GA: \t Show all groups
                          GJ: \t Join a group
                          GM: \t Send message to a group
-                         FS: \t Send a fileObject to another user
-                         FA: \t Accept a fileObject
-                         FD: \t Deny a fileObject
+                         FS: \t Send a file to another user
+                         FA: \t Accept a file
+                         FD: \t Deny a file
                          Q: \t Close connection with the server
                          ?: \t Show this menu
                         """ + ANSI_RESET);
@@ -152,6 +153,13 @@ public class InputHandler extends Thread {
             try {
                 File fileToSend = new File(resource.getFile());
                 String fileChecksum = FileChecksum.getFileChecksumMD5(fileToSend);
+                var bytes = Files.readAllBytes(fileToSend.toPath());
+//                for (int i = 0; i < bytes.length; i++) {
+//                    if (i % 32 == 0) {
+//                        System.out.println();
+//                    }
+//                    System.out.print(bytes[i] + "\t");
+//                }
 
                 addMessageToQueue(new BaseMessage(CMD_FILE + " " + CMD_REQ,
                         fileName + " " + fileToSend.length() + " " + fileChecksum + " " + username));

@@ -132,7 +132,19 @@ public class ServerMessageHandler {
         switch (header) {
             case CMD_REQ -> handleFileRequestMessage(payload);
             case CMD_ACK -> handleFileAckMessage(payload);
-            case CMD_COMPLETE -> handleFileTransferMessage(payload);
+            case CMD_TR -> handleFileTransferMessage(payload);
+            case CMD_COMPLETE -> handleFileCompleteMessage(payload);
+            default -> unknownResponseFromServer();
+        }
+    }
+
+    private void handleFileCompleteMessage(StringTokenizer payload) {
+        String header = payload.nextToken();
+        String fileID = payload.nextToken();
+
+        switch (header) {
+            case CMD_SUCCESS -> ProtocolInterpreter.showFileTransferSuccessMessage(fileID);
+            case CMD_FAIL -> ProtocolInterpreter.showFileTransferFailMessage(fileID);
             default -> unknownResponseFromServer();
         }
     }
@@ -145,8 +157,7 @@ public class ServerMessageHandler {
             switch (header) {
                 case CMD_DOWNLOAD -> handleFileTransferDownloadMessage(payload, fileID);
                 case CMD_UPLOAD -> handleFileTransferUploadMessage(payload, fileID);
-                case CMD_SUCCESS -> ProtocolInterpreter.showFileTransferSuccessMessage(fileID);
-                case CMD_FAIL -> ProtocolInterpreter.showFileTransferFailMessage(fileID);
+                default -> unknownResponseFromServer();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -237,8 +248,12 @@ public class ServerMessageHandler {
             case CMD_FILE -> handleOkFileMessage(payload);
             case CMD_PUBK -> handleOkPubkMessage(payload);
             case CMD_DSCN -> handleOkDscnMessage();
+            case CMD_SESSION -> handleOkSession();
             default -> unknownResponseFromServer();
         }
+    }
+
+    private void handleOkSession() {
     }
 
     private void handleOkAuthMessage() {

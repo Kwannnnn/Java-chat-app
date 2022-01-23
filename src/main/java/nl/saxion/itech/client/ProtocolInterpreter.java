@@ -179,7 +179,7 @@ public final class ProtocolInterpreter {
     }
 
     public static void showFileDownloadFailure(String fileID) {
-        System.out.println(italic("Something went wrong when downloading the file"));
+        System.out.println(italic("Something went wrong when downloading the file. Checksum does not match."));
         System.out.println(italic("File id: " + fileID));
     }
 

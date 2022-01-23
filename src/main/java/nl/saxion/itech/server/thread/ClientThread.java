@@ -27,7 +27,7 @@ public class ClientThread extends Thread {
             var out = this.socket.getOutputStream();
             this.service.serve(in, out);
         } catch (IOException e) {
-            // TODO: think if it is necessary to do something here
+            // Proceed to finally clause
         } finally {
             // Makes sure to stop the thread whenever the service
             // stops being provided

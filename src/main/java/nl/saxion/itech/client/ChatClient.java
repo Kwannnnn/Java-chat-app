@@ -12,12 +12,7 @@ import nl.saxion.itech.shared.security.RSA;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.PrivateKey;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.*;
 
 public class ChatClient {
     private static final Properties props = new Properties();
@@ -26,14 +21,13 @@ public class ChatClient {
     private final Thread CLIThread;
     private final RSA rsa;
 
-    private final HashMap<String, ClientEntity> connectedClients;
-
     private String currentUser;
 
     private final ServerMessageHandler messageHandler;
-    private final BlockingQueue<BaseMessage> messagesQueue = new LinkedBlockingQueue<>();
-    private final ConcurrentHashMap<String, FileObject> filesToReceive = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, FileObject> filesToSend = new ConcurrentHashMap<>();
+    private final Queue<BaseMessage> messagesQueue = new LinkedList<>();
+    private final HashMap<String, ClientEntity> connectedClients = new HashMap<>();
+    private final HashMap<String, FileObject> filesToReceive = new HashMap<>();
+    private final HashMap<String, FileObject> filesToSend = new HashMap<>();
 
     public ChatClient() throws IOException {
         props.load(ChatClient.class.getResourceAsStream("config.properties"));
@@ -43,7 +37,6 @@ public class ChatClient {
         this.writeThread = new MessageReceiver(socket, this);
         this.CLIThread = new InputHandler(this);
         this.messageHandler = new ServerMessageHandler(this);
-        this.connectedClients = new HashMap<>();
     }
 
     public void start() {
@@ -73,43 +66,31 @@ public class ChatClient {
         return this.currentUser;
     }
 
-    public boolean hasPendingMessages() {
-        return this.messagesQueue.isEmpty();
-    }
-
-    public BaseMessage collectMessage() throws InterruptedException {
-        return this.messagesQueue.take();
-    }
-
-    public void handleMessage(String rawMessage) {
-        this.messageHandler.handle(rawMessage);
-    }
-
-    public void addMessageToQueue(BaseMessage message) {
-        try {
-            messagesQueue.put(message);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    public synchronized BaseMessage collectMessage() throws InterruptedException {
+        while (this.messagesQueue.isEmpty()) {
+            wait();
         }
+        return this.messagesQueue.remove();
     }
 
-    public void closeConnection() {
-        this.CLIThread.interrupt();
+    public synchronized void addMessageToQueue(BaseMessage message) {
+        this.messagesQueue.add(message);
+        notify();
     }
 
-    public void addFileToReceive(FileObject fileObject) {
+    public synchronized void addFileToReceive(FileObject fileObject) {
         filesToReceive.put(fileObject.getId(), fileObject);
     }
 
-    public void removeFileToReceive(String fileID) {
+    public synchronized void removeFileToReceive(String fileID) {
         filesToReceive.remove(fileID);
     }
 
-    public Optional<FileObject> getFileToReceive(String fileID) {
+    public synchronized Optional<FileObject> getFileToReceive(String fileID) {
         return Optional.ofNullable(this.filesToReceive.get(fileID));
     }
 
-    public void addFileToSend(FileObject fileObject) {
+    public synchronized void addFileToSend(FileObject fileObject) {
         filesToSend.put(fileObject.getId(), fileObject);
     }
 
@@ -117,8 +98,12 @@ public class ChatClient {
         filesToSend.remove(fileID);
     }
 
-    public Optional<FileObject> getFileToSend(String fileID) {
+    public synchronized Optional<FileObject> getFileToSend(String fileID) {
         return Optional.ofNullable(this.filesToSend.get(fileID));
+    }
+
+    public void handleMessage(String rawMessage) {
+        this.messageHandler.handle(rawMessage);
     }
 
     public String getPublicKeyAsString() {
@@ -127,5 +112,9 @@ public class ChatClient {
 
     public PrivateKey getPrivateKey() {
         return rsa.getPrivateKey();
+    }
+
+    public void closeConnection() {
+        this.CLIThread.interrupt();
     }
 }

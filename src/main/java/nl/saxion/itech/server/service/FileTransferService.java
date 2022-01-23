@@ -12,28 +12,27 @@ public class FileTransferService implements Service {
 
     public FileTransferService(DataObject data) {
         this.data = data;
-
     }
 
     @Override
     public void serve(InputStream in, OutputStream out) {
         try {
-            var dataInputStream = new BufferedReader(new InputStreamReader(in));
+            var dataIn = new DataInputStream(in);
+            var dataOut = new DataOutputStream(out);
 
-            var controlMessage = dataInputStream.readLine();
+            var controlMessage = dataIn.readUTF();
+            System.out.println(controlMessage);
             var payload = new StringTokenizer(controlMessage);
 
             var mode = payload.nextToken();
             var transferID = payload.nextToken();
-            var file = getFile(transferID); // Can throw Runtime Exception TODO: create more specific checked exception
-
-            System.out.println(controlMessage);
+            var file = getFile(transferID); // Can throw Runtime Exception
 
             // Check if the client wants to receive the file or send the file
             switch (mode) {
-                case "UPLOAD" -> updateFileUploader(file, in);
-                case "DOWNLOAD" -> updateFileDownloader(file, out);
-                default -> throw new Exception(); // TODO: handle error
+                case "UPLOAD" -> updateFileUploader(file, dataIn);
+                case "DOWNLOAD" -> updateFileDownloader(file, dataOut);
+                default -> throw new Exception();
             }
 
             // Wait until both parties have connected
@@ -45,7 +44,6 @@ public class FileTransferService implements Service {
             }
 
             handleTransfer(file);
-
         } catch (NoSuchElementException e) {
             // Missing parameters
         } catch (RuntimeException e) {
@@ -54,14 +52,13 @@ public class FileTransferService implements Service {
             // Proceed to finally clause
         } catch (Exception e) {
             // Unknown command
-        } finally {
-
         }
     }
 
     private void handleTransfer(FileObject fileObject) throws IOException {
-        var in = new DataInputStream(fileObject.getSenderInputStream());
-        var out = new DataOutputStream(fileObject.getRecipientOutputStream());
+        var in = fileObject.getSenderInputStream();
+        var out = fileObject.getRecipientOutputStream();
+
         in.transferTo(out);
     }
 
@@ -69,7 +66,6 @@ public class FileTransferService implements Service {
         var optional = this.data.getFile(fileId);
 
         if (optional.isEmpty()) {
-            // TODO: handle error message
             throw new RuntimeException();
         }
 

@@ -26,17 +26,14 @@ public class MessageSender extends Thread {
 
     @Override
     public void run() {
-        do {
-            if (this.client.hasPendingMessages()) {
-                try {
-                    var message = this.client.collectMessage().toString();
-                    writer.println(message);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        } while (hasConnection());
+        while (hasConnection()) {
+            try {
+                var message = this.client.collectMessage().toString();
+                this.writer.println(message);
+            } catch (InterruptedException e) {
 
+            }
+        }
         this.writer.close();
     }
 

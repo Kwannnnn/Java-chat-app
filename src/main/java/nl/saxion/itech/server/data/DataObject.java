@@ -19,7 +19,7 @@ public class DataObject {
     static {
         AUTHENTICATED_USERS.put("Carlo", new AuthenticatedUser("Carlo", "Password1"));
         AUTHENTICATED_USERS.put("Trish", new AuthenticatedUser("Trish", "Password2"));
-        AUTHENTICATED_USERS.put("Lia", new AuthenticatedUser("Lia", "Password2"));
+        AUTHENTICATED_USERS.put("Lia", new AuthenticatedUser("Lia", "Password3"));
     }
 
     private final HashMap<String, Client> chatClients;
@@ -100,9 +100,5 @@ public class DataObject {
 
     public HashMap<String, AuthenticatedUser> getAuthenticatedUsers() {
         return AUTHENTICATED_USERS;
-    }
-
-    public boolean userIsAuthenticated(String username) {
-        return AUTHENTICATED_USERS.containsKey(username);
     }
 }

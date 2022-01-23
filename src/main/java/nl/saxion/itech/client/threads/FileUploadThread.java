@@ -7,6 +7,9 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
 
+import static nl.saxion.itech.shared.ProtocolConstants.CMD_DOWNLOAD;
+import static nl.saxion.itech.shared.ProtocolConstants.CMD_UPLOAD;
+
 public class FileUploadThread extends Thread {
     private final ChatClient client;
     private final String fileID;
@@ -29,20 +32,17 @@ public class FileUploadThread extends Thread {
         var file = fileOptional.get();
 
         try {
-            var fileInputStream = new FileInputStream(ChatClient.class.getResource(file.getName()).getFile());
+            var in = new BufferedInputStream(new FileInputStream(ChatClient.class.getResource(file.getName()).getFile()));
+            var out = new DataOutputStream(this.socket.getOutputStream());
 
-            OutputStream outputStream = socket.getOutputStream();
+            out.writeUTF(CMD_UPLOAD + " " + fileID);
+            out.flush();
 
-            var socketPrintWriter = new PrintWriter(outputStream, true);
-            var socketDataOutputStream = new DataOutputStream(outputStream);
-
-            socketPrintWriter.println("UPLOAD " + fileID);
-            socketPrintWriter.flush();
-
-            fileInputStream.transferTo(socketDataOutputStream);
-            socketDataOutputStream.close();
+            in.transferTo(out);
+            in.close();
 
             ProtocolInterpreter.showFinishedFileUpload(fileID);
+            this.socket.close();
         } catch (IOException e) {
             //say something
             e.printStackTrace();

@@ -57,8 +57,7 @@ public class MessageService implements Service {
         String line;
         while ((line = in.readLine()) != null) {
             // Log the input
-            String clientUsername = this.data.userIsAuthenticated(client.getUsername()) ? "*" + client.getUsername() : client.getUsername();
-            log(">> [" + clientUsername + "] " + line);
+            log(">> [" + client.getUsername() + "] " + line);
 
             var response = Optional.ofNullable(handleClient(line, client));
             if (response.isPresent()) {
@@ -196,7 +195,7 @@ public class MessageService implements Service {
     private Message handleFileReqMessage(StringTokenizer payload, Client sender) {
         var filename = payload.nextToken();
 
-        var fileSize = Integer.parseInt(payload.nextToken());
+        var fileSize = Long.parseLong(payload.nextToken());
         var checksum = payload.nextToken();
         var recipientUsername = payload.nextToken();
         var client = this.data.getClient(recipientUsername);
@@ -210,7 +209,7 @@ public class MessageService implements Service {
         }
 
         var recipient = client.get();
-        var file = new FileObject(filename, sender, recipient);
+        var file = new FileObject(filename, fileSize, checksum, sender, recipient);
         this.data.addFile(file);
         sendMessage(fileReq(file.getId(), sender.getUsername(), filename, fileSize, checksum), recipient);
 

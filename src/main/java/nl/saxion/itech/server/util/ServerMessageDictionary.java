@@ -84,7 +84,7 @@ public final class ServerMessageDictionary {
     public static TextMessage fileReq(String fileId,
                                       String senderUsername,
                                       String fileName,
-                                      int fileSize,
+                                      long fileSize,
                                       String checksum) {
         return new TextMessage(
                 CMD_FILE + " " + CMD_REQ,
@@ -99,7 +99,7 @@ public final class ServerMessageDictionary {
     public static TextMessage fileTrUpload(String transferId,
                                       int portNumber) {
         return new TextMessage(
-                CMD_FILE + " " + CMD_COMPLETE,
+                CMD_FILE + " " + CMD_TR,
                 CMD_UPLOAD + " " + transferId + " " + portNumber);
     }
 
@@ -111,7 +111,7 @@ public final class ServerMessageDictionary {
     public static TextMessage fileTrDownload(String transferId,
                                       int portNumber) {
         return new TextMessage(
-                CMD_FILE + " " + CMD_COMPLETE,
+                CMD_FILE + " " + CMD_TR,
                 CMD_DOWNLOAD + " " + transferId + " " + portNumber);
     }
 
@@ -333,7 +333,7 @@ public final class ServerMessageDictionary {
      * @return OK FILE SEND [file name] [recipient username]
      */
     public static TextMessage okFileReq(String fileId, String filename,
-                                        int fileSize,
+                                        long fileSize,
                                         String recipientUsername,
                                         String checksum) {
         return new TextMessage(
