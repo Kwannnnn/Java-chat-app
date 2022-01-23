@@ -73,7 +73,6 @@ public class MessageService implements Service {
 
         try {
             return sender.getStatus() == ClientStatus.CLIENT_CONNECTED
-//                    || sender.getStatus() == ClientStatus.CLIENT_AUTHENTICATED
                     ? handleConnectedClient(payload, sender)
                     : handleUnknownClient(payload, sender);
         } catch (NoSuchElementException e) {

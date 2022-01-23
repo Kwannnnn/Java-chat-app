@@ -38,9 +38,9 @@ public class DataObject {
 
     public synchronized void addClient(Client client) {
         this.chatClients.put(client.getUsername(), client);
-//        var clientPingTask = new ClientPingTask(client);
-//        this.clientPingThreads.put(client.getUsername(), clientPingTask);
-//        new Timer().scheduleAtFixedRate(clientPingTask, 0, PING_INITIAL_DELAY_MS);
+        var clientPingTask = new ClientPingTask(client);
+        this.clientPingThreads.put(client.getUsername(), clientPingTask);
+        new Timer().scheduleAtFixedRate(clientPingTask, 0, PING_INITIAL_DELAY_MS);
     }
 
     public synchronized void removeClient(Client client) {

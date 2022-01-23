@@ -16,6 +16,10 @@ import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class InputHandler extends Thread {
 
@@ -59,7 +63,7 @@ public class InputHandler extends Thread {
 
         var publicKey = this.client.getPublicKeyAsString();
 
-        addMessageToQueue(new BaseMessage(CMD_CONN, username + " " + "ass"));
+        addMessageToQueue(new BaseMessage(CMD_CONN, username + " " + publicKey));
     }
 
     /**
@@ -167,16 +171,28 @@ public class InputHandler extends Thread {
             addMessageToQueue(new BaseMessage(CMD_PUBK, username));
         }
 
-        //TODO: timeout
-        while (this.client.getClientEntity(username).isEmpty()) {
-            synchronized (this.client) {
-                try {
-                    this.client.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        try {
+            CompletableFuture.supplyAsync(() -> {
+                while (this.client.getClientEntity(username).isEmpty()) {
+                    synchronized (this.client) {
+                        try {
+                            this.client.wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
-            }
+                return null;
+            }).get(10, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            System.out.println("Time out!");
+            return;
+        } catch (InterruptedException | ExecutionException e) {
+            // Handle
+            return;
         }
+        //TODO: timeout
+
 
         var clientOptional = this.client.getClientEntity(username);
         assert clientOptional.isPresent() : "Unknown public key, but it should have arrived!";
@@ -235,10 +251,6 @@ public class InputHandler extends Thread {
 
     private void addMessageToQueue(BaseMessage message) {
         this.client.addMessageToQueue(message);
-    }
-
-    public void setRunning(boolean running) {
-        isRunning = running;
     }
 }
 

@@ -7,7 +7,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
-public class SecurityUtil {
+public final class SecurityUtil {
     public static String encrypt(String message, Key key, String transformation) {
         try {
             var cipher = Cipher.getInstance(transformation);

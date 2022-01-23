@@ -22,10 +22,6 @@ public class ClientEntity {
         this.sessionKey = sessionKey;
     }
 
-    public void setPublicKey(PublicKey publicKey) {
-        this.publicKey = publicKey;
-    }
-
     public String getUsername() {
         return username;
     }

@@ -462,12 +462,4 @@ public final class ServerMessageDictionary {
     public static TextMessage unknownTransfer() {
         return new TextMessage(CMD_ER13, ER13_BODY);
     }
-
-
-    /**
-     * @return ER15 User not registered
-     */
-    public static TextMessage userNotAuthenticatedError() {
-        return new TextMessage(CMD_ER14, ER14_BODY);
-    }
 }

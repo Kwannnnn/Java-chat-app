@@ -155,7 +155,6 @@ public class ServerMessageHandler {
 
     private void handleFileTransferUploadMessage(StringTokenizer payload, String fileID) throws IOException {
         String portNumber = payload.nextToken();
-        // TODO: maybe host should not be hard coded
         var socket = new Socket("127.0.0.1", Integer.parseInt(portNumber));
 
         ProtocolInterpreter.showFileTransferMessage(fileID, portNumber);
@@ -164,7 +163,6 @@ public class ServerMessageHandler {
 
     private void handleFileTransferDownloadMessage(StringTokenizer payload, String fileID) throws IOException {
         String portNumber = payload.nextToken();
-        // TODO: maybe host should not be hard coded
         var socket = new Socket("127.0.0.1", Integer.parseInt(portNumber));
 
         ProtocolInterpreter.showFileTransferMessage(fileID, portNumber);

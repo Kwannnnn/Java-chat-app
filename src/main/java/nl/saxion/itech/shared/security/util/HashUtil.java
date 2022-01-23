@@ -6,7 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-public class HashUtil {
+public final class HashUtil {
 
     public static String generateHash(byte[] salt, String passwordToHash) {
         try {
